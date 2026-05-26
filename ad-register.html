@@ -475,6 +475,31 @@ table.main-table tbody td { padding: 13px 14px; font-size: 13px; vertical-align:
 .empty-api .e-icon { font-size: 40px; margin-bottom: 12px; }
 .empty-api p { font-size: 14px; margin-bottom: 4px; }
 .empty-api small { font-size: 12px; }
+
+/* ─── Account selector ─── */
+.account-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.account-tab {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 16px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text2);
+  transition: all .15s; user-select: none;
+}
+.account-tab:hover { border-color: var(--accent2); color: var(--text); }
+.account-tab.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.account-tab .ac-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.account-tab.active .ac-dot { background: var(--accent); }
+
+/* ─── Settings accounts list ─── */
+.s-account-row {
+  display: grid; grid-template-columns: 1fr 1.6fr 32px;
+  gap: 8px; align-items: center;
+}
+.s-accounts-header {
+  display: grid; grid-template-columns: 1fr 1.6fr 32px;
+  gap: 8px; font-size: 11px; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .5px; padding: 0 0 4px;
+}
 </style>
 </head>
 <body>
@@ -844,6 +869,9 @@ table.main-table tbody td { padding: 13px 14px; font-size: 13px; vertical-align:
     <!-- ─── Campaign ─── -->
     <div class="page" id="page-campaign">
 
+      <!-- 계정 선택 탭 -->
+      <div class="account-tabs" id="accountTabs"></div>
+
       <!-- API 연결 상태 배너 -->
       <div class="api-status-banner">
         <div class="api-status-left">
@@ -929,25 +957,35 @@ table.main-table tbody td { padding: 13px 14px; font-size: 13px; vertical-align:
 
 <!-- Settings Modal -->
 <div class="overlay" id="settingsOverlay">
-  <div class="modal" style="width:520px">
+  <div class="modal" style="width:540px">
     <div class="modal-header">
       <h2>⚙️ Meta API 설정</h2>
       <button class="close-btn" onclick="closeSettings()">✕</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:16px">
-      <div style="background:var(--yellow-light);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:12px 14px;font-size:12px;color:#92400e;line-height:1.6">
-        🔒 입력한 정보는 <strong>이 브라우저의 localStorage에만 저장</strong>되며, GitHub나 외부 서버에 절대 전송되지 않습니다.
+      <div style="background:var(--yellow-light);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:11px 14px;font-size:12px;color:#92400e;line-height:1.6">
+        🔒 입력한 정보는 <strong>이 브라우저의 localStorage에만 저장</strong>되며, GitHub나 외부 서버에 전송되지 않습니다.
       </div>
+
+      <!-- Access Token -->
       <div class="field">
         <label>Access Token <span class="req">*</span></label>
         <input type="password" id="s-token" placeholder="EAAxxxxxxxxxx..." style="font-family:monospace;font-size:12px">
-        <div class="hint">Meta Business Suite → 앱 설정 → 액세스 토큰에서 발급 (<code>ads_read</code> 권한 필요)</div>
+        <div class="hint">ads_read 권한 포함 필요 · 모든 계정에 공통 적용</div>
       </div>
-      <div class="field">
-        <label>Ad Account ID <span class="req">*</span></label>
-        <input type="text" id="s-account" placeholder="act_XXXXXXXXXX" style="font-family:monospace;font-size:12px">
-        <div class="hint">Meta Business Manager → 광고 계정 설정에서 확인 (act_ 포함하여 입력)</div>
+
+      <!-- Accounts -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label style="font-size:12px;font-weight:600">광고 계정 <span class="req">*</span> <span style="font-weight:400;color:var(--text3)">(최대 3개)</span></label>
+          <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="addSettingsAccount()">+ 계정 추가</button>
+        </div>
+        <div class="s-accounts-header"><span>계정 별칭</span><span>Ad Account ID</span><span></span></div>
+        <div id="s-accounts-list" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div class="hint" style="margin-top:6px">계정 별칭은 탭에 표시되는 이름입니다 (예: 리칼지메디)</div>
       </div>
+
+      <!-- API version -->
       <div class="field">
         <label>API 버전</label>
         <select id="s-version">
@@ -956,6 +994,7 @@ table.main-table tbody td { padding: 13px 14px; font-size: 13px; vertical-align:
           <option value="v19.0">v19.0</option>
         </select>
       </div>
+
       <div id="s-test-result" style="display:none;border-radius:8px;padding:10px 14px;font-size:12px"></div>
     </div>
     <div class="modal-footer">
@@ -1101,7 +1140,7 @@ function showPage(id, el) {
   document.getElementById('topbarTitle').textContent = titles[id] || id;
   if (id === 'dashboard') renderDashboard();
   if (id === 'list') renderList();
-  if (id === 'campaign') { loadSettings(); updateApiStatusUI(settings.token ? 'ready' : 'off'); if (campaigns.length) { renderCampaignStats(); renderCampaignTable(); } }
+  if (id === 'campaign') { loadSettings(); renderAccountTabs(); updateApiStatusUI(settings.token ? 'ready' : 'off'); if (campaigns.length) { renderCampaignStats(); renderCampaignTable(); } }
 }
 
 // ─── Brands ───
@@ -1422,68 +1461,130 @@ let settings = {};
 
 function loadSettings() {
   const s = localStorage.getItem(SETTINGS_KEY);
-  settings = s ? JSON.parse(s) : { token: '', account: '', version: 'v21.0' };
+  settings = s ? JSON.parse(s) : { token: '', version: 'v21.0', accounts: [], activeIdx: 0 };
+  if (!settings.accounts) settings.accounts = [];
+  if (settings.activeIdx === undefined) settings.activeIdx = 0;
 }
-function saveSettings() {
-  const token   = document.getElementById('s-token').value.trim();
-  const account = document.getElementById('s-account').value.trim();
-  const version = document.getElementById('s-version').value;
-  if (!token || !account) { showToast('Token과 Account ID를 모두 입력하세요.', 'error'); return; }
-  settings = { token, account: account.startsWith('act_') ? account : 'act_' + account, version };
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  closeSettings();
-  showToast('설정 저장 완료', 'success');
-  updateApiStatusUI(settings.token ? 'ready' : 'off');
+function activeAccount() {
+  return settings.accounts[settings.activeIdx] || null;
 }
+
+// ─── Settings modal ───
 function openSettings() {
   loadSettings();
   document.getElementById('s-token').value   = settings.token   || '';
-  document.getElementById('s-account').value = settings.account || '';
   document.getElementById('s-version').value = settings.version || 'v21.0';
   document.getElementById('s-test-result').style.display = 'none';
+  renderSettingsAccounts();
   document.getElementById('settingsOverlay').classList.add('open');
 }
 function closeSettings() {
   document.getElementById('settingsOverlay').classList.remove('open');
 }
+function renderSettingsAccounts() {
+  const list = document.getElementById('s-accounts-list');
+  const accs = settings.accounts.length ? settings.accounts : [{ name: '', id: '' }];
+  list.innerHTML = accs.map((a, i) => `
+    <div class="s-account-row">
+      <input type="text" class="s-acc-name" data-i="${i}" placeholder="예: 리칼지메디"
+        value="${a.name}" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;color:var(--text);outline:none;width:100%">
+      <input type="text" class="s-acc-id" data-i="${i}" placeholder="act_XXXXXXXXXX"
+        value="${a.id}" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:12px;font-family:monospace;color:var(--text);outline:none;width:100%">
+      <button onclick="removeSettingsAccount(${i})" style="width:32px;height:36px;border:1px solid var(--border);border-radius:7px;background:transparent;cursor:pointer;color:var(--text3);font-size:14px;display:flex;align-items:center;justify-content:center" title="삭제">✕</button>
+    </div>`).join('');
+}
+function addSettingsAccount() {
+  const rows = document.querySelectorAll('.s-account-row');
+  if (rows.length >= 3) { showToast('최대 3개까지 등록할 수 있습니다.', 'error'); return; }
+  settings.accounts.push({ name: '', id: '' });
+  renderSettingsAccounts();
+}
+function removeSettingsAccount(idx) {
+  settings.accounts.splice(idx, 1);
+  if (settings.activeIdx >= settings.accounts.length) settings.activeIdx = 0;
+  renderSettingsAccounts();
+}
+function saveSettings() {
+  const token   = document.getElementById('s-token').value.trim();
+  const version = document.getElementById('s-version').value;
+  if (!token) { showToast('Access Token을 입력하세요.', 'error'); return; }
+  const names = document.querySelectorAll('.s-acc-name');
+  const ids   = document.querySelectorAll('.s-acc-id');
+  const accounts = [];
+  names.forEach((el, i) => {
+    const name = el.value.trim();
+    let   id   = ids[i].value.trim();
+    if (id) {
+      if (!id.startsWith('act_')) id = 'act_' + id;
+      accounts.push({ name: name || `계정 ${i + 1}`, id });
+    }
+  });
+  if (!accounts.length) { showToast('계정 ID를 최소 1개 입력하세요.', 'error'); return; }
+  settings = { token, version, accounts, activeIdx: Math.min(settings.activeIdx, accounts.length - 1) };
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  closeSettings();
+  showToast('설정 저장 완료', 'success');
+  renderAccountTabs();
+  updateApiStatusUI(settings.token ? 'ready' : 'off');
+}
 
 async function testConnection() {
   const token   = document.getElementById('s-token').value.trim();
-  const account = document.getElementById('s-account').value.trim();
   const version = document.getElementById('s-version').value;
   const result  = document.getElementById('s-test-result');
   const btn     = document.getElementById('s-test-btn');
-  if (!token || !account) { showToast('Token과 Account ID를 먼저 입력하세요.', 'error'); return; }
-  const acct = account.startsWith('act_') ? account : 'act_' + account;
+  const firstId = document.querySelector('.s-acc-id')?.value.trim();
+  if (!token || !firstId) { showToast('Token과 계정 ID를 먼저 입력하세요.', 'error'); return; }
+  const acct = firstId.startsWith('act_') ? firstId : 'act_' + firstId;
   btn.innerHTML = '<span class="spinner"></span> 테스트 중...';
   btn.disabled = true;
-  result.style.display = 'block';
-  result.style.background = '#f3f4f6';
-  result.textContent = '연결 확인 중...';
+  result.style.display = 'block'; result.style.background = '#f3f4f6'; result.textContent = '연결 확인 중...';
   try {
-    const url = `https://graph.facebook.com/${version}/${acct}?fields=name,currency,account_status&access_token=${token}`;
-    const res = await fetch(url);
+    const res  = await fetch(`https://graph.facebook.com/${version}/${acct}?fields=name,currency,account_status&access_token=${token}`);
     const data = await res.json();
     if (data.error) {
-      result.style.background = 'var(--red-light)';
-      result.style.color = 'var(--red)';
+      result.style.cssText = 'display:block;background:var(--red-light);color:var(--red);border-radius:8px;padding:10px 14px;font-size:12px';
       result.innerHTML = `❌ 오류: ${data.error.message}`;
     } else {
-      result.style.background = 'var(--green-light)';
-      result.style.color = '#065f46';
+      result.style.cssText = 'display:block;background:var(--green-light);color:#065f46;border-radius:8px;padding:10px 14px;font-size:12px';
       result.innerHTML = `✅ 연결 성공! 계정명: <strong>${data.name}</strong> · 통화: ${data.currency}`;
     }
   } catch (e) {
-    result.style.background = 'var(--red-light)';
-    result.style.color = 'var(--red)';
+    result.style.cssText = 'display:block;background:var(--red-light);color:var(--red);border-radius:8px;padding:10px 14px;font-size:12px';
     result.innerHTML = `❌ 네트워크 오류: ${e.message}`;
   }
-  btn.innerHTML = '연결 테스트';
-  btn.disabled = false;
+  btn.innerHTML = '연결 테스트'; btn.disabled = false;
+}
+
+// ─── Account tabs ───
+function renderAccountTabs() {
+  const container = document.getElementById('accountTabs');
+  if (!container) return;
+  if (!settings.accounts?.length) {
+    container.innerHTML = `<div style="font-size:13px;color:var(--text3)">계정이 없습니다. <span style="color:var(--accent);cursor:pointer" onclick="openSettings()">설정에서 추가하세요 →</span></div>`;
+    return;
+  }
+  container.innerHTML = settings.accounts.map((a, i) => `
+    <div class="account-tab ${i === settings.activeIdx ? 'active' : ''}" onclick="selectAccount(${i})">
+      <span class="ac-dot"></span>${a.name || `계정 ${i+1}`}
+      <span style="font-size:10px;opacity:.6;font-family:monospace">${a.id.replace('act_','#')}</span>
+    </div>`).join('');
+}
+function selectAccount(idx) {
+  if (settings.activeIdx === idx) return;
+  settings.activeIdx = idx;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  campaigns = []; camNextPage = null;
+  renderAccountTabs();
+  updateApiStatusUI('ready');
+  renderCampaignStats();
+  renderCampaignTable();
+  showToast(`${settings.accounts[idx]?.name || '계정 ' + (idx+1)} 선택됨`, 'success');
 }
 
 async function fetchCampaigns(nextUrl) {
-  if (!settings.token || !settings.account) {
+  const acct = activeAccount();
+  if (!settings.token || !acct) {
     updateApiStatusUI('off');
     showToast('먼저 API 설정을 입력해 주세요.', 'error');
     openSettings();
@@ -1493,19 +1594,15 @@ async function fetchCampaigns(nextUrl) {
   btn.innerHTML = '<span class="spinner"></span> 불러오는 중...';
   btn.disabled = true;
   updateApiStatusUI('loading');
-
   const fields = 'id,name,status,effective_status,objective,daily_budget,lifetime_budget,buying_type,start_time,stop_time,created_time';
-  const url = nextUrl || `https://graph.facebook.com/${settings.version}/${settings.account}/campaigns?fields=${fields}&limit=50&access_token=${settings.token}`;
-
+  const url = nextUrl || `https://graph.facebook.com/${settings.version}/${acct.id}/campaigns?fields=${fields}&limit=50&access_token=${settings.token}`;
   try {
     const res  = await fetch(url);
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
-
     if (!nextUrl) campaigns = [];
     campaigns = campaigns.concat(data.data || []);
     camNextPage = data.paging?.next || null;
-
     updateApiStatusUI('on');
     renderCampaignStats();
     renderCampaignTable();
@@ -1516,39 +1613,35 @@ async function fetchCampaigns(nextUrl) {
     updateApiStatusUI('err', e.message);
     showToast('API 오류: ' + e.message, 'error');
   }
-  btn.innerHTML = '↻ 새로고침';
-  btn.disabled = false;
+  btn.innerHTML = '↻ 새로고침'; btn.disabled = false;
 }
 
 function updateApiStatusUI(state, errMsg) {
-  const dot  = document.getElementById('apiDot');
-  const text = document.getElementById('apiStatusText');
-  const sub  = document.getElementById('apiStatusSub');
+  const dot    = document.getElementById('apiDot');
+  const text   = document.getElementById('apiStatusText');
+  const sub    = document.getElementById('apiStatusSub');
   const navDot = document.getElementById('nav-api-dot');
+  const acct   = activeAccount();
   dot.className = 'api-dot';
   if (state === 'on') {
-    dot.classList.add('on');
+    dot.classList.add('on'); navDot.style.background = 'var(--green)';
     text.textContent = '연결됨';
-    sub.textContent  = `계정: ${settings.account}`;
-    navDot.style.background = 'var(--green)';
+    sub.textContent  = acct ? `${acct.name || acct.id}` : '';
   } else if (state === 'err') {
-    dot.classList.add('err');
+    dot.classList.add('err'); navDot.style.background = 'var(--red)';
     text.textContent = '연결 오류';
     sub.textContent  = errMsg || 'API 응답 오류';
-    navDot.style.background = 'var(--red)';
   } else if (state === 'loading') {
     dot.classList.add('off');
-    text.textContent = '불러오는 중...';
-    sub.textContent  = '';
+    text.textContent = '불러오는 중...'; sub.textContent = '';
   } else if (state === 'ready') {
-    dot.classList.add('off');
+    dot.classList.add('off'); navDot.style.background = 'var(--yellow)';
     text.textContent = '설정 완료 — 새로고침 버튼으로 캠페인을 불러오세요';
-    sub.textContent  = `계정: ${settings.account}`;
-    navDot.style.background = 'var(--yellow)';
+    sub.textContent  = acct ? `${acct.name || acct.id}` : '';
   } else {
-    dot.classList.add('off');
+    dot.classList.add('off'); navDot.style.background = 'var(--text3)';
     text.textContent = '연결 안됨';
-    sub.textContent  = '⚙️ 설정에서 Access Token과 Ad Account ID를 입력하세요';
+    sub.textContent  = '⚙️ 설정에서 Access Token과 계정 ID를 입력하세요';
   }
 }
 
@@ -1643,7 +1736,7 @@ renderBrandStructureInfo();
 updateNavBadge();
 setDate();
 renderDashboard();
-if (settings.token) updateApiStatusUI('ready');
+if (settings.token) { renderAccountTabs(); updateApiStatusUI('ready'); }
 </script>
 </body>
 </html>

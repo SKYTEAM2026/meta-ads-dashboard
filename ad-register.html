@@ -96,6 +96,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Pretendard', 'Ap
 .sidebar-brand-item:hover { background: var(--sidebar-hover); }
 .sidebar-brand-item.selected { background: var(--sidebar-active); color: #fff; }
 .brand-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.sidebar-company-label {
+  padding: 10px 12px 3px;
+  font-size: 10px; font-weight: 700; color: var(--sidebar-text2);
+  text-transform: uppercase; letter-spacing: .6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.sidebar-company-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
 /* ─── Main ─── */
 .main-wrap { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
@@ -720,16 +727,11 @@ table.main-table tbody td { padding: 13px 14px; font-size: 13px; vertical-align:
             </div>
           </div>
 
-          <!-- Brand quick add -->
+          <!-- Brand info -->
           <div class="form-card" style="margin-top:16px">
-            <div class="form-card-header"><h3>브랜드 관리</h3></div>
-            <div class="form-card-body">
-              <div class="field">
-                <label>새 브랜드 추가</label>
-                <input type="text" id="new-brand-input" placeholder="브랜드명 입력">
-              </div>
-              <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="addBrand()">+ 브랜드 추가</button>
-              <div id="brandChipList" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
+            <div class="form-card-header"><h3>브랜드 구조</h3></div>
+            <div class="form-card-body" style="gap:12px">
+              <div id="brandStructureInfo"></div>
             </div>
           </div>
         </div>
@@ -745,7 +747,7 @@ table.main-table tbody td { padding: 13px 14px; font-size: 13px; vertical-align:
             <input type="text" id="listSearch" placeholder="소재명, 브랜드 검색..." oninput="renderList()">
           </div>
           <select class="filter-select" id="filterBrand" onchange="renderList()">
-            <option value="">전체 브랜드</option>
+            <option value="">전체 브랜드/제품</option>
           </select>
           <select class="filter-select" id="filterStatus" onchange="renderList()">
             <option value="">전체 상태</option>
@@ -833,8 +835,7 @@ table.main-table tbody td { padding: 13px 14px; font-size: 13px; vertical-align:
 <div class="toast" id="toast"></div>
 
 <script>
-const STORAGE = 'meta_ad_v1';
-const BRAND_STORAGE = 'meta_brands_v1';
+const STORAGE = 'meta_ad_v2';
 
 const TYPE_ICON = { '이미지': '🖼️', '동영상': '🎬', '카루셀': '🎠' };
 const STATUS_CONFIG = {
@@ -844,41 +845,70 @@ const STATUS_CONFIG = {
   '일시정지': { cls: 'badge-paused',   label: '⏸ 일시 정지', color: '#9ca3af' },
   '반려':     { cls: 'badge-rejected', label: '✕ 반려',       color: '#ef4444' },
 };
-const BRAND_COLORS = ['#4f46e5','#10b981','#f59e0b','#3b82f6','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16','#f97316'];
+
+const BRAND_STRUCTURE = {
+  '리칼지메디': { color: '#4f46e5', products: ['써마드', '뉴베로'] },
+  '아치핀':     { color: '#10b981', products: ['아치핀', '아큐스터', '아치핀 맥스'] },
+  '포디온':     { color: '#f59e0b', products: ['포디온'] },
+};
+
+function getCompany(product) {
+  for (const [company, cfg] of Object.entries(BRAND_STRUCTURE)) {
+    if (cfg.products.includes(product)) return company;
+  }
+  return '';
+}
+function getProductColor(product) {
+  for (const cfg of Object.values(BRAND_STRUCTURE)) {
+    if (cfg.products.includes(product)) return cfg.color;
+  }
+  return '#9ca3af';
+}
+function brandOptionsHTML(placeholder = '브랜드/제품 선택') {
+  return `<option value="">${placeholder}</option>` +
+    Object.entries(BRAND_STRUCTURE).map(([company, cfg]) =>
+      `<optgroup label="${company}">${cfg.products.map(p => `<option value="${p}">${p}</option>`).join('')}</optgroup>`
+    ).join('');
+}
+function filterOptionsHTML() {
+  return `<option value="">전체 브랜드/제품</option>` +
+    Object.entries(BRAND_STRUCTURE).map(([company, cfg]) =>
+      `<optgroup label="${company}">` +
+      `<option value="company:${company}">${company} 전체</option>` +
+      cfg.products.map(p => `<option value="${p}">${p}</option>`).join('') +
+      `</optgroup>`
+    ).join('');
+}
 
 let creatives = [];
-let brands = [];
 let editingId = null;
 let activity = [];
 let selectedType = '이미지';
 
-const SAMPLE_BRANDS = ['셀라큐어','수채염색','헤어리듬','아시모토','써마드 PLX','닥터아밀리아','포어픽서','리프틱스'];
 const SAMPLE_CREATIVES = [
-  { id:1, brand:'셀라큐어', name:'셀라큐어_피부재생_이미지_v1', type:'이미지', objective:'전환', platforms:'Facebook 피드,Instagram 피드', headline:'피부 재생의 기적', body:'6주 임상 시험으로 입증된 피부 재생 솔루션', cta:'지금 구매하기', url:'https://cellacure.com', budget:150000, status:'집행중', startdate:'2026-05-01', enddate:'2026-06-30', memo:'메인 소재', createdAt:'2026-05-01' },
-  { id:2, brand:'수채염색', name:'수채염색_봄컬러_카루셀_v2', type:'카루셀', objective:'인지도', platforms:'Instagram 피드,Instagram 스토리', headline:'2026 봄 컬러 컬렉션', body:'자연스러운 수채화 톤으로 완성하는 봄 헤어', cta:'자세히 알아보기', url:'', budget:80000, status:'집행중', startdate:'2026-04-20', enddate:'2026-05-31', memo:'', createdAt:'2026-04-20' },
-  { id:3, brand:'헤어리듬', name:'헤어리듬_손상모발_동영상_v1', type:'동영상', objective:'트래픽', platforms:'Facebook 피드', headline:'손상 모발 완벽 케어', body:'3초 만에 느껴지는 윤기, 헤어리듬 트리트먼트', cta:'무료 체험하기', url:'', budget:200000, status:'검토중', startdate:'', enddate:'', memo:'영상 길이 15초', createdAt:'2026-05-10' },
-  { id:4, brand:'아시모토', name:'아시모토_신제품_이미지_v1', type:'이미지', objective:'리타게팅', platforms:'Instagram 피드', headline:'アシモト 신제품 출시', body:'일본 직수입 프리미엄 풋케어', cta:'지금 구매하기', url:'', budget:60000, status:'승인', startdate:'2026-05-15', enddate:'', memo:'', createdAt:'2026-05-12' },
-  { id:5, brand:'써마드 PLX', name:'써마드PLX_RF리프팅_이미지_v3', type:'이미지', objective:'전환', platforms:'Facebook 피드,Instagram 피드,Audience Network', headline:'RF 리프팅 홈케어 혁신', body:'병원급 RF 에너지를 집에서, Thermad PLX', cta:'지금 신청하기', url:'', budget:300000, status:'집행중', startdate:'2026-05-05', enddate:'2026-07-31', memo:'퍼포먼스 최적화 소재', createdAt:'2026-05-05' },
-  { id:6, brand:'닥터아밀리아', name:'닥터아밀리아_앰플_동영상_v2', type:'동영상', objective:'인지도', platforms:'Instagram 스토리', headline:'의사가 만든 앰플', body:'피부과 의사가 처방하는 농도의 성분 그대로', cta:'자세히 알아보기', url:'', budget:120000, status:'일시정지', startdate:'2026-04-01', enddate:'2026-04-30', memo:'시즌 종료로 일시정지', createdAt:'2026-04-01' },
+  { id:1, brand:'써마드', name:'써마드_RF리프팅_이미지_v1', type:'이미지', objective:'전환', platforms:'Facebook 피드,Instagram 피드', headline:'RF 리프팅 홈케어 혁신', body:'병원급 RF 에너지를 집에서, 써마드로 완성하세요', cta:'지금 구매하기', url:'', budget:300000, status:'집행중', startdate:'2026-05-01', enddate:'2026-06-30', memo:'메인 소재', createdAt:'2026-05-01' },
+  { id:2, brand:'써마드', name:'써마드_리프팅_동영상_v2', type:'동영상', objective:'인지도', platforms:'Instagram 피드,Instagram 스토리', headline:'6주 만에 달라지는 피부', body:'임상으로 입증된 RF 리프팅 효과를 직접 확인하세요', cta:'자세히 알아보기', url:'', budget:150000, status:'검토중', startdate:'', enddate:'', memo:'영상 15초', createdAt:'2026-05-10' },
+  { id:3, brand:'뉴베로', name:'뉴베로_신제품_이미지_v1', type:'이미지', objective:'트래픽', platforms:'Facebook 피드', headline:'뉴베로 신제품 출시', body:'새롭게 출시된 뉴베로 라인업을 만나보세요', cta:'지금 신청하기', url:'', budget:80000, status:'승인', startdate:'2026-05-15', enddate:'', memo:'', createdAt:'2026-05-12' },
+  { id:4, brand:'아치핀', name:'아치핀_기능성_카루셀_v1', type:'카루셀', objective:'전환', platforms:'Facebook 피드,Instagram 피드', headline:'발 건강의 새로운 기준', body:'아치핀이 만드는 바른 자세, 편한 하루', cta:'지금 구매하기', url:'', budget:120000, status:'집행중', startdate:'2026-05-01', enddate:'2026-07-31', memo:'퍼포먼스 소재', createdAt:'2026-05-01' },
+  { id:5, brand:'아큐스터', name:'아큐스터_집중케어_이미지_v1', type:'이미지', objective:'리타게팅', platforms:'Instagram 피드', headline:'집중 케어 솔루션', body:'아큐스터의 정밀한 케어로 문제를 해결하세요', cta:'자세히 알아보기', url:'', budget:60000, status:'일시정지', startdate:'2026-04-01', enddate:'2026-04-30', memo:'시즌 종료 일시정지', createdAt:'2026-04-01' },
+  { id:6, brand:'아치핀 맥스', name:'아치핀맥스_프리미엄_이미지_v1', type:'이미지', objective:'인지도', platforms:'Facebook 피드,Audience Network', headline:'프리미엄 아치핀 맥스', body:'최상위 라인업으로 완성하는 완벽한 발 케어', cta:'지금 구매하기', url:'', budget:200000, status:'승인', startdate:'2026-05-20', enddate:'', memo:'', createdAt:'2026-05-20' },
+  { id:7, brand:'포디온', name:'포디온_메인_이미지_v1', type:'이미지', objective:'전환', platforms:'Facebook 피드,Instagram 피드', headline:'포디온, 새로운 경험', body:'포디온이 선사하는 특별한 경험을 지금 만나보세요', cta:'지금 구매하기', url:'', budget:100000, status:'집행중', startdate:'2026-05-05', enddate:'', memo:'', createdAt:'2026-05-05' },
 ];
 const SAMPLE_ACTIVITY = [
-  { text: '<strong>써마드 PLX</strong> 소재 "RF 리프팅 홈케어 혁신" 집행 시작', time: '방금 전', color: '#10b981' },
-  { text: '<strong>헤어리듬</strong> 신규 소재 검토 요청', time: '1시간 전', color: '#f59e0b' },
-  { text: '<strong>아시모토</strong> 소재 승인 완료', time: '3시간 전', color: '#3b82f6' },
-  { text: '<strong>닥터아밀리아</strong> 소재 일시정지 처리', time: '어제', color: '#9ca3af' },
+  { text: '<strong>써마드</strong> 소재 "RF 리프팅 홈케어 혁신" 집행 시작', time: '방금 전', color: '#4f46e5' },
+  { text: '<strong>아치핀</strong> 소재 "발 건강의 새로운 기준" 집행 중', time: '1시간 전', color: '#10b981' },
+  { text: '<strong>뉴베로</strong> 소재 승인 완료', time: '3시간 전', color: '#4f46e5' },
+  { text: '<strong>아큐스터</strong> 소재 일시정지 처리', time: '어제', color: '#9ca3af' },
   { text: '실시간 수정내역 위젯 추가', time: '2026-05-05', color: '#8b5cf6' },
 ];
 
 function loadData() {
   const saved = localStorage.getItem(STORAGE);
   creatives = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(SAMPLE_CREATIVES));
-  const savedB = localStorage.getItem(BRAND_STORAGE);
-  brands = savedB ? JSON.parse(savedB) : [...SAMPLE_BRANDS];
   activity = [...SAMPLE_ACTIVITY];
 }
 function saveData() {
   localStorage.setItem(STORAGE, JSON.stringify(creatives));
-  localStorage.setItem(BRAND_STORAGE, JSON.stringify(brands));
 }
 
 // ─── Page nav ───
@@ -903,54 +933,31 @@ function populateBrandSelects() {
     const el = document.getElementById(id);
     if (!el) return;
     const cur = el.value;
-    el.innerHTML = '<option value="">브랜드 선택</option>' + brands.map(b => `<option value="${b}">${b}</option>`).join('');
+    el.innerHTML = brandOptionsHTML();
     if (cur) el.value = cur;
   });
-  ['filterBrand'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.innerHTML = '<option value="">전체 브랜드</option>' + brands.map(b => `<option value="${b}">${b}</option>`).join('');
-  });
+  const fb = document.getElementById('filterBrand');
+  if (fb) { const cur = fb.value; fb.innerHTML = filterOptionsHTML(); if (cur) fb.value = cur; }
   renderSidebarBrands();
-  renderBrandChips();
 }
 function renderSidebarBrands() {
   const container = document.getElementById('brandSidebar');
   const selBrand = document.getElementById('filterBrand')?.value || '';
-  container.innerHTML = '<div class="sidebar-brand-label">브랜드</div>' +
-    brands.map((b, i) => `
-      <div class="sidebar-brand-item ${b === selBrand ? 'selected' : ''}" onclick="filterByBrand('${b}')">
-        <span class="brand-dot" style="background:${BRAND_COLORS[i % BRAND_COLORS.length]}"></span>${b}
-      </div>`).join('');
+  container.innerHTML = '<div class="sidebar-brand-label">브랜드/제품</div>' +
+    Object.entries(BRAND_STRUCTURE).map(([company, cfg]) => `
+      <div class="sidebar-company-label">
+        <span class="sidebar-company-dot" style="background:${cfg.color}"></span>${company}
+      </div>` +
+      cfg.products.map(p => `
+        <div class="sidebar-brand-item ${p === selBrand ? 'selected' : ''}" onclick="filterByBrand('${p}')" style="padding-left:24px">
+          <span class="brand-dot" style="background:${cfg.color}88"></span>${p}
+        </div>`).join('')
+    ).join('');
 }
-function filterByBrand(brand) {
+function filterByBrand(product) {
   showPage('list', null);
-  document.getElementById('filterBrand').value = brand;
+  document.getElementById('filterBrand').value = product;
   renderList();
-}
-function addBrand() {
-  const val = document.getElementById('new-brand-input').value.trim();
-  if (!val) return;
-  if (brands.includes(val)) { showToast('이미 존재하는 브랜드입니다.', 'error'); return; }
-  brands.push(val);
-  saveData();
-  populateBrandSelects();
-  document.getElementById('new-brand-input').value = '';
-  showToast(`"${val}" 브랜드 추가됨`, 'success');
-  activity.unshift({ text: `새 브랜드 <strong>${val}</strong> 추가`, time: '방금 전', color: '#4f46e5' });
-}
-function deleteBrand(brand) {
-  if (!confirm(`"${brand}" 브랜드를 삭제할까요?\n해당 브랜드의 소재는 유지됩니다.`)) return;
-  brands = brands.filter(b => b !== brand);
-  saveData();
-  populateBrandSelects();
-  showToast(`"${brand}" 삭제됨`, 'error');
-}
-function renderBrandChips() {
-  document.getElementById('brandChipList').innerHTML = brands.map((b, i) => `
-    <div style="display:inline-flex;align-items:center;gap:4px;background:${BRAND_COLORS[i%BRAND_COLORS.length]}18;border:1px solid ${BRAND_COLORS[i%BRAND_COLORS.length]}40;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:${BRAND_COLORS[i%BRAND_COLORS.length]}">
-      ${b}<span style="cursor:pointer;margin-left:2px;opacity:.6" onclick="deleteBrand('${b}')">✕</span>
-    </div>`).join('');
 }
 
 // ─── Creative type / platform ───
@@ -1033,8 +1040,9 @@ function renderList() {
   const fs = document.getElementById('filterStatus').value;
   const ft = document.getElementById('filterType').value;
   let filtered = creatives.filter(c => {
-    return (!q || c.name.toLowerCase().includes(q) || c.brand.toLowerCase().includes(q))
-      && (!fb || c.brand === fb) && (!fs || c.status === fs) && (!ft || c.type === ft);
+    const matchQ = !q || c.name.toLowerCase().includes(q) || c.brand.toLowerCase().includes(q) || getCompany(c.brand).toLowerCase().includes(q);
+    const matchB = !fb || (fb.startsWith('company:') ? getCompany(c.brand) === fb.slice(8) : c.brand === fb);
+    return matchQ && matchB && (!fs || c.status === fs) && (!ft || c.type === ft);
   });
   const tbody = document.getElementById('listBody');
   if (filtered.length === 0) {
@@ -1042,8 +1050,7 @@ function renderList() {
   } else {
     tbody.innerHTML = filtered.map(c => {
       const st = STATUS_CONFIG[c.status] || STATUS_CONFIG['검토중'];
-      const brandIdx = brands.indexOf(c.brand);
-      const bc = BRAND_COLORS[brandIdx >= 0 ? brandIdx % BRAND_COLORS.length : 0];
+      const bc = getProductColor(c.brand);
       const platforms = c.platforms ? c.platforms.split(',').slice(0,2).join(' · ') : '-';
       return `<tr>
         <td>
@@ -1051,7 +1058,7 @@ function renderList() {
             <div class="creative-thumb" style="background:${bc}18">${TYPE_ICON[c.type]||'🖼️'}</div>
             <div>
               <div class="creative-name">${c.name}</div>
-              <div class="creative-brand">${c.brand}</div>
+              <div class="creative-brand">${getCompany(c.brand)} · ${c.brand}</div>
             </div>
           </div>
         </td>
@@ -1098,7 +1105,7 @@ function openEdit(id) {
   document.getElementById('e-status').value = c.status;
   document.getElementById('e-objective').value = c.objective;
   const eb = document.getElementById('e-brand');
-  eb.innerHTML = brands.map(b => `<option value="${b}">${b}</option>`).join('');
+  eb.innerHTML = brandOptionsHTML();
   eb.value = c.brand;
   document.getElementById('editOverlay').classList.add('open');
 }
@@ -1164,9 +1171,9 @@ function renderDashboard() {
   creatives.forEach(c => { brandCounts[c.brand] = (brandCounts[c.brand] || 0) + 1; });
   const sorted = Object.entries(brandCounts).sort((a,b)=>b[1]-a[1]).slice(0,6);
   const maxCnt = sorted[0]?.[1] || 1;
-  document.getElementById('brandBars').innerHTML = sorted.map(([b, cnt], i) => {
+  document.getElementById('brandBars').innerHTML = sorted.map(([b, cnt]) => {
     const pct = Math.round(cnt / maxCnt * 100);
-    const color = BRAND_COLORS[brands.indexOf(b) >= 0 ? brands.indexOf(b) % BRAND_COLORS.length : i % BRAND_COLORS.length];
+    const color = getProductColor(b);
     return `<div class="brand-bar-row">
       <span class="brand-bar-name">${b}</span>
       <div class="brand-bar-wrap"><div class="brand-bar-fill" style="width:${pct}%;background:${color}">${cnt > 1 ? cnt : ''}</div></div>
@@ -1209,12 +1216,27 @@ document.getElementById('editOverlay').addEventListener('click', e => {
   if (e.target === document.getElementById('editOverlay')) closeModal();
 });
 
+function renderBrandStructureInfo() {
+  const el = document.getElementById('brandStructureInfo');
+  if (!el) return;
+  el.innerHTML = Object.entries(BRAND_STRUCTURE).map(([company, cfg]) => `
+    <div style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:${cfg.color};margin-bottom:5px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${cfg.color};display:inline-block"></span>${company}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;padding-left:14px">
+        ${cfg.products.map(p => `<span style="background:${cfg.color}15;border:1px solid ${cfg.color}35;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:600;color:${cfg.color}">${p}</span>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
 // f-brand change → update preview
 document.getElementById('f-brand').addEventListener('change', updatePreview);
 
 // ─── Init ───
 loadData();
 populateBrandSelects();
+renderBrandStructureInfo();
 updateNavBadge();
 setDate();
 renderDashboard();

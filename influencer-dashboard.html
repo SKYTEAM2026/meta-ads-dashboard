@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>인플루언서 관리 대시보드</title>
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a23;
+    --surface2: #22222e;
+    --border: #2e2e3e;
+    --accent: #7c6ef7;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --text: #e2e2f0;
+    --text2: #9090b0;
+    --text3: #5a5a7a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; min-height: 100vh; }
+
+  /* Header */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg, var(--accent), #e879f9); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--text2); }
+
+  /* Main layout */
+  main { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
+
+  /* Page title */
+  .page-title { margin-bottom: 28px; }
+  .page-title h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .page-title p { color: var(--text2); font-size: 13px; }
+
+  /* Summary cards */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .summary-card .label { font-size: 12px; color: var(--text2); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .summary-card .value { font-size: 26px; font-weight: 700; line-height: 1; }
+  .summary-card .sub { font-size: 12px; color: var(--text3); margin-top: 6px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  .dot.green { background: var(--green); }
+  .dot.yellow { background: var(--yellow); }
+  .dot.red { background: var(--red); }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .search-wrap { position: relative; }
+  .search-wrap input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 14px 9px 36px;
+    color: var(--text);
+    font-size: 13px;
+    width: 240px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap input::placeholder { color: var(--text3); }
+  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 14px; pointer-events: none; }
+  .toolbar-right { display: flex; gap: 8px; align-items: center; }
+  .filter-select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { opacity: .88; }
+  .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text2); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+  .btn-danger { background: rgba(248,113,113,.12); border: 1px solid rgba(248,113,113,.25); color: var(--red); }
+  .btn-danger:hover { background: rgba(248,113,113,.2); }
+
+  /* Table */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 13px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  thead th:hover { color: var(--text2); }
+  thead th .sort-icon { margin-left: 4px; opacity: .4; }
+  thead th.sorted .sort-icon { opacity: 1; color: var(--accent2); }
+  tbody tr { border-bottom: 1px solid rgba(46,46,62,.6); transition: background .15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 14px 16px; font-size: 13px; vertical-align: middle; }
+
+  /* Influencer cell */
+  .inf-cell { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), #e879f9);
+    color: #fff;
+  }
+  .inf-name { font-weight: 600; font-size: 13px; }
+  .inf-handle { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+  /* Number cells */
+  .num { font-variant-numeric: tabular-nums; }
+  .num-primary { font-weight: 600; }
+  .num-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* Engagement bar */
+  .eng-wrap { display: flex; align-items: center; gap: 8px; }
+  .eng-bar-bg { flex: 1; max-width: 80px; height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .eng-bar { height: 100%; border-radius: 4px; background: var(--accent); transition: width .3s; }
+  .eng-bar.high { background: var(--green); }
+  .eng-bar.mid { background: var(--yellow); }
+  .eng-bar.low { background: var(--red); }
+  .eng-pct { font-size: 13px; font-weight: 600; min-width: 36px; }
+  .eng-pct.high { color: var(--green); }
+  .eng-pct.mid { color: var(--yellow); }
+  .eng-pct.low { color: var(--red); }
+
+  /* Sponsorship badge */
+  .badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge-active { background: rgba(52,211,153,.12); color: var(--green); border: 1px solid rgba(52,211,153,.25); }
+  .badge-pending { background: rgba(251,191,36,.1); color: var(--yellow); border: 1px solid rgba(251,191,36,.2); }
+  .badge-none { background: rgba(90,90,122,.12); color: var(--text3); border: 1px solid var(--border); }
+
+  /* Category badge */
+  .cat-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--surface2);
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+
+  /* Actions */
+  .action-cell { display: flex; gap: 6px; }
+  .icon-btn {
+    width: 30px; height: 30px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    transition: all .15s;
+  }
+  .icon-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--text3); }
+  .icon-btn.del:hover { background: rgba(248,113,113,.1); color: var(--red); border-color: rgba(248,113,113,.3); }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
+  .empty-state .icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 480px;
+    max-width: 95vw;
+    padding: 28px;
+    transform: translateY(12px) scale(.97);
+    transition: transform .2s;
+  }
+  .modal-overlay.open .modal { transform: none; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .modal-header h2 { font-size: 16px; font-weight: 700; }
+  .close-btn { width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all .15s; }
+  .close-btn:hover { background: var(--surface2); color: var(--text); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
+  .form-group input,
+  .form-group select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    transition: border-color .2s;
+    width: 100%;
+  }
+  .form-group input:focus,
+  .form-group select:focus { border-color: var(--accent); }
+  .form-group input::placeholder { color: var(--text3); }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 13px;
+    display: flex; align-items: center; gap: 8px;
+    z-index: 300;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all .25s;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+  .toast.show { transform: none; opacity: 1; }
+  .toast.success { border-color: rgba(52,211,153,.3); }
+  .toast.error { border-color: rgba(248,113,113,.3); }
+
+  /* Pagination / count */
+  .table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text3);
+  }
+
+  /* Edit modal */
+  #editModal .modal-header h2 { color: var(--accent2); }
+
+  @media (max-width: 900px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+  }
+  @media (max-width: 600px) {
+    main { padding: 16px 12px; }
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+    thead th:nth-child(4),
+    thead th:nth-child(6),
+    tbody td:nth-child(4),
+    tbody td:nth-child(6) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">✦</div>
+    인플루언서 관리
+  </div>
+  <div class="header-right">
+    <span class="badge" id="lastUpdated">업데이트 중...</span>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">
+    <h1>인플루언서 파트너십 관리</h1>
+    <p>등록된 인플루언서의 지표 및 협찬 현황을 관리합니다.</p>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="label"><span class="dot"></span> 전체 인플루언서</div>
+      <div class="value" id="statTotal">0</div>
+      <div class="sub">등록된 인플루언서 수</div>
+    </div>
+    <div class="summary-card">
+      <div class="label"><span class="dot green"></span> 총 팔로워</div>
+      <div class="value" id="statFollowers">0</div>
+      <div class="sub">합산 팔로워</div>
+    </div>
+    <div class="summary-card">
+      <div class="label"><span class="dot yellow"></span> 평균 참여율</div>
+      <div class="value" id="statEngagement">0%</div>
+      <div class="sub">전체 평균</div>
+    </div>
+    <div class="summary-card">
+      <div class="label"><span class="dot red"></span> 협찬 진행 중</div>
+      <div class="value" id="statActive">0</div>
+      <div class="sub">활성 협찬 인플루언서</div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="이름 또는 @계정 검색...">
+    </div>
+    <div class="toolbar-right">
+      <select class="filter-select" id="filterSponsored">
+        <option value="">전체 협찬</option>
+        <option value="active">협찬 진행 중</option>
+        <option value="pending">협찬 검토 중</option>
+        <option value="none">협찬 없음</option>
+      </select>
+      <select class="filter-select" id="filterCategory">
+        <option value="">전체 카테고리</option>
+        <option value="뷰티">뷰티</option>
+        <option value="패션">패션</option>
+        <option value="푸드">푸드</option>
+        <option value="여행">여행</option>
+        <option value="피트니스">피트니스</option>
+        <option value="라이프스타일">라이프스타일</option>
+        <option value="테크">테크</option>
+        <option value="육아">육아</option>
+      </select>
+      <button class="btn btn-primary" onclick="openAddModal()">
+        + 인플루언서 추가
+      </button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('name')">인플루언서 <span class="sort-icon" id="sort-name">↕</span></th>
+          <th onclick="sortBy('category')">카테고리 <span class="sort-icon" id="sort-category">↕</span></th>
+          <th onclick="sortBy('followers')">팔로워수 <span class="sort-icon" id="sort-followers">↕</span></th>
+          <th onclick="sortBy('posts')">게시물수 <span class="sort-icon" id="sort-posts">↕</span></th>
+          <th onclick="sortBy('engagement')">참여율 <span class="sort-icon" id="sort-engagement">↕</span></th>
+          <th onclick="sortBy('adRate')">광고 단가 <span class="sort-icon" id="sort-adRate">↕</span></th>
+          <th onclick="sortBy('sponsored')">협찬 여부 <span class="sort-icon" id="sort-sponsored">↕</span></th>
+          <th>액션</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="table-footer">
+      <span id="resultCount"></span>
+    </div>
+  </div>
+</main>
+
+<!-- Add Modal -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>인플루언서 추가</h2>
+      <button class="close-btn" onclick="closeModal('addModal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>이름</label>
+        <input type="text" id="add-name" placeholder="홍길동">
+      </div>
+      <div class="form-group">
+        <label>@계정</label>
+        <input type="text" id="add-handle" placeholder="@username">
+      </div>
+      <div class="form-group">
+        <label>카테고리</label>
+        <select id="add-category">
+          <option value="뷰티">뷰티</option>
+          <option value="패션">패션</option>
+          <option value="푸드">푸드</option>
+          <option value="여행">여행</option>
+          <option value="피트니스">피트니스</option>
+          <option value="라이프스타일">라이프스타일</option>
+          <option value="테크">테크</option>
+          <option value="육아">육아</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>팔로워수</label>
+        <input type="number" id="add-followers" placeholder="10000">
+      </div>
+      <div class="form-group">
+        <label>게시물수</label>
+        <input type="number" id="add-posts" placeholder="120">
+      </div>
+      <div class="form-group">
+        <label>참여율 (%)</label>
+        <input type="number" id="add-engagement" placeholder="3.5" step="0.1">
+      </div>
+      <div class="form-group">
+        <label>광고 단가 (만원)</label>
+        <input type="number" id="add-adRate" placeholder="50">
+      </div>
+      <div class="form-group">
+        <label>협찬 여부</label>
+        <select id="add-sponsored">
+          <option value="none">없음</option>
+          <option value="active">진행 중</option>
+          <option value="pending">검토 중</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>메모</label>
+        <input type="text" id="add-memo" placeholder="특이사항 입력...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addModal')">취소</button>
+      <button class="btn btn-primary" onclick="addInfluencer()">추가하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>인플루언서 수정</h2>
+      <button class="close-btn" onclick="closeModal('editModal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>이름</label>
+        <input type="text" id="edit-name">
+      </div>
+      <div class="form-group">
+        <label>@계정</label>
+        <input type="text" id="edit-handle">
+      </div>
+      <div class="form-group">
+        <label>카테고리</label>
+        <select id="edit-category">
+          <option value="뷰티">뷰티</option>
+          <option value="패션">패션</option>
+          <option value="푸드">푸드</option>
+          <option value="여행">여행</option>
+          <option value="피트니스">피트니스</option>
+          <option value="라이프스타일">라이프스타일</option>
+          <option value="테크">테크</option>
+          <option value="육아">육아</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>팔로워수</label>
+        <input type="number" id="edit-followers">
+      </div>
+      <div class="form-group">
+        <label>게시물수</label>
+        <input type="number" id="edit-posts">
+      </div>
+      <div class="form-group">
+        <label>참여율 (%)</label>
+        <input type="number" id="edit-engagement" step="0.1">
+      </div>
+      <div class="form-group">
+        <label>광고 단가 (만원)</label>
+        <input type="number" id="edit-adRate">
+      </div>
+      <div class="form-group">
+        <label>협찬 여부</label>
+        <select id="edit-sponsored">
+          <option value="none">없음</option>
+          <option value="active">진행 중</option>
+          <option value="pending">검토 중</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>메모</label>
+        <input type="text" id="edit-memo">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('editModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveEdit()">저장하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'influencer_data_v1';
+
+const SAMPLE_DATA = [
+  { id: 1, name: '김민지', handle: '@minzy.official', category: '뷰티', followers: 185000, posts: 342, engagement: 5.2, adRate: 150, sponsored: 'active', memo: '스킨케어 브랜드 메인 모델' },
+  { id: 2, name: '이수현', handle: '@suhyeon_fit', category: '피트니스', followers: 92000, posts: 215, engagement: 7.8, adRate: 80, sponsored: 'active', memo: '헬스 보조식품 협찬 진행 중' },
+  { id: 3, name: '박지훈', handle: '@jihoon_eats', category: '푸드', followers: 430000, posts: 891, engagement: 3.1, adRate: 250, sponsored: 'none', memo: '' },
+  { id: 4, name: '최유나', handle: '@yuna.style', category: '패션', followers: 67000, posts: 178, engagement: 6.4, adRate: 60, sponsored: 'pending', memo: '패션 브랜드 검토 중' },
+  { id: 5, name: '정다은', handle: '@daeeun.travel', category: '여행', followers: 215000, posts: 503, engagement: 4.3, adRate: 180, sponsored: 'active', memo: '항공사 협찬 계약 완료' },
+  { id: 6, name: '강민호', handle: '@minhotech', category: '테크', followers: 54000, posts: 127, engagement: 8.9, adRate: 50, sponsored: 'none', memo: '' },
+  { id: 7, name: '윤서아', handle: '@seoa.life', category: '라이프스타일', followers: 139000, posts: 267, engagement: 5.7, adRate: 120, sponsored: 'pending', memo: '홈인테리어 협찬 검토' },
+];
+
+let data = [];
+let editingId = null;
+let sortKey = 'followers';
+let sortDir = -1;
+
+function loadData() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  data = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(SAMPLE_DATA));
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function formatNum(n) {
+  if (n >= 10000) return (n / 10000).toFixed(1).replace(/\.0$/, '') + '만';
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + '천';
+  return n.toLocaleString();
+}
+
+function engClass(e) {
+  if (e >= 6) return 'high';
+  if (e >= 3) return 'mid';
+  return 'low';
+}
+
+function sponsoredBadge(s) {
+  if (s === 'active') return `<span class="badge-status badge-active">● 진행 중</span>`;
+  if (s === 'pending') return `<span class="badge-status badge-pending">◐ 검토 중</span>`;
+  return `<span class="badge-status badge-none">○ 없음</span>`;
+}
+
+function getAvatarColor(name) {
+  const colors = [
+    'linear-gradient(135deg,#7c6ef7,#e879f9)',
+    'linear-gradient(135deg,#34d399,#059669)',
+    'linear-gradient(135deg,#fbbf24,#f97316)',
+    'linear-gradient(135deg,#60a5fa,#7c3aed)',
+    'linear-gradient(135deg,#f472b6,#ec4899)',
+    'linear-gradient(135deg,#a78bfa,#6366f1)',
+    'linear-gradient(135deg,#2dd4bf,#0284c7)',
+  ];
+  let hash = 0;
+  for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) & 0xffffffff;
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function render() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const filterSp = document.getElementById('filterSponsored').value;
+  const filterCat = document.getElementById('filterCategory').value;
+
+  let filtered = data.filter(d => {
+    const matchQ = !q || d.name.toLowerCase().includes(q) || d.handle.toLowerCase().includes(q);
+    const matchSp = !filterSp || d.sponsored === filterSp;
+    const matchCat = !filterCat || d.category === filterCat;
+    return matchQ && matchSp && matchCat;
+  });
+
+  filtered.sort((a, b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (typeof av === 'string') return av.localeCompare(bv) * sortDir;
+    return (av - bv) * sortDir;
+  });
+
+  const tbody = document.getElementById('tableBody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon">🔍</div><p>검색 결과가 없습니다.</p></div></td></tr>`;
+  } else {
+    tbody.innerHTML = filtered.map(d => {
+      const ec = engClass(d.engagement);
+      const barW = Math.min(d.engagement / 12 * 100, 100);
+      const initials = d.name.slice(0, 1);
+      return `
+      <tr>
+        <td>
+          <div class="inf-cell">
+            <div class="avatar" style="background:${getAvatarColor(d.name)}">${initials}</div>
+            <div>
+              <div class="inf-name">${d.name}</div>
+              <div class="inf-handle">${d.handle}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="cat-badge">${d.category}</span></td>
+        <td class="num">
+          <div class="num-primary">${formatNum(d.followers)}</div>
+          <div class="num-sub">${d.followers.toLocaleString()}명</div>
+        </td>
+        <td class="num">
+          <div class="num-primary">${d.posts.toLocaleString()}</div>
+          <div class="num-sub">게시물</div>
+        </td>
+        <td>
+          <div class="eng-wrap">
+            <div class="eng-bar-bg"><div class="eng-bar ${ec}" style="width:${barW}%"></div></div>
+            <span class="eng-pct ${ec}">${d.engagement}%</span>
+          </div>
+        </td>
+        <td class="num">
+          <div class="num-primary">${d.adRate.toLocaleString()}만원</div>
+          <div class="num-sub">게시물 1건</div>
+        </td>
+        <td>${sponsoredBadge(d.sponsored)}</td>
+        <td>
+          <div class="action-cell">
+            <button class="icon-btn" title="수정" onclick="openEditModal(${d.id})">✎</button>
+            <button class="icon-btn del" title="삭제" onclick="deleteInfluencer(${d.id})">✕</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('resultCount').textContent = `${filtered.length}명 표시 중 (전체 ${data.length}명)`;
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = data.length;
+  const totalFollowers = data.reduce((s, d) => s + d.followers, 0);
+  document.getElementById('statFollowers').textContent = formatNum(totalFollowers);
+  const avgEng = data.length ? (data.reduce((s, d) => s + d.engagement, 0) / data.length).toFixed(1) : 0;
+  document.getElementById('statEngagement').textContent = avgEng + '%';
+  const active = data.filter(d => d.sponsored === 'active').length;
+  document.getElementById('statActive').textContent = active;
+
+  const now = new Date();
+  document.getElementById('lastUpdated').textContent = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + ' 업데이트';
+}
+
+function sortBy(key) {
+  document.querySelectorAll('thead th').forEach(th => th.classList.remove('sorted'));
+  document.querySelectorAll('.sort-icon').forEach(el => el.textContent = '↕');
+  if (sortKey === key) { sortDir *= -1; } else { sortKey = key; sortDir = -1; }
+  const idx = ['name','category','followers','posts','engagement','adRate','sponsored'];
+  const ths = document.querySelectorAll('thead th');
+  const keyIdx = idx.indexOf(key);
+  if (keyIdx >= 0) {
+    ths[keyIdx].classList.add('sorted');
+    ths[keyIdx].querySelector('.sort-icon').textContent = sortDir === 1 ? '↑' : '↓';
+  }
+  render();
+}
+
+function openAddModal() {
+  ['name','handle','followers','posts','engagement','adRate','memo'].forEach(f => document.getElementById('add-'+f).value = '');
+  document.getElementById('add-category').value = '뷰티';
+  document.getElementById('add-sponsored').value = 'none';
+  document.getElementById('addModal').classList.add('open');
+}
+
+function openEditModal(id) {
+  const d = data.find(x => x.id === id);
+  if (!d) return;
+  editingId = id;
+  document.getElementById('edit-name').value = d.name;
+  document.getElementById('edit-handle').value = d.handle;
+  document.getElementById('edit-category').value = d.category;
+  document.getElementById('edit-followers').value = d.followers;
+  document.getElementById('edit-posts').value = d.posts;
+  document.getElementById('edit-engagement').value = d.engagement;
+  document.getElementById('edit-adRate').value = d.adRate;
+  document.getElementById('edit-sponsored').value = d.sponsored;
+  document.getElementById('edit-memo').value = d.memo || '';
+  document.getElementById('editModal').classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function addInfluencer() {
+  const name = document.getElementById('add-name').value.trim();
+  const handle = document.getElementById('add-handle').value.trim();
+  if (!name || !handle) { showToast('이름과 계정명은 필수입니다.', 'error'); return; }
+  const newId = data.length ? Math.max(...data.map(d => d.id)) + 1 : 1;
+  data.push({
+    id: newId,
+    name,
+    handle: handle.startsWith('@') ? handle : '@' + handle,
+    category: document.getElementById('add-category').value,
+    followers: parseInt(document.getElementById('add-followers').value) || 0,
+    posts: parseInt(document.getElementById('add-posts').value) || 0,
+    engagement: parseFloat(document.getElementById('add-engagement').value) || 0,
+    adRate: parseInt(document.getElementById('add-adRate').value) || 0,
+    sponsored: document.getElementById('add-sponsored').value,
+    memo: document.getElementById('add-memo').value.trim(),
+  });
+  saveData();
+  closeModal('addModal');
+  render();
+  showToast(`${name} 추가 완료!`, 'success');
+}
+
+function saveEdit() {
+  const idx = data.findIndex(x => x.id === editingId);
+  if (idx === -1) return;
+  const name = document.getElementById('edit-name').value.trim();
+  const handle = document.getElementById('edit-handle').value.trim();
+  if (!name || !handle) { showToast('이름과 계정명은 필수입니다.', 'error'); return; }
+  data[idx] = {
+    ...data[idx],
+    name,
+    handle: handle.startsWith('@') ? handle : '@' + handle,
+    category: document.getElementById('edit-category').value,
+    followers: parseInt(document.getElementById('edit-followers').value) || 0,
+    posts: parseInt(document.getElementById('edit-posts').value) || 0,
+    engagement: parseFloat(document.getElementById('edit-engagement').value) || 0,
+    adRate: parseInt(document.getElementById('edit-adRate').value) || 0,
+    sponsored: document.getElementById('edit-sponsored').value,
+    memo: document.getElementById('edit-memo').value.trim(),
+  };
+  saveData();
+  closeModal('editModal');
+  render();
+  showToast(`${name} 수정 완료!`, 'success');
+}
+
+function deleteInfluencer(id) {
+  const d = data.find(x => x.id === id);
+  if (!d) return;
+  if (!confirm(`"${d.name}" 을(를) 삭제할까요?`)) return;
+  data = data.filter(x => x.id !== id);
+  saveData();
+  render();
+  showToast(`${d.name} 삭제됨`, 'error');
+}
+
+let toastTimer;
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = type === 'success' ? '✓ ' + msg : '✕ ' + msg;
+  t.className = 'toast ' + type + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+});
+
+// Search & filter live
+document.getElementById('searchInput').addEventListener('input', render);
+document.getElementById('filterSponsored').addEventListener('change', render);
+document.getElementById('filterCategory').addEventListener('change', render);
+
+// Init
+loadData();
+render();
+sortBy('followers');
+</script>
+</body>
+</html>

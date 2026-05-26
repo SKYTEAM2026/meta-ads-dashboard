@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta 광고 소재 등록</title>
+<style>
+:root {
+  --bg: #f0f2f5;
+  --sidebar: #1c1e2a;
+  --sidebar-hover: #272a3a;
+  --sidebar-active: #3d4161;
+  --surface: #ffffff;
+  --surface2: #f7f8fb;
+  --border: #e4e7ef;
+  --accent: #4f46e5;
+  --accent2: #6366f1;
+  --accent-light: #eef2ff;
+  --green: #10b981;
+  --green-light: #d1fae5;
+  --yellow: #f59e0b;
+  --yellow-light: #fef3c7;
+  --red: #ef4444;
+  --red-light: #fee2e2;
+  --blue: #3b82f6;
+  --blue-light: #dbeafe;
+  --purple: #8b5cf6;
+  --purple-light: #ede9fe;
+  --text: #111827;
+  --text2: #6b7280;
+  --text3: #9ca3af;
+  --sidebar-text: #cbd5e1;
+  --sidebar-text2: #64748b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; display: flex; min-height: 100vh; font-size: 14px; }
+
+/* ─── Sidebar ─── */
+.sidebar {
+  width: 220px;
+  min-height: 100vh;
+  background: var(--sidebar);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 50;
+  flex-shrink: 0;
+}
+.sidebar-logo {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.sidebar-logo .brand { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -.3px; }
+.sidebar-logo .version { font-size: 10px; color: var(--sidebar-text2); margin-top: 2px; }
+.sidebar-logo .meta-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: linear-gradient(90deg,#1877f2,#6366f1);
+  color: #fff; border-radius: 4px; padding: 2px 7px; font-size: 10px; font-weight: 700; margin-top: 8px;
+}
+.sidebar-section { padding: 18px 12px 8px; font-size: 10px; font-weight: 700; color: var(--sidebar-text2); letter-spacing: .8px; text-transform: uppercase; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  margin: 1px 8px;
+  border-radius: 8px;
+  color: var(--sidebar-text);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background .15s, color .15s;
+  user-select: none;
+}
+.nav-item:hover { background: var(--sidebar-hover); }
+.nav-item.active { background: var(--sidebar-active); color: #fff; }
+.nav-item .nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-item .nav-badge {
+  margin-left: auto; background: var(--accent); color: #fff;
+  border-radius: 10px; padding: 1px 7px; font-size: 10px; font-weight: 700;
+}
+.sidebar-brand-section {
+  padding: 12px 8px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  margin-top: auto;
+}
+.sidebar-brand-label { font-size: 10px; color: var(--sidebar-text2); font-weight: 700; letter-spacing: .8px; text-transform: uppercase; padding: 0 8px 8px; }
+.sidebar-brand-item {
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--sidebar-text);
+  font-size: 12px;
+  display: flex; align-items: center; gap: 8px;
+  transition: background .15s;
+}
+.sidebar-brand-item:hover { background: var(--sidebar-hover); }
+.sidebar-brand-item.selected { background: var(--sidebar-active); color: #fff; }
+.brand-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* ─── Main ─── */
+.main-wrap { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+/* Topbar */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px;
+  position: sticky; top: 0; z-index: 40;
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-title { font-size: 15px; font-weight: 700; }
+.topbar-brand-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--accent-light); border: 1px solid #c7d2fe;
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 12px; font-weight: 600; color: var(--accent2);
+  cursor: pointer;
+}
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-date { font-size: 12px; color: var(--text3); }
+.topbar-btn {
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 8px;
+  padding: 8px 16px; font-size: 13px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  transition: opacity .15s;
+}
+.topbar-btn:hover { opacity: .88; }
+
+/* Content */
+.content { padding: 28px; flex: 1; }
+
+/* Page sections */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ─── Dashboard ─── */
+.stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px;
+}
+.stat-card .s-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.stat-card .s-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+.stat-card .s-icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+.stat-card .s-value { font-size: 28px; font-weight: 800; line-height: 1; }
+.stat-card .s-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+.s-icon.purple { background: var(--purple-light); }
+.s-icon.green { background: var(--green-light); }
+.s-icon.blue { background: var(--blue-light); }
+.s-icon.yellow { background: var(--yellow-light); }
+
+.dash-row { display: grid; grid-template-columns: 1fr 340px; gap: 20px; margin-bottom: 20px; }
+.dash-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+}
+.card-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-header h3 { font-size: 14px; font-weight: 700; }
+.card-header .card-action { font-size: 12px; color: var(--accent); cursor: pointer; font-weight: 500; }
+.card-body { padding: 20px; }
+
+/* Status breakdown */
+.status-list { display: flex; flex-direction: column; gap: 12px; }
+.status-row { display: flex; align-items: center; gap: 10px; }
+.status-name { font-size: 12px; font-weight: 500; width: 70px; flex-shrink: 0; }
+.status-bar-bg { flex: 1; height: 6px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.status-bar { height: 100%; border-radius: 4px; transition: width .4s; }
+.status-count { font-size: 12px; font-weight: 700; width: 28px; text-align: right; flex-shrink: 0; }
+
+/* Mini table */
+.mini-table { width: 100%; border-collapse: collapse; }
+.mini-table th { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; padding: 0 0 10px; text-align: left; }
+.mini-table td { padding: 10px 0; border-top: 1px solid var(--border); font-size: 12px; vertical-align: middle; }
+.mini-table tr:first-child td { border-top: none; }
+
+/* Brand bar chart */
+.brand-bars { display: flex; flex-direction: column; gap: 10px; }
+.brand-bar-row { display: flex; align-items: center; gap: 10px; }
+.brand-bar-name { font-size: 12px; width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.brand-bar-wrap { flex: 1; height: 20px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.brand-bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 6px; font-size: 10px; font-weight: 700; color: #fff; transition: width .4s; }
+.brand-bar-num { font-size: 12px; font-weight: 600; width: 24px; text-align: right; }
+
+/* Activity log */
+.activity-list { display: flex; flex-direction: column; gap: 0; }
+.activity-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.activity-text { font-size: 12px; line-height: 1.5; flex: 1; }
+.activity-text strong { font-weight: 600; }
+.activity-time { font-size: 11px; color: var(--text3); white-space: nowrap; }
+
+/* ─── Form ─── */
+.form-page-header { margin-bottom: 24px; }
+.form-page-header h2 { font-size: 18px; font-weight: 700; }
+.form-page-header p { color: var(--text2); font-size: 13px; margin-top: 4px; }
+
+.form-layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+
+.form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.form-card-header { padding: 16px 24px; border-bottom: 1px solid var(--border); }
+.form-card-header h3 { font-size: 14px; font-weight: 700; }
+.form-card-header p { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.form-card-body { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field.full { grid-column: 1/-1; }
+.field label { font-size: 12px; font-weight: 600; color: var(--text); }
+.field label .req { color: var(--red); margin-left: 2px; }
+.field input, .field select, .field textarea {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px;
+  color: var(--text); font-size: 13px; outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  width: 100%; font-family: inherit;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.1);
+}
+.field input::placeholder, .field textarea::placeholder { color: var(--text3); }
+.field textarea { resize: vertical; min-height: 80px; }
+.field .hint { font-size: 11px; color: var(--text3); }
+.char-count { font-size: 11px; color: var(--text3); text-align: right; margin-top: 2px; }
+
+.type-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.type-option {
+  border: 2px solid var(--border); border-radius: 10px;
+  padding: 12px 8px; text-align: center; cursor: pointer;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.type-option:hover { border-color: var(--accent); background: var(--accent-light); }
+.type-option.selected { border-color: var(--accent); background: var(--accent-light); }
+.type-option .t-icon { font-size: 22px; margin-bottom: 4px; }
+.type-option .t-label { font-size: 11px; font-weight: 600; color: var(--text2); }
+.type-option.selected .t-label { color: var(--accent); }
+
+.platform-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
+.platform-option {
+  border: 2px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.platform-option:hover { border-color: var(--accent); background: var(--accent-light); }
+.platform-option.selected { border-color: var(--accent); background: var(--accent-light); }
+.platform-option .p-icon { font-size: 16px; }
+.platform-option .p-name { font-size: 12px; font-weight: 600; }
+
+/* Preview card */
+.preview-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; position: sticky; top: 72px; }
+.preview-phone {
+  margin: 20px auto;
+  width: 180px; background: #000; border-radius: 28px; padding: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.2);
+}
+.preview-screen {
+  background: #fff; border-radius: 20px; overflow: hidden; min-height: 300px;
+}
+.preview-header { background: #fff; padding: 8px 10px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #f0f0f0; }
+.preview-avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg,var(--accent),#e879f9); }
+.preview-brand-name { font-size: 9px; font-weight: 700; }
+.preview-sponsored { font-size: 7px; color: #888; }
+.preview-img { width: 100%; height: 140px; background: linear-gradient(135deg,#e0e7ff,#ede9fe); display: flex; align-items: center; justify-content: center; font-size: 28px; }
+.preview-copy { padding: 8px 10px; }
+.preview-headline { font-size: 10px; font-weight: 700; color: #111; margin-bottom: 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.preview-body { font-size: 8px; color: #555; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.preview-cta { margin: 6px 10px 10px; background: #1877f2; color: #fff; font-size: 9px; font-weight: 700; text-align: center; padding: 6px; border-radius: 4px; }
+
+.form-submit-area { display: flex; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--border); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { opacity: .88; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+.btn-ghost:hover { border-color: var(--text3); color: var(--text); }
+.btn-danger { background: var(--red-light); color: var(--red); border: 1px solid #fca5a5; }
+.btn-danger:hover { background: #fecaca; }
+
+/* ─── List page ─── */
+.list-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.list-toolbar-left { display: flex; gap: 8px; flex-wrap: wrap; }
+.search-wrap { position: relative; }
+.search-wrap input {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 12px 9px 34px;
+  color: var(--text); font-size: 13px; width: 220px; outline: none;
+  transition: border-color .2s;
+}
+.search-wrap input:focus { border-color: var(--accent); }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 13px; pointer-events: none; }
+.filter-select {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 12px;
+  color: var(--text); font-size: 13px; cursor: pointer; outline: none;
+}
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+table.main-table { width: 100%; border-collapse: collapse; }
+table.main-table thead th {
+  padding: 12px 14px; text-align: left; font-size: 11px; font-weight: 600;
+  color: var(--text3); text-transform: uppercase; letter-spacing: .5px;
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+  background: var(--surface2); cursor: pointer; user-select: none;
+}
+table.main-table thead th:hover { color: var(--text2); }
+table.main-table tbody tr { border-bottom: 1px solid var(--border); transition: background .12s; }
+table.main-table tbody tr:last-child { border-bottom: none; }
+table.main-table tbody tr:hover { background: var(--surface2); }
+table.main-table tbody td { padding: 13px 14px; font-size: 13px; vertical-align: middle; }
+.table-footer2 { padding: 12px 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text3); display: flex; align-items: center; justify-content: space-between; }
+
+/* Status badges */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  white-space: nowrap;
+}
+.badge-running { background: var(--green-light); color: #059669; }
+.badge-review { background: var(--yellow-light); color: #d97706; }
+.badge-ready { background: var(--blue-light); color: #2563eb; }
+.badge-paused { background: #f3f4f6; color: var(--text2); }
+.badge-rejected { background: var(--red-light); color: var(--red); }
+
+/* Type badge */
+.type-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 6px;
+  background: var(--surface2); border: 1px solid var(--border);
+  font-size: 11px; font-weight: 500; color: var(--text2);
+}
+
+/* Creative name cell */
+.creative-cell { display: flex; align-items: center; gap: 10px; }
+.creative-thumb {
+  width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+.creative-name { font-weight: 600; font-size: 13px; }
+.creative-brand { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+/* Action icons */
+.action-cell { display: flex; gap: 4px; }
+.icon-btn {
+  width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; color: var(--text3); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 12px;
+  transition: all .15s;
+}
+.icon-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--text3); }
+.icon-btn.del:hover { background: var(--red-light); color: var(--red); border-color: #fca5a5; }
+
+/* Empty state */
+.empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+.empty .e-icon { font-size: 40px; margin-bottom: 12px; }
+
+/* Modal */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  z-index: 200; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; width: 460px; max-width: 95vw;
+  padding: 28px; transform: translateY(12px) scale(.97);
+  transition: transform .2s;
+  max-height: 90vh; overflow-y: auto;
+}
+.overlay.open .modal { transform: none; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.modal-header h2 { font-size: 16px; font-weight: 700; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+.close-btn {
+  width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--border);
+  background: transparent; color: var(--text2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+  transition: all .15s;
+}
+.close-btn:hover { background: var(--surface2); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--sidebar); color: #fff;
+  border-radius: 10px; padding: 12px 18px;
+  font-size: 13px; display: flex; align-items: center; gap: 8px;
+  z-index: 300; transform: translateY(20px); opacity: 0;
+  transition: all .25s; box-shadow: 0 8px 32px rgba(0,0,0,.25);
+}
+.toast.show { transform: none; opacity: 1; }
+
+/* Section divider */
+.section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .stat-grid { grid-template-columns: repeat(2,1fr); }
+  .dash-row { grid-template-columns: 1fr; }
+  .form-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .sidebar { width: 60px; }
+  .sidebar .nav-item span, .sidebar-logo .brand, .sidebar-logo .version,
+  .sidebar-logo .meta-badge, .sidebar-brand-section { display: none; }
+  .main-wrap { margin-left: 60px; }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">META 소재관리</div>
+    <div class="version">v2.1 · DUSK팀</div>
+    <div class="meta-badge">📘 Meta Ads</div>
+  </div>
+
+  <div class="sidebar-section">메뉴</div>
+  <div class="nav-item active" onclick="showPage('dashboard', this)">
+    <span class="nav-icon">📊</span><span>대시보드</span>
+  </div>
+  <div class="nav-item" onclick="showPage('register', this)">
+    <span class="nav-icon">➕</span><span>소재 등록</span>
+  </div>
+  <div class="nav-item" onclick="showPage('list', this)">
+    <span class="nav-icon">📋</span><span>소재 목록</span>
+    <span class="nav-badge" id="nav-count">0</span>
+  </div>
+
+  <div class="sidebar-brand-section" id="brandSidebar">
+    <div class="sidebar-brand-label">브랜드</div>
+    <!-- injected by JS -->
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main-wrap">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title" id="topbarTitle">대시보드</div>
+      <div class="topbar-brand-pill" id="topbarBrand" onclick="showPage('register', null)">
+        <span>📦</span><span id="topbarBrandName">전체 브랜드</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topbarDate"></span>
+      <button class="topbar-btn" onclick="showPage('register', null)">+ 소재 등록</button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- ─── Dashboard ─── -->
+    <div class="page active" id="page-dashboard">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="s-top"><span class="s-label">전체 소재</span><span class="s-icon purple">🎨</span></div>
+          <div class="s-value" id="d-total">0</div>
+          <div class="s-sub">등록된 소재 수</div>
+        </div>
+        <div class="stat-card">
+          <div class="s-top"><span class="s-label">집행 중</span><span class="s-icon green">▶️</span></div>
+          <div class="s-value" id="d-running">0</div>
+          <div class="s-sub">현재 집행 중인 소재</div>
+        </div>
+        <div class="stat-card">
+          <div class="s-top"><span class="s-label">검토 대기</span><span class="s-icon yellow">⏳</span></div>
+          <div class="s-value" id="d-review">0</div>
+          <div class="s-sub">승인 대기 중</div>
+        </div>
+        <div class="stat-card">
+          <div class="s-top"><span class="s-label">등록 브랜드</span><span class="s-icon blue">🏢</span></div>
+          <div class="s-value" id="d-brands">0</div>
+          <div class="s-sub">활성 브랜드 수</div>
+        </div>
+      </div>
+
+      <div class="dash-row">
+        <!-- Recent creatives -->
+        <div class="card">
+          <div class="card-header">
+            <h3>최근 등록 소재</h3>
+            <span class="card-action" onclick="showPage('list', null)">전체 보기 →</span>
+          </div>
+          <div class="card-body">
+            <table class="mini-table" id="recentTable">
+              <thead><tr>
+                <th>소재명</th><th>브랜드</th><th>유형</th><th>상태</th><th>등록일</th>
+              </tr></thead>
+              <tbody id="recentBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Status breakdown -->
+        <div class="card">
+          <div class="card-header"><h3>상태별 현황</h3></div>
+          <div class="card-body">
+            <div class="status-list" id="statusBreakdown"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-row2">
+        <!-- Brand distribution -->
+        <div class="card">
+          <div class="card-header"><h3>브랜드별 소재 수</h3></div>
+          <div class="card-body">
+            <div class="brand-bars" id="brandBars"></div>
+          </div>
+        </div>
+        <!-- Activity log -->
+        <div class="card">
+          <div class="card-header"><h3>수정 내역</h3></div>
+          <div class="card-body">
+            <div class="activity-list" id="activityLog"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Register ─── -->
+    <div class="page" id="page-register">
+      <div class="form-page-header">
+        <h2>소재 등록</h2>
+        <p>Meta 광고 소재를 등록하고 브랜드별로 관리하세요.</p>
+      </div>
+      <div class="form-layout">
+        <div>
+          <!-- 기본정보 -->
+          <div class="form-card" style="margin-bottom:16px">
+            <div class="form-card-header">
+              <h3>기본 정보</h3>
+              <p>소재의 기본 정보를 입력하세요.</p>
+            </div>
+            <div class="form-card-body">
+              <div class="field-row">
+                <div class="field">
+                  <label>브랜드<span class="req">*</span></label>
+                  <select id="f-brand">
+                    <option value="">브랜드 선택</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>캠페인 목표<span class="req">*</span></label>
+                  <select id="f-objective">
+                    <option value="인지도">인지도</option>
+                    <option value="트래픽">트래픽</option>
+                    <option value="전환">전환</option>
+                    <option value="리타게팅">리타게팅</option>
+                    <option value="앱설치">앱 설치</option>
+                    <option value="리드">리드 생성</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label>소재명<span class="req">*</span></label>
+                <input type="text" id="f-name" placeholder="예) 셀라큐어_피부재생_이미지_v1">
+              </div>
+              <div class="field">
+                <label>소재 유형</label>
+                <div class="type-grid">
+                  <div class="type-option selected" data-type="이미지" onclick="selectType(this)">
+                    <div class="t-icon">🖼️</div><div class="t-label">이미지</div>
+                  </div>
+                  <div class="type-option" data-type="동영상" onclick="selectType(this)">
+                    <div class="t-icon">🎬</div><div class="t-label">동영상</div>
+                  </div>
+                  <div class="type-option" data-type="카루셀" onclick="selectType(this)">
+                    <div class="t-icon">🎠</div><div class="t-label">카루셀</div>
+                  </div>
+                </div>
+              </div>
+              <div class="field">
+                <label>노출 플랫폼</label>
+                <div class="platform-grid">
+                  <div class="platform-option selected" data-p="Facebook 피드" onclick="togglePlatform(this)">
+                    <span class="p-icon">📘</span><span class="p-name">Facebook 피드</span>
+                  </div>
+                  <div class="platform-option selected" data-p="Instagram 피드" onclick="togglePlatform(this)">
+                    <span class="p-icon">📸</span><span class="p-name">Instagram 피드</span>
+                  </div>
+                  <div class="platform-option" data-p="Instagram 스토리" onclick="togglePlatform(this)">
+                    <span class="p-icon">🔮</span><span class="p-name">Instagram 스토리</span>
+                  </div>
+                  <div class="platform-option" data-p="Audience Network" onclick="togglePlatform(this)">
+                    <span class="p-icon">🌐</span><span class="p-name">Audience Network</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 광고 문구 -->
+          <div class="form-card" style="margin-bottom:16px">
+            <div class="form-card-header">
+              <h3>광고 문구</h3>
+              <p>Meta 광고에 표시될 텍스트를 입력하세요.</p>
+            </div>
+            <div class="form-card-body">
+              <div class="field">
+                <label>헤드라인<span class="req">*</span></label>
+                <input type="text" id="f-headline" placeholder="짧고 강력한 제목 (40자 이내)" maxlength="40" oninput="updatePreview()">
+                <div class="char-count"><span id="headline-count">0</span>/40</div>
+              </div>
+              <div class="field">
+                <label>본문 텍스트</label>
+                <textarea id="f-body" placeholder="광고 본문 내용을 입력하세요 (125자 이내)" maxlength="125" oninput="updatePreview()"></textarea>
+                <div class="char-count"><span id="body-count">0</span>/125</div>
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label>CTA 버튼</label>
+                  <select id="f-cta" onchange="updatePreview()">
+                    <option>지금 구매하기</option>
+                    <option>자세히 알아보기</option>
+                    <option>지금 신청하기</option>
+                    <option>무료 체험하기</option>
+                    <option>앱 다운로드</option>
+                    <option>문의하기</option>
+                    <option>지금 예약하기</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>랜딩 URL</label>
+                  <input type="url" id="f-url" placeholder="https://">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 예산/상태 -->
+          <div class="form-card">
+            <div class="form-card-header">
+              <h3>예산 및 상태</h3>
+            </div>
+            <div class="form-card-body">
+              <div class="field-row">
+                <div class="field">
+                  <label>일 예산 (원)</label>
+                  <input type="number" id="f-budget" placeholder="100000">
+                </div>
+                <div class="field">
+                  <label>상태</label>
+                  <select id="f-status">
+                    <option value="검토중">검토 대기</option>
+                    <option value="승인">승인 완료</option>
+                    <option value="집행중">집행 중</option>
+                    <option value="일시정지">일시 정지</option>
+                    <option value="반려">반려</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label>집행 시작일</label>
+                  <input type="date" id="f-startdate">
+                </div>
+                <div class="field">
+                  <label>집행 종료일</label>
+                  <input type="date" id="f-enddate">
+                </div>
+              </div>
+              <div class="field">
+                <label>메모</label>
+                <textarea id="f-memo" placeholder="특이사항, 요청사항 등"></textarea>
+              </div>
+            </div>
+            <div class="form-submit-area">
+              <button class="btn btn-primary" onclick="registerCreative()">소재 등록하기</button>
+              <button class="btn btn-ghost" onclick="resetForm()">초기화</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview -->
+        <div>
+          <div class="preview-card">
+            <div class="card-header" style="border-radius:12px 12px 0 0">
+              <h3>미리보기</h3>
+              <span style="font-size:11px;color:var(--text3)">Instagram 피드</span>
+            </div>
+            <div class="preview-phone">
+              <div class="preview-screen">
+                <div class="preview-header">
+                  <div class="preview-avatar"></div>
+                  <div>
+                    <div class="preview-brand-name" id="pv-brand">브랜드명</div>
+                    <div class="preview-sponsored">Sponsored</div>
+                  </div>
+                </div>
+                <div class="preview-img" id="pv-img">🖼️</div>
+                <div class="preview-copy">
+                  <div class="preview-headline" id="pv-headline">헤드라인을 입력하세요</div>
+                  <div class="preview-body" id="pv-body">광고 본문이 여기에 표시됩니다.</div>
+                </div>
+                <div class="preview-cta" id="pv-cta">지금 구매하기</div>
+              </div>
+            </div>
+            <div style="padding:0 20px 16px; text-align:center">
+              <div style="font-size:11px;color:var(--text3);margin-bottom:8px">소재 유형: <strong id="pv-type">이미지</strong></div>
+            </div>
+          </div>
+
+          <!-- Brand quick add -->
+          <div class="form-card" style="margin-top:16px">
+            <div class="form-card-header"><h3>브랜드 관리</h3></div>
+            <div class="form-card-body">
+              <div class="field">
+                <label>새 브랜드 추가</label>
+                <input type="text" id="new-brand-input" placeholder="브랜드명 입력">
+              </div>
+              <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="addBrand()">+ 브랜드 추가</button>
+              <div id="brandChipList" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── List ─── -->
+    <div class="page" id="page-list">
+      <div class="list-toolbar">
+        <div class="list-toolbar-left">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="listSearch" placeholder="소재명, 브랜드 검색..." oninput="renderList()">
+          </div>
+          <select class="filter-select" id="filterBrand" onchange="renderList()">
+            <option value="">전체 브랜드</option>
+          </select>
+          <select class="filter-select" id="filterStatus" onchange="renderList()">
+            <option value="">전체 상태</option>
+            <option value="집행중">집행 중</option>
+            <option value="검토중">검토 대기</option>
+            <option value="승인">승인 완료</option>
+            <option value="일시정지">일시 정지</option>
+            <option value="반려">반려</option>
+          </select>
+          <select class="filter-select" id="filterType" onchange="renderList()">
+            <option value="">전체 유형</option>
+            <option value="이미지">이미지</option>
+            <option value="동영상">동영상</option>
+            <option value="카루셀">카루셀</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="showPage('register', null)">+ 소재 등록</button>
+      </div>
+      <div class="table-wrap">
+        <table class="main-table">
+          <thead><tr>
+            <th>소재명</th>
+            <th>유형</th>
+            <th>캠페인 목표</th>
+            <th>플랫폼</th>
+            <th>일 예산</th>
+            <th>상태</th>
+            <th>등록일</th>
+            <th>액션</th>
+          </tr></thead>
+          <tbody id="listBody"></tbody>
+        </table>
+        <div class="table-footer2">
+          <span id="listCount"></span>
+          <span id="listUpdated"></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="overlay" id="editOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>소재 수정</h2>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="field"><label>소재명</label><input id="e-name" type="text"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label>브랜드</label><select id="e-brand"></select></div>
+        <div class="field"><label>상태</label>
+          <select id="e-status">
+            <option value="검토중">검토 대기</option>
+            <option value="승인">승인 완료</option>
+            <option value="집행중">집행 중</option>
+            <option value="일시정지">일시 정지</option>
+            <option value="반려">반려</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label>캠페인 목표</label>
+          <select id="e-objective">
+            <option>인지도</option><option>트래픽</option><option>전환</option>
+            <option>리타게팅</option><option>앱설치</option><option>리드</option>
+          </select>
+        </div>
+        <div class="field"><label>일 예산 (원)</label><input id="e-budget" type="number"></div>
+      </div>
+      <div class="field"><label>헤드라인</label><input id="e-headline" type="text" maxlength="40"></div>
+      <div class="field"><label>본문 텍스트</label><textarea id="e-body" maxlength="125"></textarea></div>
+      <div class="field"><label>메모</label><input id="e-memo" type="text"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveEdit()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE = 'meta_ad_v1';
+const BRAND_STORAGE = 'meta_brands_v1';
+
+const TYPE_ICON = { '이미지': '🖼️', '동영상': '🎬', '카루셀': '🎠' };
+const STATUS_CONFIG = {
+  '집행중':   { cls: 'badge-running',  label: '▶ 집행 중',    color: '#10b981' },
+  '검토중':   { cls: 'badge-review',   label: '⏳ 검토 대기', color: '#f59e0b' },
+  '승인':     { cls: 'badge-ready',    label: '✓ 승인 완료',  color: '#3b82f6' },
+  '일시정지': { cls: 'badge-paused',   label: '⏸ 일시 정지', color: '#9ca3af' },
+  '반려':     { cls: 'badge-rejected', label: '✕ 반려',       color: '#ef4444' },
+};
+const BRAND_COLORS = ['#4f46e5','#10b981','#f59e0b','#3b82f6','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16','#f97316'];
+
+let creatives = [];
+let brands = [];
+let editingId = null;
+let activity = [];
+let selectedType = '이미지';
+
+const SAMPLE_BRANDS = ['셀라큐어','수채염색','헤어리듬','아시모토','써마드 PLX','닥터아밀리아','포어픽서','리프틱스'];
+const SAMPLE_CREATIVES = [
+  { id:1, brand:'셀라큐어', name:'셀라큐어_피부재생_이미지_v1', type:'이미지', objective:'전환', platforms:'Facebook 피드,Instagram 피드', headline:'피부 재생의 기적', body:'6주 임상 시험으로 입증된 피부 재생 솔루션', cta:'지금 구매하기', url:'https://cellacure.com', budget:150000, status:'집행중', startdate:'2026-05-01', enddate:'2026-06-30', memo:'메인 소재', createdAt:'2026-05-01' },
+  { id:2, brand:'수채염색', name:'수채염색_봄컬러_카루셀_v2', type:'카루셀', objective:'인지도', platforms:'Instagram 피드,Instagram 스토리', headline:'2026 봄 컬러 컬렉션', body:'자연스러운 수채화 톤으로 완성하는 봄 헤어', cta:'자세히 알아보기', url:'', budget:80000, status:'집행중', startdate:'2026-04-20', enddate:'2026-05-31', memo:'', createdAt:'2026-04-20' },
+  { id:3, brand:'헤어리듬', name:'헤어리듬_손상모발_동영상_v1', type:'동영상', objective:'트래픽', platforms:'Facebook 피드', headline:'손상 모발 완벽 케어', body:'3초 만에 느껴지는 윤기, 헤어리듬 트리트먼트', cta:'무료 체험하기', url:'', budget:200000, status:'검토중', startdate:'', enddate:'', memo:'영상 길이 15초', createdAt:'2026-05-10' },
+  { id:4, brand:'아시모토', name:'아시모토_신제품_이미지_v1', type:'이미지', objective:'리타게팅', platforms:'Instagram 피드', headline:'アシモト 신제품 출시', body:'일본 직수입 프리미엄 풋케어', cta:'지금 구매하기', url:'', budget:60000, status:'승인', startdate:'2026-05-15', enddate:'', memo:'', createdAt:'2026-05-12' },
+  { id:5, brand:'써마드 PLX', name:'써마드PLX_RF리프팅_이미지_v3', type:'이미지', objective:'전환', platforms:'Facebook 피드,Instagram 피드,Audience Network', headline:'RF 리프팅 홈케어 혁신', body:'병원급 RF 에너지를 집에서, Thermad PLX', cta:'지금 신청하기', url:'', budget:300000, status:'집행중', startdate:'2026-05-05', enddate:'2026-07-31', memo:'퍼포먼스 최적화 소재', createdAt:'2026-05-05' },
+  { id:6, brand:'닥터아밀리아', name:'닥터아밀리아_앰플_동영상_v2', type:'동영상', objective:'인지도', platforms:'Instagram 스토리', headline:'의사가 만든 앰플', body:'피부과 의사가 처방하는 농도의 성분 그대로', cta:'자세히 알아보기', url:'', budget:120000, status:'일시정지', startdate:'2026-04-01', enddate:'2026-04-30', memo:'시즌 종료로 일시정지', createdAt:'2026-04-01' },
+];
+const SAMPLE_ACTIVITY = [
+  { text: '<strong>써마드 PLX</strong> 소재 "RF 리프팅 홈케어 혁신" 집행 시작', time: '방금 전', color: '#10b981' },
+  { text: '<strong>헤어리듬</strong> 신규 소재 검토 요청', time: '1시간 전', color: '#f59e0b' },
+  { text: '<strong>아시모토</strong> 소재 승인 완료', time: '3시간 전', color: '#3b82f6' },
+  { text: '<strong>닥터아밀리아</strong> 소재 일시정지 처리', time: '어제', color: '#9ca3af' },
+  { text: '실시간 수정내역 위젯 추가', time: '2026-05-05', color: '#8b5cf6' },
+];
+
+function loadData() {
+  const saved = localStorage.getItem(STORAGE);
+  creatives = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(SAMPLE_CREATIVES));
+  const savedB = localStorage.getItem(BRAND_STORAGE);
+  brands = savedB ? JSON.parse(savedB) : [...SAMPLE_BRANDS];
+  activity = [...SAMPLE_ACTIVITY];
+}
+function saveData() {
+  localStorage.setItem(STORAGE, JSON.stringify(creatives));
+  localStorage.setItem(BRAND_STORAGE, JSON.stringify(brands));
+}
+
+// ─── Page nav ───
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  else {
+    const map = { dashboard: 0, register: 1, list: 2 };
+    document.querySelectorAll('.nav-item')[map[id]]?.classList.add('active');
+  }
+  const titles = { dashboard: '대시보드', register: '소재 등록', list: '소재 목록' };
+  document.getElementById('topbarTitle').textContent = titles[id];
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'list') renderList();
+}
+
+// ─── Brands ───
+function populateBrandSelects() {
+  ['f-brand', 'e-brand'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value;
+    el.innerHTML = '<option value="">브랜드 선택</option>' + brands.map(b => `<option value="${b}">${b}</option>`).join('');
+    if (cur) el.value = cur;
+  });
+  ['filterBrand'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = '<option value="">전체 브랜드</option>' + brands.map(b => `<option value="${b}">${b}</option>`).join('');
+  });
+  renderSidebarBrands();
+  renderBrandChips();
+}
+function renderSidebarBrands() {
+  const container = document.getElementById('brandSidebar');
+  const selBrand = document.getElementById('filterBrand')?.value || '';
+  container.innerHTML = '<div class="sidebar-brand-label">브랜드</div>' +
+    brands.map((b, i) => `
+      <div class="sidebar-brand-item ${b === selBrand ? 'selected' : ''}" onclick="filterByBrand('${b}')">
+        <span class="brand-dot" style="background:${BRAND_COLORS[i % BRAND_COLORS.length]}"></span>${b}
+      </div>`).join('');
+}
+function filterByBrand(brand) {
+  showPage('list', null);
+  document.getElementById('filterBrand').value = brand;
+  renderList();
+}
+function addBrand() {
+  const val = document.getElementById('new-brand-input').value.trim();
+  if (!val) return;
+  if (brands.includes(val)) { showToast('이미 존재하는 브랜드입니다.', 'error'); return; }
+  brands.push(val);
+  saveData();
+  populateBrandSelects();
+  document.getElementById('new-brand-input').value = '';
+  showToast(`"${val}" 브랜드 추가됨`, 'success');
+  activity.unshift({ text: `새 브랜드 <strong>${val}</strong> 추가`, time: '방금 전', color: '#4f46e5' });
+}
+function deleteBrand(brand) {
+  if (!confirm(`"${brand}" 브랜드를 삭제할까요?\n해당 브랜드의 소재는 유지됩니다.`)) return;
+  brands = brands.filter(b => b !== brand);
+  saveData();
+  populateBrandSelects();
+  showToast(`"${brand}" 삭제됨`, 'error');
+}
+function renderBrandChips() {
+  document.getElementById('brandChipList').innerHTML = brands.map((b, i) => `
+    <div style="display:inline-flex;align-items:center;gap:4px;background:${BRAND_COLORS[i%BRAND_COLORS.length]}18;border:1px solid ${BRAND_COLORS[i%BRAND_COLORS.length]}40;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:${BRAND_COLORS[i%BRAND_COLORS.length]}">
+      ${b}<span style="cursor:pointer;margin-left:2px;opacity:.6" onclick="deleteBrand('${b}')">✕</span>
+    </div>`).join('');
+}
+
+// ─── Creative type / platform ───
+function selectType(el) {
+  document.querySelectorAll('.type-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedType = el.dataset.type;
+  document.getElementById('pv-type').textContent = selectedType;
+  document.getElementById('pv-img').textContent = TYPE_ICON[selectedType] || '🖼️';
+}
+function togglePlatform(el) { el.classList.toggle('selected'); }
+function getSelectedPlatforms() {
+  return [...document.querySelectorAll('.platform-option.selected')].map(e => e.dataset.p).join(',');
+}
+
+// ─── Preview ───
+function updatePreview() {
+  const headline = document.getElementById('f-headline').value || '헤드라인을 입력하세요';
+  const body = document.getElementById('f-body').value || '광고 본문이 여기에 표시됩니다.';
+  const cta = document.getElementById('f-cta').value;
+  const brand = document.getElementById('f-brand').value || '브랜드명';
+  document.getElementById('pv-headline').textContent = headline;
+  document.getElementById('pv-body').textContent = body;
+  document.getElementById('pv-cta').textContent = cta;
+  document.getElementById('pv-brand').textContent = brand;
+  document.getElementById('headline-count').textContent = document.getElementById('f-headline').value.length;
+  document.getElementById('body-count').textContent = document.getElementById('f-body').value.length;
+  document.getElementById('topbarBrandName').textContent = brand !== '브랜드명' ? brand : '전체 브랜드';
+}
+
+// ─── Register ───
+function registerCreative() {
+  const brand = document.getElementById('f-brand').value;
+  const name = document.getElementById('f-name').value.trim();
+  const headline = document.getElementById('f-headline').value.trim();
+  if (!brand || !name || !headline) { showToast('브랜드, 소재명, 헤드라인은 필수입니다.', 'error'); return; }
+  const newId = creatives.length ? Math.max(...creatives.map(c => c.id)) + 1 : 1;
+  const now = new Date().toISOString().slice(0, 10);
+  const c = {
+    id: newId, brand, name, type: selectedType,
+    objective: document.getElementById('f-objective').value,
+    platforms: getSelectedPlatforms(),
+    headline, body: document.getElementById('f-body').value,
+    cta: document.getElementById('f-cta').value,
+    url: document.getElementById('f-url').value,
+    budget: parseInt(document.getElementById('f-budget').value) || 0,
+    status: document.getElementById('f-status').value,
+    startdate: document.getElementById('f-startdate').value,
+    enddate: document.getElementById('f-enddate').value,
+    memo: document.getElementById('f-memo').value,
+    createdAt: now,
+  };
+  creatives.unshift(c);
+  saveData();
+  activity.unshift({ text: `<strong>${brand}</strong> 소재 "${name}" 등록`, time: '방금 전', color: '#4f46e5' });
+  resetForm();
+  showToast(`"${name}" 소재 등록 완료!`, 'success');
+  updateNavBadge();
+  showPage('list', null);
+}
+function resetForm() {
+  ['f-name','f-headline','f-body','f-url','f-budget','f-startdate','f-enddate','f-memo'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('f-brand').value = '';
+  document.getElementById('f-objective').value = '인지도';
+  document.getElementById('f-status').value = '검토중';
+  document.getElementById('f-cta').value = '지금 구매하기';
+  document.querySelectorAll('.type-option').forEach(e => e.classList.remove('selected'));
+  document.querySelector('.type-option[data-type="이미지"]').classList.add('selected');
+  selectedType = '이미지';
+  document.querySelectorAll('.platform-option').forEach(e => e.classList.remove('selected'));
+  document.querySelector('[data-p="Facebook 피드"]').classList.add('selected');
+  document.querySelector('[data-p="Instagram 피드"]').classList.add('selected');
+  updatePreview();
+}
+
+// ─── List ───
+function renderList() {
+  const q = document.getElementById('listSearch').value.toLowerCase();
+  const fb = document.getElementById('filterBrand').value;
+  const fs = document.getElementById('filterStatus').value;
+  const ft = document.getElementById('filterType').value;
+  let filtered = creatives.filter(c => {
+    return (!q || c.name.toLowerCase().includes(q) || c.brand.toLowerCase().includes(q))
+      && (!fb || c.brand === fb) && (!fs || c.status === fs) && (!ft || c.type === ft);
+  });
+  const tbody = document.getElementById('listBody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="e-icon">📭</div><p>등록된 소재가 없습니다.</p></div></td></tr>`;
+  } else {
+    tbody.innerHTML = filtered.map(c => {
+      const st = STATUS_CONFIG[c.status] || STATUS_CONFIG['검토중'];
+      const brandIdx = brands.indexOf(c.brand);
+      const bc = BRAND_COLORS[brandIdx >= 0 ? brandIdx % BRAND_COLORS.length : 0];
+      const platforms = c.platforms ? c.platforms.split(',').slice(0,2).join(' · ') : '-';
+      return `<tr>
+        <td>
+          <div class="creative-cell">
+            <div class="creative-thumb" style="background:${bc}18">${TYPE_ICON[c.type]||'🖼️'}</div>
+            <div>
+              <div class="creative-name">${c.name}</div>
+              <div class="creative-brand">${c.brand}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="type-badge">${TYPE_ICON[c.type]} ${c.type}</span></td>
+        <td style="color:var(--text2);font-size:12px">${c.objective||'-'}</td>
+        <td style="font-size:11px;color:var(--text2)">${platforms}</td>
+        <td style="font-variant-numeric:tabular-nums">${c.budget ? c.budget.toLocaleString()+'원' : '-'}</td>
+        <td><span class="badge ${st.cls}">${st.label}</span></td>
+        <td style="color:var(--text3);font-size:12px">${c.createdAt||'-'}</td>
+        <td>
+          <div class="action-cell">
+            <button class="icon-btn" title="수정" onclick="openEdit(${c.id})">✎</button>
+            <button class="icon-btn del" title="삭제" onclick="deleteCreative(${c.id})">✕</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('listCount').textContent = `${filtered.length}개 표시 (전체 ${creatives.length}개)`;
+  const now = new Date();
+  document.getElementById('listUpdated').textContent = now.toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit'}) + ' 기준';
+  renderSidebarBrands();
+}
+
+function deleteCreative(id) {
+  const c = creatives.find(x => x.id === id);
+  if (!c || !confirm(`"${c.name}" 소재를 삭제할까요?`)) return;
+  creatives = creatives.filter(x => x.id !== id);
+  saveData();
+  activity.unshift({ text: `소재 "${c.name}" 삭제됨`, time: '방금 전', color: '#ef4444' });
+  renderList(); updateNavBadge(); showToast(`"${c.name}" 삭제됨`, 'error');
+}
+
+// ─── Edit ───
+function openEdit(id) {
+  const c = creatives.find(x => x.id === id);
+  if (!c) return;
+  editingId = id;
+  document.getElementById('e-name').value = c.name;
+  document.getElementById('e-headline').value = c.headline || '';
+  document.getElementById('e-body').value = c.body || '';
+  document.getElementById('e-budget').value = c.budget || '';
+  document.getElementById('e-memo').value = c.memo || '';
+  document.getElementById('e-status').value = c.status;
+  document.getElementById('e-objective').value = c.objective;
+  const eb = document.getElementById('e-brand');
+  eb.innerHTML = brands.map(b => `<option value="${b}">${b}</option>`).join('');
+  eb.value = c.brand;
+  document.getElementById('editOverlay').classList.add('open');
+}
+function closeModal() { document.getElementById('editOverlay').classList.remove('open'); }
+function saveEdit() {
+  const idx = creatives.findIndex(x => x.id === editingId);
+  if (idx === -1) return;
+  const name = document.getElementById('e-name').value.trim();
+  if (!name) { showToast('소재명은 필수입니다.', 'error'); return; }
+  Object.assign(creatives[idx], {
+    name, brand: document.getElementById('e-brand').value,
+    status: document.getElementById('e-status').value,
+    objective: document.getElementById('e-objective').value,
+    budget: parseInt(document.getElementById('e-budget').value) || 0,
+    headline: document.getElementById('e-headline').value,
+    body: document.getElementById('e-body').value,
+    memo: document.getElementById('e-memo').value,
+  });
+  saveData();
+  activity.unshift({ text: `소재 "${name}" 수정됨`, time: '방금 전', color: '#6366f1' });
+  closeModal(); renderList();
+  showToast(`"${name}" 수정 완료`, 'success');
+}
+
+// ─── Dashboard ───
+function renderDashboard() {
+  document.getElementById('d-total').textContent = creatives.length;
+  document.getElementById('d-running').textContent = creatives.filter(c => c.status === '집행중').length;
+  document.getElementById('d-review').textContent = creatives.filter(c => c.status === '검토중').length;
+  const activeBrands = new Set(creatives.map(c => c.brand)).size;
+  document.getElementById('d-brands').textContent = activeBrands;
+
+  // Recent
+  const recent = creatives.slice(0, 6);
+  const rb = document.getElementById('recentBody');
+  rb.innerHTML = recent.map(c => {
+    const st = STATUS_CONFIG[c.status] || STATUS_CONFIG['검토중'];
+    return `<tr>
+      <td style="font-weight:600;font-size:12px">${c.name}</td>
+      <td style="font-size:12px;color:var(--text2)">${c.brand}</td>
+      <td><span class="type-badge" style="font-size:10px">${TYPE_ICON[c.type]} ${c.type}</span></td>
+      <td><span class="badge ${st.cls}" style="font-size:10px">${st.label}</span></td>
+      <td style="font-size:11px;color:var(--text3)">${c.createdAt}</td>
+    </tr>`;
+  }).join('');
+
+  // Status breakdown
+  const statusOrder = ['집행중','검토중','승인','일시정지','반려'];
+  const total = creatives.length || 1;
+  document.getElementById('statusBreakdown').innerHTML = statusOrder.map(s => {
+    const cnt = creatives.filter(c => c.status === s).length;
+    const pct = Math.round(cnt / total * 100);
+    const cfg = STATUS_CONFIG[s];
+    return `<div class="status-row">
+      <span class="status-name" style="color:${cfg.color};font-size:12px">${s}</span>
+      <div class="status-bar-bg"><div class="status-bar" style="width:${pct}%;background:${cfg.color}"></div></div>
+      <span class="status-count" style="color:${cfg.color}">${cnt}</span>
+    </div>`;
+  }).join('');
+
+  // Brand bars
+  const brandCounts = {};
+  creatives.forEach(c => { brandCounts[c.brand] = (brandCounts[c.brand] || 0) + 1; });
+  const sorted = Object.entries(brandCounts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxCnt = sorted[0]?.[1] || 1;
+  document.getElementById('brandBars').innerHTML = sorted.map(([b, cnt], i) => {
+    const pct = Math.round(cnt / maxCnt * 100);
+    const color = BRAND_COLORS[brands.indexOf(b) >= 0 ? brands.indexOf(b) % BRAND_COLORS.length : i % BRAND_COLORS.length];
+    return `<div class="brand-bar-row">
+      <span class="brand-bar-name">${b}</span>
+      <div class="brand-bar-wrap"><div class="brand-bar-fill" style="width:${pct}%;background:${color}">${cnt > 1 ? cnt : ''}</div></div>
+      <span class="brand-bar-num">${cnt}</span>
+    </div>`;
+  }).join('');
+
+  // Activity
+  document.getElementById('activityLog').innerHTML = activity.slice(0,6).map(a =>
+    `<div class="activity-item">
+      <div class="activity-dot" style="background:${a.color}"></div>
+      <div class="activity-text">${a.text}</div>
+      <span class="activity-time">${a.time}</span>
+    </div>`).join('');
+}
+
+function updateNavBadge() {
+  document.getElementById('nav-count').textContent = creatives.length;
+}
+
+// ─── Toast ───
+let toastTimer;
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'success' ? '✓ ' : '✕ ') + msg;
+  t.style.borderLeft = `3px solid ${type === 'success' ? '#10b981' : '#ef4444'}`;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── Date ───
+function setDate() {
+  const now = new Date();
+  document.getElementById('topbarDate').textContent = now.toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric'});
+}
+
+// Close overlay on background click
+document.getElementById('editOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('editOverlay')) closeModal();
+});
+
+// f-brand change → update preview
+document.getElementById('f-brand').addEventListener('change', updatePreview);
+
+// ─── Init ───
+loadData();
+populateBrandSelects();
+updateNavBadge();
+setDate();
+renderDashboard();
+</script>
+</body>
+</html>

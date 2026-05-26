@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스카이팀 메타 광고 대시보드</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='%2338bdf8' d='M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383z'/></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --meta-blue: #1877F2;
+            --meta-blue-dark: #0e5cbf;
+            --meta-blue-light: #e7f3ff;
+            --bg: #f0f9ff;
+            --card-shadow: 0 1px 4px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06);
+            --text-primary: #1c1e21;
+            --text-secondary: #65676b;
+            --border: #e4e6ea;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* ── NAVBAR ── */
+        .topbar {
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            padding: 0 24px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--meta-blue);
+            text-decoration: none;
+        }
+        .topbar-brand i { font-size: 22px; }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .account-badge {
+            background: var(--meta-blue-light);
+            color: var(--meta-blue);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        /* ── FILTER BAR ── */
+        .filter-bar {
+            background: #fff;
+            border-radius: 12px;
+            padding: 14px 20px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+        }
+
+        /* ── CARDS ── */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            background: #fff;
+        }
+        .kpi-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px 20px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        }
+        .kpi-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .kpi-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        .kpi-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .kpi-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        /* ── SECTION TITLE ── */
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        /* ── TABLE ── */
+        .table th {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            background: #f8f9fa;
+            border-top: none;
+            padding: 10px 12px;
+        }
+        .table td {
+            font-size: 13px;
+            vertical-align: middle;
+            padding: 10px 12px;
+            border-color: #f0f2f5;
+        }
+        .table tbody tr { cursor: pointer; transition: background 0.1s; }
+        .table tbody tr:hover { background: var(--meta-blue-light); }
+        .campaign-name { font-weight: 600; color: var(--text-primary); }
+        .campaign-meta { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+        /* ── STATUS BADGE ── */
+        .s-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        .s-active   { background: #e8f5e9; color: #2e7d32; }
+        .s-paused   { background: #fff8e1; color: #e65100; }
+        .s-archived { background: #f5f5f5; color: #616161; }
+        .s-deleted  { background: #fce4ec; color: #c62828; }
+
+        /* ── CHART ── */
+        .chart-wrap { position: relative; height: 290px; }
+        .chart-wrap-sm { position: relative; height: 240px; }
+
+        /* ── LOADING ── */
+        .loading-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 0;
+            gap: 16px;
+        }
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid #e4e6ea;
+            border-top-color: var(--meta-blue);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── ERROR ── */
+        .error-box {
+            background: #fff5f5;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            padding: 16px 20px;
+            color: #991b1b;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* ── FORM CONTROLS ── */
+        .form-select, .form-control {
+            border-radius: 8px;
+            border-color: var(--border);
+            font-size: 13px;
+        }
+        .form-select:focus, .form-control:focus {
+            border-color: var(--meta-blue);
+            box-shadow: 0 0 0 3px rgba(24,119,242,0.15);
+        }
+        .btn-meta {
+            background: var(--meta-blue);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-meta:hover { background: var(--meta-blue-dark); }
+        .btn-outline-meta {
+            background: transparent;
+            color: var(--meta-blue);
+            border: 1.5px solid var(--meta-blue);
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 5px 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-outline-meta:hover {
+            background: var(--meta-blue-light);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 48px;
+            color: var(--text-secondary);
+        }
+        .no-data i { font-size: 40px; opacity: 0.3; display: block; margin-bottom: 8px; }
+
+        .last-update {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        #adAccountSelect { min-width: 220px; }
+
+        .total-row td {
+            font-weight: 700;
+            background: #f8f9fa;
+            color: var(--text-primary);
+        }
+        .row-selected { background: var(--meta-blue-light) !important; }
+        .row-selected td:first-child { border-left: 3px solid var(--meta-blue); }
+        .table tbody tr td:first-child { border-left: 3px solid transparent; }
+        .daily-kpi-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .daily-kpi-icon {
+            width: 36px; height: 36px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+        .daily-kpi-label {
+            font-size: 10px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.4px; color: var(--text-secondary);
+        }
+        .daily-kpi-value {
+            font-size: 17px; font-weight: 700; color: var(--text-primary); line-height: 1.2;
+        }
+        .panel-spinner {
+            width: 32px; height: 32px; border-width: 3px;
+            border: 3px solid #e4e6ea; border-top-color: var(--meta-blue);
+            border-radius: 50%; animation: spin 0.7s linear infinite;
+        }
+        /* ── Panel Tabs ── */
+        .panel-tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 2px solid #e4e6ea;
+            padding-bottom: 0;
+        }
+        .panel-tab {
+            background: none;
+            border: none;
+            padding: 8px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: color 0.15s, border-color 0.15s;
+            border-radius: 0;
+        }
+        .panel-tab:hover { color: var(--meta-blue); }
+        .panel-tab.active {
+            color: var(--meta-blue);
+            border-bottom-color: var(--meta-blue);
+        }
+        /* ── Creative table ── */
+        .creative-thumb {
+            width: 52px; height: 52px; border-radius: 6px;
+            object-fit: cover; display: block;
+            background: #f0f2f5;
+        }
+        .creative-thumb-placeholder {
+            width: 52px; height: 52px; border-radius: 6px;
+            background: #e4e6ea; display: flex; align-items: center;
+            justify-content: center; color: #aaa; font-size: 20px;
+        }
+        .ad-name-cell { max-width: 280px; }
+        .ad-name { font-weight: 600; font-size: 13px; }
+        .ad-sub  { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+        .spend-bar-wrap { display:flex; align-items:center; gap:8px; }
+        .spend-bar { flex:1; height:5px; background:#e4e6ea; border-radius:3px; min-width:60px; }
+        .spend-bar-fill { height:100%; border-radius:3px; background:var(--meta-blue); }
+        .filter-divider {
+            color: var(--border);
+            font-size: 20px;
+            line-height: 1;
+            margin: 0 6px;
+            user-select: none;
+        }
+        input[type="date"].form-control-sm {
+            min-width: 130px;
+            cursor: pointer;
+        }
+        .btn-meta-apply {
+            background: var(--meta-blue);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 5px 14px;
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+        .btn-meta-apply:hover { background: var(--meta-blue-dark); }
+        .btn-meta-apply:disabled { background: #a8c7fa; cursor: not-allowed; }
+        .custom-range-active #dateFrom,
+        .custom-range-active #dateTo {
+            border-color: var(--meta-blue);
+            box-shadow: 0 0 0 2px rgba(24,119,242,0.15);
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── PASSWORD SCREEN ── -->
+<div id="passwordScreen" style="position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:20px;padding:48px 40px;box-shadow:0 8px 40px rgba(0,0,0,0.12);width:100%;max-width:380px;text-align:center;">
+        <div style="font-size:52px;color:#38bdf8;margin-bottom:16px;line-height:1;">
+            <i class="bi bi-cloud-fill"></i>
+        </div>
+        <h5 style="font-weight:700;font-size:18px;color:var(--text-primary);margin-bottom:6px;">스카이팀 메타 광고 대시보드</h5>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:28px;">비밀번호를 입력해 주세요</p>
+        <input type="password" id="pwInput" class="form-control" placeholder="비밀번호"
+            style="border-radius:10px;font-size:14px;padding:10px 14px;margin-bottom:10px;text-align:center;letter-spacing:2px;"
+            onkeydown="if(event.key==='Enter') checkPassword()">
+        <div id="pwError" style="font-size:12px;color:#dc2626;margin-bottom:10px;display:none;">
+            <i class="bi bi-exclamation-circle me-1"></i>비밀번호가 올바르지 않습니다
+        </div>
+        <button class="btn-meta" onclick="checkPassword()" style="width:100%;padding:10px;font-size:14px;border-radius:10px;">
+            입력
+        </button>
+    </div>
+</div>
+
+<!-- ── TOP BAR ── -->
+<div class="topbar">
+    <a href="#" class="topbar-brand">
+        <i class="bi bi-cloud-fill" style="color:#38bdf8;"></i>
+        스카이팀 메타 광고 대시보드
+    </a>
+    <div class="topbar-right">
+        <span id="accountBadge" class="account-badge" style="display:none;"></span>
+        <select id="adAccountSelect" class="form-select form-select-sm" onchange="onAccountChange(this.value)" style="display:none;"></select>
+        <button class="btn-outline-meta" onclick="openTokenModal()" title="Access Token 변경" style="white-space:nowrap;">
+            <i class="bi bi-key"></i> 토큰 변경
+        </button>
+        <button class="btn-outline-meta" onclick="refreshData()" style="white-space:nowrap;">
+            <i class="bi bi-arrow-clockwise"></i> 새로고침
+        </button>
+    </div>
+</div>
+
+<!-- ── TOKEN MODAL ── -->
+<div class="modal fade" id="tokenModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:14px; border:none;">
+            <div class="modal-header" style="border-bottom:1px solid #e4e6ea; padding:20px 24px;">
+                <div>
+                    <h5 class="modal-title" style="font-weight:700; font-size:17px;">
+                        <i class="bi bi-key-fill me-2" style="color:var(--meta-blue);"></i>Access Token 변경
+                    </h5>
+                    <div style="font-size:12px; color:#65676b; margin-top:4px;">
+                        Meta Business Suite → 설정 → 앱 → 액세스 토큰에서 발급 가능합니다
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:24px;">
+                <label style="font-size:13px; font-weight:600; display:block; margin-bottom:8px;">
+                    Access Token <span style="color:#dc2626;">*</span>
+                </label>
+                <textarea id="tokenInput" class="form-control" rows="4"
+                    placeholder="EAAYk64YIHcIBR..."
+                    style="font-family:monospace; font-size:12px; border-radius:8px; resize:vertical;"></textarea>
+                <div id="tokenError" style="font-size:12px; color:#dc2626; margin-top:6px; display:none;"></div>
+                <div style="font-size:12px; color:#65676b; margin-top:10px;">
+                    <i class="bi bi-info-circle me-1"></i>
+                    토큰은 브라우저 로컬 스토리지에만 저장되며 외부로 전송되지 않습니다.
+                    필요 권한: <code>ads_read</code>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid #e4e6ea; padding:16px 24px; gap:8px;">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                    style="border-radius:8px; font-size:13px;">취소</button>
+                <button type="button" class="btn-meta" onclick="saveToken()"
+                    style="padding:8px 20px; font-size:13px;">
+                    <i class="bi bi-check2 me-1"></i>저장 후 재연결
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="container-fluid p-4" style="max-width:1600px; margin:0 auto;">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar mb-4" id="filterBar" style="display:none;">
+        <span class="filter-label">기간 프리셋</span>
+        <select id="datePreset" class="form-select form-select-sm" style="width:auto;" onchange="onDatePresetChange(this.value)">
+            <option value="today">오늘</option>
+            <option value="yesterday">어제</option>
+            <option value="last_7d" selected>최근 7일</option>
+            <option value="last_14d">최근 14일</option>
+            <option value="last_30d">최근 30일</option>
+            <option value="this_month">이번 달</option>
+            <option value="last_month">지난 달</option>
+            <option value="last_90d">최근 90일</option>
+        </select>
+
+        <span class="filter-divider">|</span>
+        <span class="filter-label">직접 선택</span>
+        <input type="date" id="dateFrom" class="form-control form-control-sm"
+               style="width:auto;" title="시작일" oninput="onCustomDateInput()">
+        <span style="color:var(--text-secondary); font-size:14px; padding:0 2px; user-select:none;">~</span>
+        <input type="date" id="dateTo" class="form-control form-control-sm"
+               style="width:auto;" title="종료일" oninput="onCustomDateInput()">
+        <button class="btn-meta-apply" id="applyBtn" onclick="onCustomRangeApply()" disabled>
+            <i class="bi bi-check2"></i> 적용
+        </button>
+
+        <span class="filter-label ms-2">캠페인 상태</span>
+        <select id="statusFilter" class="form-select form-select-sm" style="width:auto;" onchange="onStatusFilter(this.value)">
+            <option value="">전체</option>
+            <option value="ACTIVE">활성</option>
+            <option value="PAUSED">일시중지</option>
+            <option value="ARCHIVED">보관됨</option>
+        </select>
+
+        <div class="ms-auto last-update" id="lastUpdate"></div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-box mb-4" id="errorBox">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span id="errorMsg"></span>
+    </div>
+
+    <!-- Loading -->
+    <div id="loadingBox" class="loading-box">
+        <div class="spinner"></div>
+        <div style="font-size:14px; color:var(--text-secondary);">데이터를 불러오는 중입니다...</div>
+    </div>
+
+    <!-- Dashboard (hidden until loaded) -->
+    <div id="dashboard" style="display:none;">
+
+        <!-- KPI Cards -->
+        <div class="row g-3 mb-4" id="kpiRow"></div>
+
+        <!-- Charts -->
+        <div class="row g-3 mb-4">
+            <div class="col-xl-8">
+                <div class="card h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="section-title">일별 성과 추이</h6>
+                            <div class="d-flex gap-2">
+                                <button class="btn-outline-meta btn-sm chart-toggle active-toggle" id="toggle-spend" onclick="toggleMetric('spend')">지출</button>
+                                <button class="btn-outline-meta btn-sm chart-toggle" id="toggle-roas" onclick="toggleMetric('roas')">구매 ROAS</button>
+                                <button class="btn-outline-meta btn-sm chart-toggle" id="toggle-cpr" onclick="toggleMetric('cpr')">결과당 비용</button>
+                            </div>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="lineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="card h-100">
+                    <div class="card-body p-4">
+                        <h6 class="section-title mb-3">캠페인별 지출 비중</h6>
+                        <div class="chart-wrap-sm">
+                            <canvas id="donutChart"></canvas>
+                        </div>
+                        <div id="donutNoData" class="no-data" style="display:none;">
+                            <i class="bi bi-pie-chart"></i>지출 데이터 없음
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Campaigns Table -->
+        <div class="card mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="section-title">캠페인 목록</h6>
+                        <div style="font-size:12px; color:var(--text-secondary); margin-top:3px;">행을 클릭하면 일별 성과를 확인할 수 있습니다</div>
+                    </div>
+                    <span id="campaignBadge" class="badge bg-secondary" style="font-size:12px;"></span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="campaignTable">
+                        <thead>
+                            <tr>
+                                <th>캠페인명</th>
+                                <th>상태</th>
+                                <th>예산</th>
+                                <th class="text-end">지출금액</th>
+                                <th class="text-end">구매전환값</th>
+                                <th class="text-end">결과</th>
+                                <th class="text-end">결과당 비용</th>
+                                <th class="text-end">구매 ROAS</th>
+                                <th class="text-end">CTR</th>
+                                <th class="text-end">CPC</th>
+                                <th class="text-end">CPM</th>
+                            </tr>
+                        </thead>
+                        <tbody id="campaignTbody"></tbody>
+                        <tfoot id="campaignTfoot"></tfoot>
+                    </table>
+                </div>
+                <div id="noData" class="no-data" style="display:none;">
+                    <i class="bi bi-inbox"></i>표시할 캠페인이 없습니다
+                </div>
+            </div>
+        </div>
+
+        <!-- ── CAMPAIGN DETAIL PANEL ── -->
+        <div id="campaignDailyPanel" class="card mb-4" style="display:none;">
+            <div class="card-body p-4">
+
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--meta-blue);margin-bottom:4px;">
+                            <i class="bi bi-grid-1x2-fill me-1"></i>캠페인 성과 분석
+                        </div>
+                        <h6 class="section-title" id="dailyPanelTitle" style="font-size:17px;"></h6>
+                        <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;" id="dailyPanelMeta"></div>
+                    </div>
+                    <button onclick="closeCampaignDaily()" class="btn-outline-meta" style="padding:5px 14px;flex-shrink:0;">
+                        <i class="bi bi-x-lg"></i> 닫기
+                    </button>
+                </div>
+
+                <!-- Tabs -->
+                <div class="panel-tabs mb-4">
+                    <button class="panel-tab active" id="tab-btn-daily" onclick="switchTab('daily')">
+                        <i class="bi bi-calendar3 me-1"></i>일별 성과
+                    </button>
+                    <button class="panel-tab" id="tab-btn-creative" onclick="switchTab('creative')">
+                        <i class="bi bi-images me-1"></i>소재별 성과
+                    </button>
+                </div>
+
+                <!-- ── TAB: 일별 성과 ── -->
+                <div id="tabDaily">
+                    <!-- Loading -->
+                    <div id="dailyPanelLoading" class="text-center py-5">
+                        <div class="panel-spinner mx-auto mb-2"></div>
+                        <div style="font-size:13px;color:var(--text-secondary);">데이터 불러오는 중...</div>
+                    </div>
+                    <!-- Content -->
+                    <div id="dailyPanelContent" style="display:none;">
+                        <div class="row g-2 mb-4" id="dailyKpiRow"></div>
+                        <div class="chart-wrap mb-4">
+                            <canvas id="campaignDailyChart"></canvas>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>날짜</th>
+                                        <th class="text-end">지출금액</th>
+                                        <th class="text-end">구매전환값</th>
+                                        <th class="text-end">결과</th>
+                                        <th class="text-end">결과당 비용</th>
+                                        <th class="text-end">구매 ROAS</th>
+                                        <th class="text-end">CTR</th>
+                                        <th class="text-end">CPC</th>
+                                        <th class="text-end">CPM</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dailyTableBody"></tbody>
+                                <tfoot id="dailyTableFoot"></tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── TAB: 소재별 성과 ── -->
+                <div id="tabCreative" style="display:none;">
+                    <!-- Loading -->
+                    <div id="creativeLoading" class="text-center py-5">
+                        <div class="panel-spinner mx-auto mb-2"></div>
+                        <div style="font-size:13px;color:var(--text-secondary);">소재 데이터 불러오는 중...</div>
+                    </div>
+                    <!-- Content -->
+                    <div id="creativeContent" style="display:none;">
+                        <!-- Creative KPI -->
+                        <div class="row g-2 mb-4" id="creativeKpiRow"></div>
+                        <!-- Creative table -->
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="creativeTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width:64px;">썸네일</th>
+                                        <th>소재명 / 광고 세트</th>
+                                        <th>상태</th>
+                                        <th class="text-end" style="min-width:120px;">지출금액</th>
+                                        <th class="text-end">구매전환값</th>
+                                        <th class="text-end">결과</th>
+                                        <th class="text-end">결과당 비용</th>
+                                        <th class="text-end">구매 ROAS</th>
+                                        <th class="text-end">CTR</th>
+                                        <th class="text-end">CPC</th>
+                                        <th class="text-end">CPM</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="creativeTableBody"></tbody>
+                                <tfoot id="creativeTableFoot"></tfoot>
+                            </table>
+                        </div>
+                        <div id="creativeNoData" class="no-data" style="display:none;">
+                            <i class="bi bi-inbox"></i>소재 데이터가 없습니다
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// 전역 JS 오류를 화면에 표시
+window.onerror = function(msg, src, line) {
+    const eb = document.getElementById('errorBox');
+    const em = document.getElementById('errorMsg');
+    const lb = document.getElementById('loadingBox');
+    if (em) em.textContent = `JS 오류: ${msg} (${src ? src.split('/').pop() : '?'}:${line})`;
+    if (eb) eb.style.display = 'block';
+    if (lb) lb.style.display = 'none';
+    return true;
+};
+
+// ═══════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════
+const TOKEN_KEY = 'meta_dashboard_token';
+const TOKEN_DEFAULT = 'REMOVED_LEAKED_TOKEN';
+let ACCESS_TOKEN = localStorage.getItem(TOKEN_KEY) || TOKEN_DEFAULT;
+const API_BASE = 'https://graph.facebook.com/v21.0';
+
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+let state = {
+    accountId: null,
+    currency: 'KRW',
+    datePreset: 'last_7d',
+    customRange: { since: null, until: null },
+    statusFilter: '',
+    campaigns: [],
+    campaignInsights: {},
+    dailyData: [],
+};
+
+function getDateParams() {
+    const { since, until } = state.customRange;
+    if (since && until) {
+        return { time_range: JSON.stringify({ since, until }) };
+    }
+    return { date_preset: state.datePreset };
+}
+
+let lineChartInst = null;
+let donutChartInst = null;
+let visibleMetrics = { spend: true, roas: false, cpr: false };
+
+// ═══════════════════════════════════════
+//  API
+// ═══════════════════════════════════════
+async function api(path, params = {}) {
+    const url = new URL(API_BASE + path);
+    url.searchParams.set('access_token', ACCESS_TOKEN);
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    const res = await fetch(url.toString());
+    const json = await res.json();
+    if (json.error) throw new Error(`${json.error.message} (code ${json.error.code})`);
+    return json;
+}
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+async function init() {
+    showLoading(true);
+    try {
+        const data = await api('/me/adaccounts', {
+            fields: 'id,name,currency,timezone_name,account_status',
+            limit: 50,
+        });
+        const allAccounts = data.data || [];
+        if (allAccounts.length === 0) throw new Error('접근 가능한 광고 계정이 없습니다.');
+
+        const ACCOUNT_ORDER = ['써마드2', '아치핀2', '포디온'];
+        const accounts = ACCOUNT_ORDER
+            .map(name => allAccounts.find(a => a.name === name))
+            .filter(Boolean);
+
+        if (accounts.length === 0) throw new Error('지정된 광고 계정을 찾을 수 없습니다. 계정명을 확인해 주세요.');
+
+        const sel = document.getElementById('adAccountSelect');
+        sel.innerHTML = accounts.map(a =>
+            `<option value="${a.id}" data-currency="${a.currency}">${a.name}</option>`
+        ).join('');
+        sel.style.display = '';
+
+        const first = accounts[0];
+        if (!first?.id) throw new Error('광고 계정 ID를 읽을 수 없습니다. 토큰 권한(ads_read)을 확인해 주세요.');
+        state.accountId = first.id;
+        state.currency = first.currency || 'KRW';
+        setBadge(first.name);
+
+        document.getElementById('filterBar').style.display = '';
+        await loadAll();
+    } catch (e) {
+        showError(e.message);
+    }
+}
+
+async function loadAll() {
+    if (!state.accountId) { await init(); return; }
+    closeCampaignDaily();
+    showLoading(true);
+    hideError();
+    try {
+        const [campaigns, acctIns, daily] = await Promise.all([
+            fetchCampaigns(),
+            fetchAccountInsights(),
+            fetchDailyInsights(),
+        ]);
+        state.campaigns = campaigns;
+        state.dailyData = daily;
+
+        renderKPI(acctIns);
+        renderLineChart(daily);
+        renderCampaignTableSkeleton(campaigns);
+
+        const cmpIns = await fetchCampaignInsights();
+        state.campaignInsights = cmpIns;
+        renderCampaignTable(campaigns, cmpIns);
+        renderDonutChart(cmpIns);
+
+        document.getElementById('lastUpdate').textContent =
+            `최종 업데이트: ${new Date().toLocaleTimeString('ko-KR')}`;
+        showDashboard();
+    } catch (e) {
+        showError(e.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function fetchCampaigns() {
+    const data = await api(`/${state.accountId}/campaigns`, {
+        fields: 'id,name,status,objective,daily_budget,lifetime_budget',
+        limit: 200,
+    });
+    return data.data || [];
+}
+
+async function fetchAccountInsights() {
+    try {
+        const data = await api(`/${state.accountId}/insights`, {
+            fields: 'impressions,clicks,spend,ctr,cpc,cpm,reach,frequency',
+            ...getDateParams(),
+            level: 'account',
+        });
+        return (data.data || [])[0] || {};
+    } catch { return {}; }
+}
+
+async function fetchDailyInsights() {
+    try {
+        const data = await api(`/${state.accountId}/insights`, {
+            fields: 'date_start,spend,actions,action_values,purchase_roas',
+            ...getDateParams(),
+            time_increment: 1,
+            level: 'account',
+            limit: 90,
+        });
+        return (data.data || []).sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+    } catch { return []; }
+}
+
+async function fetchCampaignInsights() {
+    try {
+        const data = await api(`/${state.accountId}/insights`, {
+            fields: 'campaign_id,campaign_name,impressions,clicks,spend,ctr,cpc,cpm,actions,action_values,purchase_roas',
+            ...getDateParams(),
+            level: 'campaign',
+            limit: 200,
+        });
+        const map = {};
+        (data.data || []).forEach(i => { map[i.campaign_id] = i; });
+        return map;
+    } catch { return {}; }
+}
+
+// ═══════════════════════════════════════
+//  RENDER KPI
+// ═══════════════════════════════════════
+function renderKPI(ins) {
+    const spend = parseFloat(ins.spend || 0);
+    const impressions = parseInt(ins.impressions || 0);
+    const clicks = parseInt(ins.clicks || 0);
+    const ctr = parseFloat(ins.ctr || 0);
+    const cpc = parseFloat(ins.cpc || 0);
+    const cpm = parseFloat(ins.cpm || 0);
+    const reach = parseInt(ins.reach || 0);
+    const freq = parseFloat(ins.frequency || 0);
+
+    const kpis = [
+        { label: '총 지출', value: fCur(spend), sub: reach ? `도달: ${fNum(reach)}명` : '', icon: 'bi-cash-coin', bg: '#e8f4fd', color: '#1877F2' },
+        { label: '노출수', value: fNum(impressions), sub: freq ? `빈도: ${freq.toFixed(2)}` : '', icon: 'bi-eye', bg: '#f0fdf4', color: '#16a34a' },
+        { label: '클릭수', value: fNum(clicks), sub: `CTR: ${ctr.toFixed(2)}%`, icon: 'bi-hand-index-thumb', bg: '#fefce8', color: '#ca8a04' },
+        { label: 'CTR', value: ctr.toFixed(2) + '%', sub: '클릭률', icon: 'bi-graph-up-arrow', bg: '#fdf4ff', color: '#9333ea' },
+        { label: 'CPC', value: fCur(cpc), sub: '클릭당 비용', icon: 'bi-cursor-fill', bg: '#fff7ed', color: '#ea580c' },
+        { label: 'CPM', value: fCur(cpm), sub: '1천회 노출당 비용', icon: 'bi-bar-chart-fill', bg: '#fef2f2', color: '#dc2626' },
+    ];
+
+    document.getElementById('kpiRow').innerHTML = kpis.map(k => `
+        <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
+            <div class="kpi-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div style="min-width:0;">
+                        <div class="kpi-label">${k.label}</div>
+                        <div class="kpi-value">${k.value}</div>
+                        <div class="kpi-sub">${k.sub}</div>
+                    </div>
+                    <div class="kpi-icon" style="background:${k.bg}; color:${k.color};">
+                        <i class="bi ${k.icon}"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ═══════════════════════════════════════
+//  RENDER LINE CHART
+// ═══════════════════════════════════════
+function renderLineChart(daily) {
+    const ctx = document.getElementById('lineChart').getContext('2d');
+    if (lineChartInst) lineChartInst.destroy();
+    if (!daily.length) return;
+
+    const labels = daily.map(d => {
+        const dt = new Date(d.date_start);
+        return `${dt.getMonth()+1}/${dt.getDate()}`;
+    });
+
+    const PTYPES = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
+
+    lineChartInst = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    id: 'spend',
+                    label: '지출',
+                    data: daily.map(d => parseFloat(d.spend || 0)),
+                    borderColor: '#1877F2',
+                    backgroundColor: 'rgba(24,119,242,0.07)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    yAxisID: 'yLeft',
+                    hidden: !visibleMetrics.spend,
+                },
+                {
+                    id: 'roas',
+                    label: '구매 ROAS',
+                    data: daily.map(d => {
+                        const item = (d.purchase_roas || []).find(a => PTYPES.includes(a.action_type));
+                        return item ? parseFloat(item.value) * 100 : 0;
+                    }),
+                    borderColor: '#9333ea',
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                    yAxisID: 'yRight',
+                    hidden: !visibleMetrics.roas,
+                },
+                {
+                    id: 'cpr',
+                    label: '결과당 비용',
+                    data: daily.map(d => {
+                        const results = findAction(d.actions, PTYPES);
+                        const spend   = parseFloat(d.spend || 0);
+                        return results > 0 ? spend / results : 0;
+                    }),
+                    borderColor: '#ea580c',
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                    yAxisID: 'yLeft',
+                    hidden: !visibleMetrics.cpr,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { usePointStyle: true, boxWidth: 8, font: { size: 12 } },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            if (ctx.dataset.id === 'spend') return ` 지출: ${fCur(ctx.raw)}`;
+                            if (ctx.dataset.id === 'roas')  return ` 구매 ROAS: ${ctx.raw.toFixed(1)}%`;
+                            if (ctx.dataset.id === 'cpr')   return ` 결과당 비용: ${fCur(ctx.raw)}`;
+                            return '';
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                yLeft: {
+                    position: 'left',
+                    grid: { color: 'rgba(0,0,0,0.04)' },
+                    ticks: { font: { size: 11 }, callback: v => fCurShort(v) },
+                },
+                yRight: {
+                    position: 'right',
+                    grid: { display: false },
+                    ticks: { font: { size: 11 }, callback: v => v.toFixed(0) + '%' },
+                },
+            },
+        },
+    });
+}
+
+function toggleMetric(metric) {
+    visibleMetrics[metric] = !visibleMetrics[metric];
+    const btn = document.getElementById(`toggle-${metric}`);
+    if (visibleMetrics[metric]) {
+        btn.style.background = 'var(--meta-blue)';
+        btn.style.color = '#fff';
+    } else {
+        btn.style.background = '';
+        btn.style.color = '';
+    }
+    if (lineChartInst) {
+        const ds = lineChartInst.data.datasets.find(d => d.id === metric);
+        if (ds) {
+            ds.hidden = !visibleMetrics[metric];
+            lineChartInst.update();
+        }
+    }
+}
+
+// ═══════════════════════════════════════
+//  RENDER DONUT CHART
+// ═══════════════════════════════════════
+function renderDonutChart(insightsMap) {
+    const ctx = document.getElementById('donutChart').getContext('2d');
+    if (donutChartInst) donutChartInst.destroy();
+
+    const items = Object.values(insightsMap)
+        .filter(i => parseFloat(i.spend || 0) > 0)
+        .sort((a, b) => parseFloat(b.spend) - parseFloat(a.spend))
+        .slice(0, 8);
+
+    if (items.length === 0) {
+        document.getElementById('donutNoData').style.display = '';
+        document.getElementById('donutChart').style.display = 'none';
+        return;
+    }
+    document.getElementById('donutNoData').style.display = 'none';
+    document.getElementById('donutChart').style.display = '';
+
+    const palette = ['#1877F2','#42A5F5','#66BB6A','#FFA726','#EF5350','#AB47BC','#26A69A','#EC407A'];
+    const total = items.reduce((s, i) => s + parseFloat(i.spend), 0);
+
+    donutChartInst = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: items.map(i => trunc(i.campaign_name, 22)),
+            datasets: [{
+                data: items.map(i => parseFloat(i.spend || 0)),
+                backgroundColor: palette.slice(0, items.length),
+                borderWidth: 2,
+                borderColor: '#fff',
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '62%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { usePointStyle: true, boxWidth: 7, font: { size: 10 }, padding: 7 },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${fCur(ctx.raw)}  (${((ctx.raw / total) * 100).toFixed(1)}%)`,
+                    },
+                },
+            },
+        },
+    });
+}
+
+// ═══════════════════════════════════════
+//  RENDER CAMPAIGN TABLE
+// ═══════════════════════════════════════
+function renderCampaignTableSkeleton(campaigns) {
+    const rows = campaigns.map(c => {
+        const budget = c.daily_budget
+            ? `일 ${fCur(parseFloat(c.daily_budget))}`
+            : c.lifetime_budget
+            ? `총 ${fCur(parseFloat(c.lifetime_budget))}`
+            : '–';
+        return `
+        <tr data-id="${c.id}" data-name="${esc(c.name)}" onclick="showCampaignDaily(this)">
+            <td>
+                <div class="campaign-name">${esc(c.name)}</div>
+                <div class="campaign-meta">${c.id}</div>
+            </td>
+            <td><span class="s-badge s-${(c.status||'').toLowerCase()}">${statusLabel(c.status)}</span></td>
+            <td style="font-size:12px;">${budget}</td>
+            <td class="text-end text-muted">–</td>
+            <td class="text-end text-muted">–</td>
+            <td class="text-end text-muted">–</td>
+            <td class="text-end text-muted">–</td>
+            <td class="text-end text-muted">–</td>
+            <td class="text-end text-muted">–</td>
+            <td class="text-end text-muted">–</td>
+            <td class="text-end text-muted">–</td>
+        </tr>
+        `;
+    }).join('');
+    document.getElementById('campaignTbody').innerHTML = rows;
+    document.getElementById('campaignBadge').textContent = `${campaigns.length}개`;
+}
+
+function renderCampaignTable(campaigns, insightsMap) {
+    const sf = state.statusFilter;
+    const filtered = sf ? campaigns.filter(c => c.status === sf) : campaigns;
+
+    const PTYPES = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
+    let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0;
+
+    const rows = filtered.map(c => {
+        const ins = insightsMap[c.id] || {};
+        const spend    = parseFloat(ins.spend || 0);
+        const impr     = parseInt(ins.impressions || 0);
+        const clicks   = parseInt(ins.clicks || 0);
+        const convVal  = findAction(ins.action_values, PTYPES);
+        const results  = findAction(ins.actions, PTYPES);
+        const roasItem = (ins.purchase_roas || []).find(a => PTYPES.includes(a.action_type));
+        const roas     = roasItem ? (parseFloat(roasItem.value) * 100).toFixed(1) + '%' : '–';
+        const cpr      = results > 0 ? fCur(spend / results) : '–';
+        const budget   = c.daily_budget
+            ? `일 ${fCur(parseFloat(c.daily_budget))}`
+            : c.lifetime_budget
+            ? `총 ${fCur(parseFloat(c.lifetime_budget))}`
+            : '–';
+
+        totSpend += spend; totConvVal += convVal; totResults += results;
+        totImpr += impr; totClicks += clicks;
+
+        return `
+            <tr data-id="${c.id}" data-name="${esc(c.name)}" onclick="showCampaignDaily(this)">
+                <td>
+                    <div class="campaign-name">${esc(c.name)}</div>
+                    <div class="campaign-meta">${c.id}</div>
+                </td>
+                <td><span class="s-badge s-${(c.status||'').toLowerCase()}">${statusLabel(c.status)}</span></td>
+                <td style="font-size:12px;">${budget}</td>
+                <td class="text-end fw-semibold">${spend ? fCur(spend) : '–'}</td>
+                <td class="text-end">${convVal ? fCur(convVal) : '–'}</td>
+                <td class="text-end">${results ? fNum(results) : '–'}</td>
+                <td class="text-end">${cpr}</td>
+                <td class="text-end">${roas}</td>
+                <td class="text-end">${ins.ctr ? parseFloat(ins.ctr).toFixed(2) + '%' : '–'}</td>
+                <td class="text-end">${ins.cpc ? fCur(parseFloat(ins.cpc)) : '–'}</td>
+                <td class="text-end">${ins.cpm ? fCur(parseFloat(ins.cpm)) : '–'}</td>
+            </tr>
+        `;
+    }).join('');
+
+    document.getElementById('campaignTbody').innerHTML = rows;
+    document.getElementById('campaignBadge').textContent = `${filtered.length}개`;
+    document.getElementById('noData').style.display = filtered.length === 0 ? '' : 'none';
+
+    if (filtered.length > 1 && totSpend > 0) {
+        const totCtr  = totImpr > 0 ? (totClicks / totImpr * 100).toFixed(2) + '%' : '–';
+        const totRoas = totConvVal > 0 ? (totConvVal / totSpend * 100).toFixed(1) + '%' : '–';
+        document.getElementById('campaignTfoot').innerHTML = `
+            <tr class="total-row">
+                <td colspan="3">합계</td>
+                <td class="text-end">${fCur(totSpend)}</td>
+                <td class="text-end">${totConvVal ? fCur(totConvVal) : '–'}</td>
+                <td class="text-end">${totResults ? fNum(totResults) : '–'}</td>
+                <td class="text-end">${totResults ? fCur(totSpend / totResults) : '–'}</td>
+                <td class="text-end">${totRoas}</td>
+                <td class="text-end">${totCtr}</td>
+                <td class="text-end">${totClicks ? fCur(totSpend / totClicks) : '–'}</td>
+                <td class="text-end">${totImpr ? fCur(totSpend / totImpr * 1000) : '–'}</td>
+            </tr>
+        `;
+    } else {
+        document.getElementById('campaignTfoot').innerHTML = '';
+    }
+}
+
+// ═══════════════════════════════════════
+//  EVENT HANDLERS
+// ═══════════════════════════════════════
+async function onAccountChange(id) {
+    const sel = document.getElementById('adAccountSelect');
+    const opt = sel.options[sel.selectedIndex];
+    state.accountId = id;
+    state.currency = opt.dataset.currency || 'KRW';
+    setBadge(opt.text);
+    await loadAll();
+}
+
+async function onDatePresetChange(preset) {
+    state.datePreset = preset;
+    state.customRange = { since: null, until: null };
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    document.getElementById('applyBtn').disabled = true;
+    document.getElementById('filterBar').classList.remove('custom-range-active');
+    await loadAll();
+}
+
+function onCustomDateInput() {
+    const since = document.getElementById('dateFrom').value;
+    const until = document.getElementById('dateTo').value;
+    document.getElementById('applyBtn').disabled = !(since && until && since <= until);
+}
+
+async function onCustomRangeApply() {
+    const since = document.getElementById('dateFrom').value;
+    const until = document.getElementById('dateTo').value;
+    if (!since || !until || since > until) return;
+    state.customRange = { since, until };
+    document.getElementById('datePreset').value = '';
+    document.getElementById('filterBar').classList.add('custom-range-active');
+    await loadAll();
+}
+
+function onStatusFilter(val) {
+    state.statusFilter = val;
+    renderCampaignTable(state.campaigns, state.campaignInsights);
+}
+
+async function refreshData() { await loadAll(); }
+
+// ═══════════════════════════════════════
+//  TOKEN MODAL
+// ═══════════════════════════════════════
+function openTokenModal() {
+    document.getElementById('tokenInput').value = ACCESS_TOKEN;
+    document.getElementById('tokenError').style.display = 'none';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('tokenModal')).show();
+}
+
+async function saveToken() {
+    const raw = document.getElementById('tokenInput').value.trim();
+    const errEl = document.getElementById('tokenError');
+    errEl.style.display = 'none';
+
+    if (!raw || raw.length < 20) {
+        errEl.textContent = '유효한 Access Token을 입력해주세요.';
+        errEl.style.display = 'block';
+        return;
+    }
+
+    // 토큰 저장
+    ACCESS_TOKEN = raw;
+    localStorage.setItem(TOKEN_KEY, raw);
+
+    // 모달 닫기
+    try {
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('tokenModal')).hide();
+    } catch(_) {}
+
+    // 상태 초기화 후 재시작 (토큰 유효성은 init()에서 자동 검증)
+    state.accountId = null;
+    const sel = document.getElementById('adAccountSelect');
+    sel.style.display = 'none';
+    sel.innerHTML = '';
+    document.getElementById('accountBadge').style.display = 'none';
+    document.getElementById('filterBar').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'none';
+    hideError();
+    showLoading(true);
+    await init();
+}
+
+// ═══════════════════════════════════════
+//  CAMPAIGN DETAIL PANEL (일별 + 소재별)
+// ═══════════════════════════════════════
+let campaignDailyChartInst = null;
+let currentCampaignId = null;
+let creativeTabLoaded   = false;
+
+async function showCampaignDaily(row) {
+    const id   = row.dataset.id;
+    const name = row.dataset.name;
+    if (currentCampaignId === id && document.getElementById('campaignDailyPanel').style.display !== 'none') {
+        return; // 같은 캠페인 재클릭 시 무시
+    }
+
+    currentCampaignId  = id;
+    creativeTabLoaded  = false;
+
+    document.querySelectorAll('#campaignTbody tr').forEach(tr => {
+        tr.classList.toggle('row-selected', tr === row);
+    });
+
+    document.getElementById('dailyPanelTitle').textContent = name;
+    document.getElementById('dailyPanelMeta').textContent  = periodLabel();
+    switchTab('daily', /*skipLoad=*/true);
+
+    const panel = document.getElementById('campaignDailyPanel');
+    panel.style.display = '';
+    setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+
+    if (campaignDailyChartInst) { campaignDailyChartInst.destroy(); campaignDailyChartInst = null; }
+    document.getElementById('dailyPanelLoading').style.display = '';
+    document.getElementById('dailyPanelContent').style.display = 'none';
+
+    try {
+        const data = await api(`/${id}/insights`, {
+            fields: 'date_start,impressions,clicks,spend,ctr,cpc,cpm,actions,action_values,purchase_roas',
+            ...getDateParams(),
+            time_increment: 1,
+        });
+        const daily = (data.data || []).sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+
+        document.getElementById('dailyPanelMeta').textContent = `${periodLabel()} · ${daily.length}일`;
+        document.getElementById('dailyPanelLoading').style.display = 'none';
+
+        if (daily.length === 0) {
+            document.getElementById('dailyPanelContent').innerHTML =
+                '<div class="no-data"><i class="bi bi-inbox"></i>해당 기간에 성과 데이터가 없습니다</div>';
+            document.getElementById('dailyPanelContent').style.display = '';
+            return;
+        }
+        renderDailyKPI(daily);
+        renderCampaignDailyChart(daily);
+        renderDailyTable(daily);
+        document.getElementById('dailyPanelContent').style.display = '';
+    } catch(e) {
+        document.getElementById('dailyPanelLoading').style.display = 'none';
+        document.getElementById('dailyPanelMeta').textContent = `오류: ${e.message}`;
+    }
+}
+
+function closeCampaignDaily() {
+    const panel = document.getElementById('campaignDailyPanel');
+    if (panel) panel.style.display = 'none';
+    document.querySelectorAll('#campaignTbody tr').forEach(tr => tr.classList.remove('row-selected'));
+    if (campaignDailyChartInst) { campaignDailyChartInst.destroy(); campaignDailyChartInst = null; }
+    currentCampaignId = null;
+    creativeTabLoaded = false;
+}
+
+// ── Tab switcher ──
+function switchTab(tab, skipLoad) {
+    document.getElementById('tab-btn-daily').classList.toggle('active', tab === 'daily');
+    document.getElementById('tab-btn-creative').classList.toggle('active', tab === 'creative');
+    document.getElementById('tabDaily').style.display    = tab === 'daily'    ? '' : 'none';
+    document.getElementById('tabCreative').style.display = tab === 'creative' ? '' : 'none';
+
+    if (tab === 'creative' && !skipLoad && !creativeTabLoaded && currentCampaignId) {
+        loadCreativeTab(currentCampaignId);
+    }
+}
+
+// ── 소재별 성과 로드 ──
+async function loadCreativeTab(campaignId) {
+    document.getElementById('creativeLoading').style.display = '';
+    document.getElementById('creativeContent').style.display = 'none';
+
+    try {
+        // 광고 insights + 광고 정보(썸네일 포함) 병렬 요청
+        const [insData, adsData] = await Promise.all([
+            api(`/${campaignId}/insights`, {
+                fields: 'ad_id,ad_name,adset_id,adset_name,impressions,clicks,spend,ctr,cpc,cpm,actions,action_values,purchase_roas',
+                ...getDateParams(),
+                level: 'ad',
+                limit: 200,
+            }),
+            api(`/${campaignId}/ads`, {
+                fields: 'id,name,status,creative{thumbnail_url,title,body}',
+                limit: 200,
+            }),
+        ]);
+
+        const insights = insData.data || [];
+        const adsArr   = adsData.data || [];
+
+        // ad ID → {status, thumbnail_url, title}
+        const adMap = {};
+        adsArr.forEach(a => {
+            adMap[a.id] = {
+                status: a.status,
+                thumb:  a.creative?.thumbnail_url || null,
+                title:  a.creative?.title || null,
+            };
+        });
+
+        document.getElementById('creativeLoading').style.display = 'none';
+        renderCreativeKPI(insights);
+        renderCreativeTable(insights, adMap);
+        document.getElementById('creativeContent').style.display = '';
+        creativeTabLoaded = true;
+    } catch(e) {
+        document.getElementById('creativeLoading').innerHTML =
+            `<div class="error-box" style="display:block;"><i class="bi bi-exclamation-triangle-fill me-2"></i>오류: ${e.message}</div>`;
+    }
+}
+
+// ── 소재별 KPI 요약 ──
+function renderCreativeKPI(insights) {
+    const PTYPES     = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
+    const totSpend   = insights.reduce((s, d) => s + parseFloat(d.spend || 0), 0);
+    const totConvVal = insights.reduce((s, d) => s + findAction(d.action_values, PTYPES), 0);
+    const totResults = insights.reduce((s, d) => s + findAction(d.actions, PTYPES), 0);
+    const cpr  = totResults > 0 ? fCur(totSpend / totResults) : '–';
+    const roas = totConvVal > 0 ? (totConvVal / totSpend * 100).toFixed(1) + '%' : '–';
+
+    const kpis = [
+        { label: '소재 수',     value: insights.length + '개',           icon: 'bi-images',       bg: '#e8f4fd', color: '#1877F2' },
+        { label: '총 지출',     value: fCur(totSpend),                   icon: 'bi-cash-coin',    bg: '#f0fdf4', color: '#16a34a' },
+        { label: '구매전환값',  value: totConvVal ? fCur(totConvVal) : '–', icon: 'bi-bag-check',  bg: '#fefce8', color: '#ca8a04' },
+        { label: '결과',        value: totResults ? fNum(totResults) : '–', icon: 'bi-check-circle', bg: '#fdf4ff', color: '#9333ea' },
+        { label: '결과당 비용', value: cpr,                              icon: 'bi-cursor-fill',  bg: '#fff7ed', color: '#ea580c' },
+        { label: '구매 ROAS',   value: roas,                             icon: 'bi-graph-up-arrow', bg: '#fef2f2', color: '#dc2626' },
+    ];
+    document.getElementById('creativeKpiRow').innerHTML = kpis.map(k => `
+        <div class="col-xl-2 col-lg-4 col-md-4 col-6">
+            <div class="daily-kpi-item">
+                <div class="daily-kpi-icon" style="background:${k.bg};color:${k.color};">
+                    <i class="bi ${k.icon}"></i>
+                </div>
+                <div>
+                    <div class="daily-kpi-label">${k.label}</div>
+                    <div class="daily-kpi-value">${k.value}</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ── 소재별 테이블 ──
+function renderCreativeTable(insights, adMap) {
+    if (insights.length === 0) {
+        document.getElementById('creativeNoData').style.display = '';
+        document.getElementById('creativeTable').style.display = 'none';
+        return;
+    }
+    document.getElementById('creativeNoData').style.display = 'none';
+    document.getElementById('creativeTable').style.display  = '';
+
+    const PTYPES   = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
+    const maxSpend = Math.max(...insights.map(i => parseFloat(i.spend || 0)), 1);
+    let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0;
+
+    // 지출 내림차순 정렬
+    const sorted = [...insights].sort((a, b) => parseFloat(b.spend || 0) - parseFloat(a.spend || 0));
+
+    const rows = sorted.map(ins => {
+        const spend   = parseFloat(ins.spend || 0);
+        const impr    = parseInt(ins.impressions || 0);
+        const clicks  = parseInt(ins.clicks || 0);
+        const convVal = findAction(ins.action_values, PTYPES);
+        const results = findAction(ins.actions, PTYPES);
+        const roasItem = (ins.purchase_roas || []).find(a => PTYPES.includes(a.action_type));
+        const roas    = roasItem ? (parseFloat(roasItem.value) * 100).toFixed(1) + '%' : '–';
+        const cpr     = results > 0 ? fCur(spend / results) : '–';
+        const ctr     = ins.ctr ? parseFloat(ins.ctr).toFixed(2) + '%' : (impr > 0 ? (clicks/impr*100).toFixed(2)+'%' : '–');
+        const cpc     = ins.cpc ? fCur(parseFloat(ins.cpc)) : (clicks ? fCur(spend/clicks) : '–');
+        const cpm     = ins.cpm ? fCur(parseFloat(ins.cpm)) : (impr ? fCur(spend/impr*1000) : '–');
+        const ad      = adMap[ins.ad_id] || {};
+        const pct     = maxSpend > 0 ? (spend / maxSpend * 100).toFixed(1) : 0;
+        const thumb   = ad.thumb
+            ? `<img src="${ad.thumb}" class="creative-thumb" onerror="this.parentNode.innerHTML='<div class=creative-thumb-placeholder><i class=bi bi-image></i></div>'">`
+            : `<div class="creative-thumb-placeholder"><i class="bi bi-image"></i></div>`;
+        const statusStr = ad.status || '';
+        totSpend += spend; totConvVal += convVal; totResults += results;
+        totImpr += impr; totClicks += clicks;
+
+        return `
+            <tr>
+                <td style="padding:8px 12px;">${thumb}</td>
+                <td class="ad-name-cell">
+                    <div class="ad-name">${esc(ins.ad_name)}</div>
+                    <div class="ad-sub"><i class="bi bi-collection me-1"></i>${esc(ins.adset_name || '–')}</div>
+                    <div class="ad-sub" style="color:#aaa;">${ins.ad_id}</div>
+                </td>
+                <td><span class="s-badge s-${statusStr.toLowerCase()}">${statusLabel(statusStr) || '–'}</span></td>
+                <td class="text-end">
+                    <div class="spend-bar-wrap">
+                        <span class="fw-semibold">${spend ? fCur(spend) : '–'}</span>
+                        <div class="spend-bar"><div class="spend-bar-fill" style="width:${pct}%"></div></div>
+                    </div>
+                </td>
+                <td class="text-end">${convVal ? fCur(convVal) : '–'}</td>
+                <td class="text-end">${results ? fNum(results) : '–'}</td>
+                <td class="text-end">${cpr}</td>
+                <td class="text-end">${roas}</td>
+                <td class="text-end">${ctr}</td>
+                <td class="text-end">${cpc}</td>
+                <td class="text-end">${cpm}</td>
+            </tr>
+        `;
+    }).join('');
+
+    document.getElementById('creativeTableBody').innerHTML = rows;
+
+    const totCtr  = totImpr > 0 ? (totClicks/totImpr*100).toFixed(2) + '%' : '–';
+    const totRoas = totConvVal > 0 ? (totConvVal/totSpend*100).toFixed(1) + '%' : '–';
+    document.getElementById('creativeTableFoot').innerHTML = `
+        <tr class="total-row">
+            <td colspan="3">합계 (${sorted.length}개 소재)</td>
+            <td class="text-end">${fCur(totSpend)}</td>
+            <td class="text-end">${totConvVal ? fCur(totConvVal) : '–'}</td>
+            <td class="text-end">${totResults ? fNum(totResults) : '–'}</td>
+            <td class="text-end">${totResults ? fCur(totSpend/totResults) : '–'}</td>
+            <td class="text-end">${totRoas}</td>
+            <td class="text-end">${totCtr}</td>
+            <td class="text-end">${totClicks ? fCur(totSpend/totClicks) : '–'}</td>
+            <td class="text-end">${totImpr ? fCur(totSpend/totImpr*1000) : '–'}</td>
+        </tr>
+    `;
+}
+
+function renderDailyKPI(daily) {
+    const PTYPES    = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
+    const totSpend  = daily.reduce((s, d) => s + parseFloat(d.spend || 0), 0);
+    const totImpr   = daily.reduce((s, d) => s + parseInt(d.impressions || 0), 0);
+    const totClicks = daily.reduce((s, d) => s + parseInt(d.clicks || 0), 0);
+    const totConvVal = daily.reduce((s, d) => s + findAction(d.action_values, PTYPES), 0);
+    const totResults = daily.reduce((s, d) => s + findAction(d.actions, PTYPES), 0);
+    const cpr  = totResults > 0 ? fCur(totSpend / totResults) : '–';
+    const roas = totConvVal > 0 ? (totConvVal / totSpend * 100).toFixed(1) + '%' : '–';
+    const ctr  = totImpr > 0 ? (totClicks / totImpr * 100).toFixed(2) + '%' : '–';
+
+    const kpis = [
+        { label: '총 지출',      value: fCur(totSpend),   icon: 'bi-cash-coin',        bg: '#e8f4fd', color: '#1877F2' },
+        { label: '구매전환값',   value: totConvVal ? fCur(totConvVal) : '–', icon: 'bi-bag-check', bg: '#f0fdf4', color: '#16a34a' },
+        { label: '결과',         value: totResults ? fNum(totResults) : '–', icon: 'bi-check-circle', bg: '#fefce8', color: '#ca8a04' },
+        { label: '결과당 비용',  value: cpr,              icon: 'bi-cursor-fill',       bg: '#fdf4ff', color: '#9333ea' },
+        { label: '구매 ROAS',    value: roas,             icon: 'bi-graph-up-arrow',    bg: '#fff7ed', color: '#ea580c' },
+        { label: 'CTR',          value: ctr,              icon: 'bi-bar-chart-fill',    bg: '#fef2f2', color: '#dc2626' },
+    ];
+
+    document.getElementById('dailyKpiRow').innerHTML = kpis.map(k => `
+        <div class="col-xl-2 col-lg-4 col-md-4 col-6">
+            <div class="daily-kpi-item">
+                <div class="daily-kpi-icon" style="background:${k.bg}; color:${k.color};">
+                    <i class="bi ${k.icon}"></i>
+                </div>
+                <div>
+                    <div class="daily-kpi-label">${k.label}</div>
+                    <div class="daily-kpi-value">${k.value}</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderCampaignDailyChart(daily) {
+    const ctx = document.getElementById('campaignDailyChart').getContext('2d');
+    if (campaignDailyChartInst) campaignDailyChartInst.destroy();
+
+    const labels = daily.map(d => {
+        const dt = new Date(d.date_start);
+        return `${dt.getMonth()+1}/${dt.getDate()}`;
+    });
+
+    campaignDailyChartInst = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: '지출',
+                    data: daily.map(d => parseFloat(d.spend || 0)),
+                    backgroundColor: 'rgba(24,119,242,0.72)',
+                    borderColor: '#1877F2',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    yAxisID: 'yLeft',
+                    order: 2,
+                },
+                {
+                    label: '결과',
+                    type: 'line',
+                    data: daily.map(d => findAction(d.actions, ['omni_purchase','offsite_conversion.fb_pixel_purchase'])),
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    yAxisID: 'yRight',
+                    order: 1,
+                },
+                {
+                    label: '구매전환값',
+                    type: 'line',
+                    data: daily.map(d => findAction(d.action_values, ['omni_purchase','offsite_conversion.fb_pixel_purchase'])),
+                    borderColor: '#16a34a',
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    yAxisID: 'yLeft',
+                    order: 0,
+                    hidden: true,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { usePointStyle: true, boxWidth: 8, font: { size: 12 } },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            if (ctx.dataset.label === '지출')      return ` 지출: ${fCur(ctx.raw)}`;
+                            if (ctx.dataset.label === '결과')       return ` 결과: ${fNum(ctx.raw)}`;
+                            if (ctx.dataset.label === '구매전환값') return ` 구매전환값: ${fCur(ctx.raw)}`;
+                            return ` ${ctx.dataset.label}: ${ctx.raw}`;
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                yLeft: {
+                    position: 'left',
+                    grid: { color: 'rgba(0,0,0,0.04)' },
+                    ticks: { font: { size: 11 }, callback: v => fCurShort(v) },
+                },
+                yRight: {
+                    position: 'right',
+                    grid: { display: false },
+                    ticks: { font: { size: 11 }, callback: v => fNumShort(v) },
+                },
+            },
+        },
+    });
+}
+
+function renderDailyTable(daily) {
+    const PTYPES = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
+    let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0;
+
+    const rows = daily.map(d => {
+        const spend   = parseFloat(d.spend || 0);
+        const impr    = parseInt(d.impressions || 0);
+        const clicks  = parseInt(d.clicks || 0);
+        const convVal = findAction(d.action_values, PTYPES);
+        const results = findAction(d.actions, PTYPES);
+        const roasItem = (d.purchase_roas || []).find(a => PTYPES.includes(a.action_type));
+        const roas    = roasItem ? (parseFloat(roasItem.value) * 100).toFixed(1) + '%' : '–';
+        const cpr     = results > 0 ? fCur(spend / results) : '–';
+        const ctr     = d.ctr ? parseFloat(d.ctr).toFixed(2) + '%' : (impr > 0 ? (clicks/impr*100).toFixed(2)+'%' : '–');
+        const cpc     = d.cpc ? fCur(parseFloat(d.cpc)) : (clicks ? fCur(spend/clicks) : '–');
+        const cpm     = d.cpm ? fCur(parseFloat(d.cpm)) : (impr ? fCur(spend/impr*1000) : '–');
+        totSpend += spend; totConvVal += convVal; totResults += results;
+        totImpr += impr; totClicks += clicks;
+        return `
+            <tr>
+                <td style="white-space:nowrap;">${formatDate(d.date_start)}</td>
+                <td class="text-end fw-semibold">${spend ? fCur(spend) : '–'}</td>
+                <td class="text-end">${convVal ? fCur(convVal) : '–'}</td>
+                <td class="text-end">${results ? fNum(results) : '–'}</td>
+                <td class="text-end">${cpr}</td>
+                <td class="text-end">${roas}</td>
+                <td class="text-end">${ctr}</td>
+                <td class="text-end">${cpc}</td>
+                <td class="text-end">${cpm}</td>
+            </tr>
+        `;
+    }).join('');
+
+    document.getElementById('dailyTableBody').innerHTML = rows;
+
+    const totCtr  = totImpr > 0 ? (totClicks/totImpr*100).toFixed(2) + '%' : '–';
+    const totRoas = totConvVal > 0 ? (totConvVal/totSpend*100).toFixed(1) + '%' : '–';
+    document.getElementById('dailyTableFoot').innerHTML = `
+        <tr class="total-row">
+            <td>합계 (${daily.length}일)</td>
+            <td class="text-end">${fCur(totSpend)}</td>
+            <td class="text-end">${totConvVal ? fCur(totConvVal) : '–'}</td>
+            <td class="text-end">${totResults ? fNum(totResults) : '–'}</td>
+            <td class="text-end">${totResults ? fCur(totSpend/totResults) : '–'}</td>
+            <td class="text-end">${totRoas}</td>
+            <td class="text-end">${totCtr}</td>
+            <td class="text-end">${totClicks ? fCur(totSpend/totClicks) : '–'}</td>
+            <td class="text-end">${totImpr ? fCur(totSpend/totImpr*1000) : '–'}</td>
+        </tr>
+    `;
+}
+
+function periodLabel() {
+    const { since, until } = state.customRange;
+    if (since && until) return `${since} ~ ${until}`;
+    const m = {
+        today: '오늘', yesterday: '어제', last_7d: '최근 7일', last_14d: '최근 14일',
+        last_30d: '최근 30일', this_month: '이번 달', last_month: '지난 달', last_90d: '최근 90일',
+    };
+    return m[state.datePreset] || state.datePreset;
+}
+
+function formatDate(s) {
+    if (!s) return '–';
+    const d = new Date(s + 'T00:00:00');
+    return `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`;
+}
+
+// ═══════════════════════════════════════
+//  FORMAT HELPERS
+// ═══════════════════════════════════════
+function fCur(v) {
+    if (isNaN(v) || v === null) return '–';
+    if (state.currency === 'KRW' || state.currency === 'krw') {
+        return '₩' + Math.round(v).toLocaleString('ko-KR');
+    }
+    return '$' + parseFloat(v).toFixed(2).toLocaleString('en-US', { minimumFractionDigits: 2 });
+}
+function fCurShort(v) {
+    if (state.currency === 'KRW') {
+        if (v >= 1000000) return '₩' + (v/1000000).toFixed(1) + 'M';
+        if (v >= 1000) return '₩' + (v/1000).toFixed(0) + 'K';
+        return '₩' + Math.round(v);
+    }
+    if (v >= 1000) return '$' + (v/1000).toFixed(1) + 'K';
+    return '$' + v.toFixed(0);
+}
+function fNum(v) {
+    if (isNaN(v)) return '–';
+    return parseInt(v).toLocaleString('ko-KR');
+}
+function fNumShort(v) {
+    if (v >= 1000000) return (v/1000000).toFixed(1) + 'M';
+    if (v >= 1000) return (v/1000).toFixed(0) + 'K';
+    return v.toString();
+}
+function statusLabel(s) {
+    return { ACTIVE: '활성', PAUSED: '일시중지', ARCHIVED: '보관됨', DELETED: '삭제됨', PENDING_REVIEW: '검토중' }[s] || (s || '–');
+}
+function objLabel(o) {
+    const m = {
+        OUTCOME_TRAFFIC: '트래픽', OUTCOME_AWARENESS: '인지도', OUTCOME_ENGAGEMENT: '참여',
+        OUTCOME_LEADS: '잠재고객', OUTCOME_SALES: '판매', OUTCOME_APP_PROMOTION: '앱 홍보',
+        LINK_CLICKS: '링크 클릭', CONVERSIONS: '전환', REACH: '도달', BRAND_AWARENESS: '브랜드 인지도',
+        VIDEO_VIEWS: '동영상 조회', LEAD_GENERATION: '잠재고객 확보', APP_INSTALLS: '앱 설치',
+        MESSAGES: '메시지', PAGE_LIKES: '페이지 좋아요',
+    };
+    return m[o] || (o || '–');
+}
+function findAction(arr, types) {
+    if (!Array.isArray(arr) || arr.length === 0) return 0;
+    const found = arr.find(a => types.includes(a.action_type));
+    return found ? parseFloat(found.value) : 0;
+}
+function trunc(s, n) { return s && s.length > n ? s.slice(0, n) + '…' : (s || ''); }
+function esc(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════
+//  UI STATE
+// ═══════════════════════════════════════
+function showLoading(v) {
+    document.getElementById('loadingBox').style.display = v ? '' : 'none';
+}
+function showDashboard() {
+    document.getElementById('dashboard').style.display = '';
+}
+function showError(msg) {
+    const isExpired = /code\s*190|Session has expired|Invalid OAuth/i.test(msg);
+    const isPermission = /code\s*100|code\s*10[0-9]\b/i.test(msg);
+    const tokenHint = ACCESS_TOKEN ? `현재 토큰: ${ACCESS_TOKEN.slice(0, 20)}…` : '토큰 없음';
+
+    const box = document.getElementById('errorBox');
+    if (isExpired) {
+        document.getElementById('errorMsg').innerHTML =
+            `<strong>Access Token이 만료됐습니다.</strong><br>` +
+            `<span style="font-size:12px;">${msg}</span><br>` +
+            `<span style="font-size:11px;color:#9b1c1c;">${tokenHint}</span><br>` +
+            `<button onclick="openTokenModal()" class="btn-meta" style="margin-top:10px;padding:6px 16px;font-size:13px;">` +
+            `<i class="bi bi-key me-1"></i>새 토큰 입력하기</button>`;
+    } else if (isPermission) {
+        document.getElementById('errorMsg').innerHTML =
+            `<strong>API 오류 (권한 또는 계정 문제)</strong><br>` +
+            `<span style="font-size:12px;">${msg}</span><br>` +
+            `<span style="font-size:11px;color:#9b1c1c;">${tokenHint}</span><br>` +
+            `<button onclick="openTokenModal()" class="btn-meta" style="margin-top:10px;padding:6px 16px;font-size:13px;">` +
+            `<i class="bi bi-key me-1"></i>토큰 변경하기</button>`;
+    } else {
+        document.getElementById('errorMsg').innerHTML =
+            `${msg}<br><span style="font-size:11px;color:#9b1c1c;">${tokenHint}</span>`;
+    }
+    box.style.display = 'block';
+    document.getElementById('dashboard').style.display = 'none';
+    showLoading(false);
+
+    if (isExpired) {
+        setTimeout(() => openTokenModal(), 300);
+    }
+}
+function hideError() {
+    document.getElementById('errorBox').style.display = 'none';
+}
+function setBadge(name) {
+    const b = document.getElementById('accountBadge');
+    b.textContent = name;
+    b.style.display = '';
+}
+
+// ── set initial toggle button style ──
+document.getElementById('toggle-spend').style.background = 'var(--meta-blue)';
+document.getElementById('toggle-spend').style.color = '#fff';
+
+// ── PASSWORD ──
+const DASHBOARD_PW = 'sky240722@';
+
+function checkPassword() {
+    const input = document.getElementById('pwInput').value;
+    if (input === DASHBOARD_PW) {
+        sessionStorage.setItem('pw_ok', '1');
+        document.getElementById('passwordScreen').style.display = 'none';
+        init();
+    } else {
+        document.getElementById('pwError').style.display = 'block';
+        document.getElementById('pwInput').value = '';
+        document.getElementById('pwInput').focus();
+    }
+}
+
+// ── START ──
+if (sessionStorage.getItem('pw_ok') === '1') {
+    document.getElementById('passwordScreen').style.display = 'none';
+    init();
+} else {
+    showLoading(false);
+    document.getElementById('pwInput').focus();
+}
+</script>
+</body>
+</html>

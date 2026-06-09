@@ -1486,7 +1486,7 @@ function renderCreativeTable(insights, adMap) {
         totImpr += impr; totClicks += clicks;
 
         return `
-            <tr data-ad-id="${ins.ad_id}" data-ad-name="${esc(ins.ad_name)}" onclick="toggleAdDaily(this)">
+            <tr data-ad-id="${ins.ad_id}" data-ad-name="${esc(ins.ad_name)}">
                 <td style="padding:8px 12px;">${thumb}</td>
                 <td class="ad-name-cell">
                     <div class="ad-name">${esc(ins.ad_name)} <i class="bi bi-chevron-down" style="font-size:10px;color:var(--text-secondary);margin-left:4px;"></i></div>

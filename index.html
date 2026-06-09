@@ -1513,6 +1513,11 @@ function renderCreativeTable(insights, adMap) {
 
     document.getElementById('creativeTableBody').innerHTML = rows;
 
+    // onclick을 addEventListener로 바인딩 (innerHTML 후 이벤트 등록이 더 안정적)
+    document.querySelectorAll('#creativeTableBody tr[data-ad-id]').forEach(tr => {
+        tr.addEventListener('click', () => toggleAdDaily(tr));
+    });
+
     const totCtr  = totImpr > 0 ? (totClicks/totImpr*100).toFixed(2) + '%' : '–';
     const totRoas = totConvVal > 0 ? (totConvVal/totSpend*100).toFixed(1) + '%' : '–';
     document.getElementById('creativeTableFoot').innerHTML = `

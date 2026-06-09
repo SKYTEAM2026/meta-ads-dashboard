@@ -1565,6 +1565,7 @@ async function toggleAdDaily(row) {
         const data = await api(`/${adId}/insights`, {
             fields: 'date_start,impressions,clicks,spend,ctr,cpc,cpm,actions,action_values,purchase_roas',
             ...getDateParams(),
+            level: 'ad',
             time_increment: 1,
         });
         const daily = (data.data || []).sort((a, b) => new Date(a.date_start) - new Date(b.date_start));

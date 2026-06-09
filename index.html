@@ -1555,6 +1555,8 @@ async function toggleAdDaily(row) {
     });
 
     row.classList.add('row-selected');
+    const chevron = row.querySelector('.bi-chevron-down');
+    if (chevron) chevron.className = 'bi bi-chevron-up';
 
     const loadingRow = document.createElement('tr');
     loadingRow.id = `ad-daily-${adId}`;

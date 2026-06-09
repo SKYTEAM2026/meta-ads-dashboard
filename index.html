@@ -1541,12 +1541,18 @@ async function toggleAdDaily(row) {
     if (existingExpanded) {
         existingExpanded.remove();
         row.classList.remove('row-selected');
+        const icon = row.querySelector('.bi-chevron-up');
+        if (icon) icon.className = 'bi bi-chevron-down';
         return;
     }
 
     // 다른 열린 행 닫기
     document.querySelectorAll('.ad-daily-expanded').forEach(el => el.remove());
-    document.querySelectorAll('#creativeTableBody tr').forEach(tr => tr.classList.remove('row-selected'));
+    document.querySelectorAll('#creativeTableBody tr[data-ad-id]').forEach(tr => {
+        tr.classList.remove('row-selected');
+        const icon = tr.querySelector('.bi-chevron-up');
+        if (icon) icon.className = 'bi bi-chevron-down';
+    });
 
     row.classList.add('row-selected');
 

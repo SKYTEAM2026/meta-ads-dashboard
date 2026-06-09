@@ -334,6 +334,25 @@
         .spend-bar-wrap { display:flex; align-items:center; gap:8px; }
         .spend-bar { flex:1; height:5px; background:#e4e6ea; border-radius:3px; min-width:60px; }
         .spend-bar-fill { height:100%; border-radius:3px; background:var(--meta-blue); }
+        /* ── Ad daily expanded row ── */
+        .ad-daily-cell {
+            background: #f0f9ff;
+            padding: 16px 20px !important;
+            border-top: 2px solid var(--meta-blue-light) !important;
+            border-bottom: 2px solid var(--meta-blue-light) !important;
+        }
+        .ad-daily-header {
+            font-size: 13px;
+            color: var(--meta-blue);
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ad-daily-expanded td { cursor: default !important; }
+        #creativeTableBody tr { cursor: pointer; }
+        #creativeTableBody tr:hover { background: var(--meta-blue-light); }
         .filter-divider {
             color: var(--border);
             font-size: 20px;
@@ -1350,6 +1369,7 @@ function switchTab(tab, skipLoad) {
 
 // ── 소재별 성과 로드 ──
 async function loadCreativeTab(campaignId) {
+    document.querySelectorAll('.ad-daily-expanded').forEach(el => el.remove());
     document.getElementById('creativeLoading').style.display = '';
     document.getElementById('creativeContent').style.display = 'none';
 
@@ -1463,7 +1483,7 @@ function renderCreativeTable(insights, adMap) {
         totImpr += impr; totClicks += clicks;
 
         return `
-            <tr>
+            <tr data-ad-id="${ins.ad_id}" data-ad-name="${esc(ins.ad_name)}" onclick="toggleAdDaily(this)">
                 <td style="padding:8px 12px;">${thumb}</td>
                 <td class="ad-name-cell">
                     <div class="ad-name">${esc(ins.ad_name)}</div>
@@ -1504,6 +1524,143 @@ function renderCreativeTable(insights, adMap) {
             <td class="text-end">${totClicks ? fCur(totSpend/totClicks) : '–'}</td>
             <td class="text-end">${totImpr ? fCur(totSpend/totImpr*1000) : '–'}</td>
         </tr>
+    `;
+}
+
+// ── 소재 일별 성과 토글 (아코디언) ──
+async function toggleAdDaily(row) {
+    const adId   = row.dataset.adId;
+    const adName = row.dataset.adName;
+
+    const existingExpanded = document.getElementById(`ad-daily-${adId}`);
+
+    // 이미 열려 있으면 닫기
+    if (existingExpanded) {
+        existingExpanded.remove();
+        row.classList.remove('row-selected');
+        return;
+    }
+
+    // 다른 열린 행 닫기
+    document.querySelectorAll('.ad-daily-expanded').forEach(el => el.remove());
+    document.querySelectorAll('#creativeTableBody tr').forEach(tr => tr.classList.remove('row-selected'));
+
+    row.classList.add('row-selected');
+
+    const loadingRow = document.createElement('tr');
+    loadingRow.id = `ad-daily-${adId}`;
+    loadingRow.className = 'ad-daily-expanded';
+    loadingRow.innerHTML = `
+        <td colspan="11" class="ad-daily-cell" style="text-align:center;padding:24px!important;">
+            <div class="panel-spinner mx-auto mb-2"></div>
+            <div style="font-size:12px;color:var(--text-secondary);">소재 일별 데이터 불러오는 중...</div>
+        </td>
+    `;
+    row.after(loadingRow);
+
+    try {
+        const data = await api(`/${adId}/insights`, {
+            fields: 'date_start,impressions,clicks,spend,ctr,cpc,cpm,actions,action_values,purchase_roas',
+            ...getDateParams(),
+            time_increment: 1,
+        });
+        const daily = (data.data || []).sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+
+        const expanded = document.getElementById(`ad-daily-${adId}`);
+        if (!expanded) return;
+
+        expanded.innerHTML = `
+            <td colspan="11" class="ad-daily-cell">
+                <div class="ad-daily-header">
+                    <i class="bi bi-calendar3"></i>${esc(adName)} · 일별 성과
+                    <span style="font-size:11px;font-weight:400;color:var(--text-secondary);margin-left:6px;">${periodLabel()}</span>
+                </div>
+                ${daily.length === 0
+                    ? '<div class="no-data" style="padding:20px 0;"><i class="bi bi-inbox"></i>해당 기간에 데이터가 없습니다</div>'
+                    : renderAdDailyTable(daily)
+                }
+            </td>
+        `;
+    } catch(e) {
+        const expanded = document.getElementById(`ad-daily-${adId}`);
+        if (expanded) {
+            expanded.innerHTML = `
+                <td colspan="11" class="ad-daily-cell">
+                    <div class="error-box" style="display:block;margin:0;">오류: ${e.message}</div>
+                </td>
+            `;
+        }
+    }
+}
+
+function renderAdDailyTable(daily) {
+    const PTYPES = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
+    let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0;
+
+    const rows = daily.map(d => {
+        const spend   = parseFloat(d.spend || 0);
+        const impr    = parseInt(d.impressions || 0);
+        const clicks  = parseInt(d.clicks || 0);
+        const convVal = findAction(d.action_values, PTYPES);
+        const results = findAction(d.actions, PTYPES);
+        const roasItem = (d.purchase_roas || []).find(a => PTYPES.includes(a.action_type));
+        const roas    = roasItem ? (parseFloat(roasItem.value) * 100).toFixed(1) + '%' : '–';
+        const cpr     = results > 0 ? fCur(spend / results) : '–';
+        const ctr     = d.ctr ? parseFloat(d.ctr).toFixed(2) + '%' : (impr > 0 ? (clicks/impr*100).toFixed(2)+'%' : '–');
+        const cpc     = d.cpc ? fCur(parseFloat(d.cpc)) : (clicks ? fCur(spend/clicks) : '–');
+        const cpm     = d.cpm ? fCur(parseFloat(d.cpm)) : (impr ? fCur(spend/impr*1000) : '–');
+        totSpend += spend; totConvVal += convVal; totResults += results;
+        totImpr += impr; totClicks += clicks;
+        return `
+            <tr>
+                <td style="white-space:nowrap;">${formatDate(d.date_start)}</td>
+                <td class="text-end fw-semibold">${spend ? fCur(spend) : '–'}</td>
+                <td class="text-end">${convVal ? fCur(convVal) : '–'}</td>
+                <td class="text-end">${results ? fNum(results) : '–'}</td>
+                <td class="text-end">${cpr}</td>
+                <td class="text-end">${roas}</td>
+                <td class="text-end">${ctr}</td>
+                <td class="text-end">${cpc}</td>
+                <td class="text-end">${cpm}</td>
+            </tr>
+        `;
+    }).join('');
+
+    const totCtr  = totImpr > 0 ? (totClicks/totImpr*100).toFixed(2) + '%' : '–';
+    const totRoas = totConvVal > 0 ? (totConvVal/totSpend*100).toFixed(1) + '%' : '–';
+
+    return `
+        <div class="table-responsive">
+            <table class="table table-sm mb-0" style="font-size:12px;">
+                <thead>
+                    <tr>
+                        <th>날짜</th>
+                        <th class="text-end">지출금액</th>
+                        <th class="text-end">구매전환값</th>
+                        <th class="text-end">결과</th>
+                        <th class="text-end">결과당 비용</th>
+                        <th class="text-end">구매 ROAS</th>
+                        <th class="text-end">CTR</th>
+                        <th class="text-end">CPC</th>
+                        <th class="text-end">CPM</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+                <tfoot>
+                    <tr class="total-row">
+                        <td>합계 (${daily.length}일)</td>
+                        <td class="text-end">${fCur(totSpend)}</td>
+                        <td class="text-end">${totConvVal ? fCur(totConvVal) : '–'}</td>
+                        <td class="text-end">${totResults ? fNum(totResults) : '–'}</td>
+                        <td class="text-end">${totResults ? fCur(totSpend/totResults) : '–'}</td>
+                        <td class="text-end">${totRoas}</td>
+                        <td class="text-end">${totCtr}</td>
+                        <td class="text-end">${totClicks ? fCur(totSpend/totClicks) : '–'}</td>
+                        <td class="text-end">${totImpr ? fCur(totSpend/totImpr*1000) : '–'}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     `;
 }
 

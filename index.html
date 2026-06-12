@@ -1603,7 +1603,8 @@ function renderCreativeTable(insights, adMap) {
         const ad      = adMap[ins.ad_id] || {};
         // 카페24 실제 ROAS: term 매칭 (기간 내 합산)
         const termData = cafe24MetaByTerm[ins.ad_name];
-        const termRevenue = termData ? Object.values(termData).reduce((s, v) => s + v, 0) : 0;
+        const { since: rSince, until: rUntil } = getActiveDateRange();
+        const termRevenue = termData ? Object.entries(termData).filter(([d]) => d >= rSince && d <= rUntil).reduce((s, [, v]) => s + v, 0) : 0;
         const realRoas = spend > 0 && termRevenue > 0 ? (termRevenue / spend * 100).toFixed(1) + '%' : '–';
         const pct     = maxSpend > 0 ? (spend / maxSpend * 100).toFixed(1) : 0;
         const thumb   = ad.thumb

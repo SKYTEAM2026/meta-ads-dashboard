@@ -56,7 +56,7 @@ jobs:
           echo "주문 조회: ${START_DATE} ~ ${END_DATE}"
 
           ORDERS_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
-            "https://${CAFE24_MALL_ID}.cafe24api.com/api/v2/orders?start_date=${START_DATE}&end_date=${END_DATE}&limit=100&offset=0" \
+            "https://${CAFE24_MALL_ID}.cafe24api.com/api/v2/admin/orders?start_date=${START_DATE}&end_date=${END_DATE}&limit=100&offset=0" \
             -H "Authorization: Bearer ${ACCESS_TOKEN}" \
             -H "Content-Type: application/json")
 

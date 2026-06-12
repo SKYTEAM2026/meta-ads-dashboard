@@ -1508,6 +1508,8 @@ async function loadCreativeTab(campaignId) {
         });
 
         document.getElementById('creativeLoading').style.display = 'none';
+        state.creativeInsights = insights;
+        state.adMap = adMap;
         renderCreativeKPI(insights);
         renderCreativeTable(insights, adMap);
         document.getElementById('creativeContent').style.display = '';

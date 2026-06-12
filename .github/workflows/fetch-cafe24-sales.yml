@@ -1,0 +1,62 @@
+name: Fetch Cafe24 Sales Data
+
+on:
+  schedule:
+    - cron: '0 1 * * *'  # 매일 오전 10시 KST (UTC 01:00)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-sales:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refresh token and fetch orders
+        env:
+          CAFE24_CLIENT_ID: ${{ secrets.CAFE24_CLIENT_ID }}
+          CAFE24_CLIENT_SECRET: ${{ secrets.CAFE24_CLIENT_SECRET }}
+          CAFE24_MALL_ID: ${{ secrets.CAFE24_MALL_ID }}
+          CAFE24_REFRESH_TOKEN: ${{ secrets.CAFE24_REFRESH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          set -e
+
+          # 액세스 토큰 갱신
+          AUTH=$(echo -n "${CAFE24_CLIENT_ID}:${CAFE24_CLIENT_SECRET}" | base64 -w 0)
+          TOKEN_RESPONSE=$(curl -sf -X POST \
+            "https://${CAFE24_MALL_ID}.cafe24api.com/api/v2/oauth/token" \
+            -H "Authorization: Basic ${AUTH}" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "grant_type=refresh_token&refresh_token=${CAFE24_REFRESH_TOKEN}")
+
+          ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
+          NEW_REFRESH_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.refresh_token')
+
+          echo "토큰 갱신 완료"
+
+          # GitHub Secrets의 refresh token 업데이트
+          gh secret set CAFE24_REFRESH_TOKEN --body "$NEW_REFRESH_TOKEN" --repo ${{ github.repository }}
+
+          # 최근 30일 주문 데이터 수집
+          START_DATE=$(date -d '30 days ago' '+%Y-%m-%d')
+          END_DATE=$(date '+%Y-%m-%d')
+
+          ORDERS=$(curl -sf \
+            "https://${CAFE24_MALL_ID}.cafe24api.com/api/v2/orders?start_date=${START_DATE}&end_date=${END_DATE}&limit=500&fields=order_id,order_date,actual_payment_amount,order_status,cancel_date" \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            -H "X-Cafe24-Api-Version: 2024-09-01")
+
+          mkdir -p data
+          echo "$ORDERS" > data/cafe24_sales.json
+          echo "주문 데이터 수집 완료: ${START_DATE} ~ ${END_DATE}"
+
+      - name: Commit sales data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/cafe24_sales.json
+          git diff --staged --quiet || git commit -m "Update Cafe24 sales data $(date '+%Y-%m-%d')"
+          git push

@@ -1004,6 +1004,23 @@ function renderLineChart(daily) {
                     yAxisID: 'yLeft',
                     hidden: !visibleMetrics.cpr,
                 },
+                {
+                    id: 'cafe24roas',
+                    label: '실제 ROAS (카페24)',
+                    data: daily.map(d => {
+                        const spend = parseFloat(d.spend || 0);
+                        const revenue = cafe24RevenueByDate[d.date_start] || 0;
+                        return spend > 0 && revenue > 0 ? (revenue / spend * 100) : 0;
+                    }),
+                    borderColor: '#16a34a',
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                    yAxisID: 'yRight',
+                    hidden: !visibleMetrics.cafe24roas,
+                    borderDash: [5, 3],
+                },
             ],
         },
         options: {

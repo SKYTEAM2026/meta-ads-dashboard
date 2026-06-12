@@ -1580,6 +1580,10 @@ function renderCreativeTable(insights, adMap) {
         const cpc     = ins.cpc ? fCur(parseFloat(ins.cpc)) : (clicks ? fCur(spend/clicks) : '–');
         const cpm     = ins.cpm ? fCur(parseFloat(ins.cpm)) : (impr ? fCur(spend/impr*1000) : '–');
         const ad      = adMap[ins.ad_id] || {};
+        // 카페24 실제 ROAS: term 매칭 (기간 내 합산)
+        const termData = cafe24MetaByTerm[ins.ad_name];
+        const termRevenue = termData ? Object.values(termData).reduce((s, v) => s + v, 0) : 0;
+        const realRoas = spend > 0 && termRevenue > 0 ? (termRevenue / spend * 100).toFixed(1) + '%' : '–';
         const pct     = maxSpend > 0 ? (spend / maxSpend * 100).toFixed(1) : 0;
         const thumb   = ad.thumb
             ? `<img src="${ad.thumb}" class="creative-thumb" onerror="this.parentNode.innerHTML='<div class=creative-thumb-placeholder><i class=bi bi-image></i></div>'">`

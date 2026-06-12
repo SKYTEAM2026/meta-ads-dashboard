@@ -1628,6 +1628,8 @@ function renderCreativeTable(insights, adMap) {
 
     const totCtr  = totImpr > 0 ? (totClicks/totImpr*100).toFixed(2) + '%' : '–';
     const totRoas = totConvVal > 0 ? (totConvVal/totSpend*100).toFixed(1) + '%' : '–';
+    const totMetaRevenue = Object.values(cafe24MetaByDate).reduce((s, v) => s + v, 0);
+    const totRealRoas = totSpend > 0 && totMetaRevenue > 0 ? (totMetaRevenue / totSpend * 100).toFixed(1) + '%' : '–';
     document.getElementById('creativeTableFoot').innerHTML = `
         <tr class="total-row">
             <td colspan="3">합계 (${sorted.length}개 소재)</td>
@@ -1636,6 +1638,7 @@ function renderCreativeTable(insights, adMap) {
             <td class="text-end">${totResults ? fNum(totResults) : '–'}</td>
             <td class="text-end">${totResults ? fCur(totSpend/totResults) : '–'}</td>
             <td class="text-end">${totRoas}</td>
+            <td class="text-end" style="color:${totRealRoas !== '–' ? '#16a34a' : 'inherit'};font-weight:${totRealRoas !== '–' ? '600' : 'normal'};">${totRealRoas}</td>
             <td class="text-end">${totCtr}</td>
             <td class="text-end">${totClicks ? fCur(totSpend/totClicks) : '–'}</td>
             <td class="text-end">${totImpr ? fCur(totSpend/totImpr*1000) : '–'}</td>

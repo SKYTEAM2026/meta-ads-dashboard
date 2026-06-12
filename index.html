@@ -820,6 +820,12 @@ function parseCafe24CSV(text) {
         }
     }
 
+    // localStorage에 저장
+    try {
+        localStorage.setItem('cafe24MetaByDate', JSON.stringify(cafe24MetaByDate));
+        localStorage.setItem('cafe24MetaByTerm', JSON.stringify(cafe24MetaByTerm));
+    } catch(e) {}
+
     // 날짜 범위 표시
     const dates = Object.keys(cafe24MetaByDate).sort();
     const statusEl = document.getElementById('cafe24UploadStatus');
@@ -831,6 +837,22 @@ function parseCafe24CSV(text) {
     // 차트 및 테이블 갱신
     if (state.dailyData) renderLineChart(state.dailyData);
     if (state.creativeInsights) renderCreativeTable(state.creativeInsights, state.adMap || {});
+}
+
+function loadCafe24FromStorage() {
+    try {
+        const byDate = localStorage.getItem('cafe24MetaByDate');
+        const byTerm = localStorage.getItem('cafe24MetaByTerm');
+        if (!byDate || !byTerm) return;
+        cafe24MetaByDate = JSON.parse(byDate);
+        cafe24MetaByTerm = JSON.parse(byTerm);
+        const dates = Object.keys(cafe24MetaByDate).sort();
+        if (dates.length > 0) {
+            const statusEl = document.getElementById('cafe24UploadStatus');
+            statusEl.textContent = `✓ ${dates[0]}~${dates[dates.length-1]} (Meta 매출 로드됨)`;
+            statusEl.style.display = '';
+        }
+    } catch(e) {}
 }
 
 async function fetchCafe24Data() {

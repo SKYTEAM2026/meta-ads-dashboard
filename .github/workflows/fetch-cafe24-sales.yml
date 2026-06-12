@@ -26,14 +26,23 @@ jobs:
 
           # 액세스 토큰 갱신
           AUTH=$(echo -n "${CAFE24_CLIENT_ID}:${CAFE24_CLIENT_SECRET}" | base64 -w 0)
-          TOKEN_RESPONSE=$(curl -sf -X POST \
+          TOKEN_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST \
             "https://${CAFE24_MALL_ID}.cafe24api.com/api/v2/oauth/token" \
             -H "Authorization: Basic ${AUTH}" \
             -H "Content-Type: application/x-www-form-urlencoded" \
             -d "grant_type=refresh_token&refresh_token=${CAFE24_REFRESH_TOKEN}")
 
-          ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
-          NEW_REFRESH_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.refresh_token')
+          HTTP_STATUS=$(echo "$TOKEN_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
+          TOKEN_BODY=$(echo "$TOKEN_RESPONSE" | grep -v "HTTP_STATUS:")
+          echo "토큰 갱신 응답 (HTTP $HTTP_STATUS): $TOKEN_BODY"
+
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "토큰 갱신 실패"
+            exit 1
+          fi
+
+          ACCESS_TOKEN=$(echo "$TOKEN_BODY" | jq -r '.access_token')
+          NEW_REFRESH_TOKEN=$(echo "$TOKEN_BODY" | jq -r '.refresh_token')
 
           echo "토큰 갱신 완료"
 

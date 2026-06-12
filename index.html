@@ -1749,7 +1749,7 @@ async function toggleAdDaily(row) {
                 </div>
                 ${daily.length === 0
                     ? '<div class="no-data" style="padding:20px 0;"><i class="bi bi-inbox"></i>해당 기간에 데이터가 없습니다</div>'
-                    : renderAdDailyTable(daily)
+                    : renderAdDailyTable(daily, adName)
                 }
             </td>
         `;

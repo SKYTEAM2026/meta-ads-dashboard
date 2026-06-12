@@ -750,7 +750,23 @@ function getDateParams() {
 
 let lineChartInst = null;
 let donutChartInst = null;
-let visibleMetrics = { spend: true, roas: false, cpr: false };
+let visibleMetrics = { spend: true, roas: false, cpr: false, cafe24roas: false };
+let cafe24RevenueByDate = {};
+
+async function fetchCafe24Data() {
+    try {
+        const res = await fetch('./data/cafe24_sales.json?t=' + Date.now());
+        if (!res.ok) return;
+        const json = await res.json();
+        cafe24RevenueByDate = {};
+        (json.orders || []).forEach(order => {
+            if (order.canceled === 'F') {
+                const date = order.order_date.split('T')[0];
+                cafe24RevenueByDate[date] = (cafe24RevenueByDate[date] || 0) + parseFloat(order.payment_amount || 0);
+            }
+        });
+    } catch { /* 데이터 없으면 무시 */ }
+}
 
 // ═══════════════════════════════════════
 //  API

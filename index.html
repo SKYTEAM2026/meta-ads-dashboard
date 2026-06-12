@@ -924,6 +924,7 @@ async function init() {
 
 async function loadAll() {
     if (!state.accountId) { await init(); return; }
+    loadCafe24FromStorage();
     closeCampaignDaily();
     showLoading(true);
     hideError();

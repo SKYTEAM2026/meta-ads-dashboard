@@ -47,16 +47,27 @@ jobs:
           echo "토큰 갱신 완료"
 
           # GitHub Secrets의 refresh token 업데이트
-          gh secret set CAFE24_REFRESH_TOKEN --body "$NEW_REFRESH_TOKEN" --repo ${{ github.repository }}
+          echo "Secrets 업데이트 시작..."
+          gh secret set CAFE24_REFRESH_TOKEN --body "$NEW_REFRESH_TOKEN" --repo ${{ github.repository }} && echo "Secrets 업데이트 완료" || echo "Secrets 업데이트 실패 (계속 진행)"
 
           # 최근 30일 주문 데이터 수집
           START_DATE=$(date -d '30 days ago' '+%Y-%m-%d')
           END_DATE=$(date '+%Y-%m-%d')
+          echo "주문 조회: ${START_DATE} ~ ${END_DATE}"
 
-          ORDERS=$(curl -sf \
+          ORDERS_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
             "https://${CAFE24_MALL_ID}.cafe24api.com/api/v2/orders?start_date=${START_DATE}&end_date=${END_DATE}&limit=500&fields=order_id,order_date,actual_payment_amount,order_status,cancel_date" \
             -H "Authorization: Bearer ${ACCESS_TOKEN}" \
             -H "X-Cafe24-Api-Version: 2024-09-01")
+
+          ORDERS_STATUS=$(echo "$ORDERS_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
+          ORDERS=$(echo "$ORDERS_RESPONSE" | grep -v "HTTP_STATUS:")
+          echo "주문 API 응답 (HTTP $ORDERS_STATUS): ${ORDERS:0:200}"
+
+          if [ "$ORDERS_STATUS" != "200" ]; then
+            echo "주문 API 호출 실패"
+            exit 1
+          fi
 
           mkdir -p data
           echo "$ORDERS" > data/cafe24_sales.json

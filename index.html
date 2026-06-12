@@ -1066,11 +1066,13 @@ function toggleMetric(metric) {
     visibleMetrics[metric] = !visibleMetrics[metric];
     const btn = document.getElementById(`toggle-${metric}`);
     if (visibleMetrics[metric]) {
-        btn.style.background = 'var(--meta-blue)';
+        btn.style.background = metric === 'cafe24roas' ? '#16a34a' : 'var(--meta-blue)';
         btn.style.color = '#fff';
+        btn.style.borderColor = metric === 'cafe24roas' ? '#16a34a' : '';
     } else {
         btn.style.background = '';
-        btn.style.color = '';
+        btn.style.color = metric === 'cafe24roas' ? '#16a34a' : '';
+        btn.style.borderColor = metric === 'cafe24roas' ? '#16a34a' : '';
     }
     if (lineChartInst) {
         const ds = lineChartInst.data.datasets.find(d => d.id === metric);

@@ -1035,9 +1035,10 @@ function renderLineChart(daily) {
                 tooltip: {
                     callbacks: {
                         label: ctx => {
-                            if (ctx.dataset.id === 'spend') return ` 지출: ${fCur(ctx.raw)}`;
-                            if (ctx.dataset.id === 'roas')  return ` 구매 ROAS: ${ctx.raw.toFixed(1)}%`;
-                            if (ctx.dataset.id === 'cpr')   return ` 결과당 비용: ${fCur(ctx.raw)}`;
+                            if (ctx.dataset.id === 'spend')      return ` 지출: ${fCur(ctx.raw)}`;
+                            if (ctx.dataset.id === 'roas')       return ` 구매 ROAS (Meta): ${ctx.raw.toFixed(1)}%`;
+                            if (ctx.dataset.id === 'cpr')        return ` 결과당 비용: ${fCur(ctx.raw)}`;
+                            if (ctx.dataset.id === 'cafe24roas') return ` 실제 ROAS (카페24): ${ctx.raw.toFixed(1)}%`;
                             return '';
                         },
                     },

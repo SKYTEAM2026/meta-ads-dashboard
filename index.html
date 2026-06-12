@@ -1071,7 +1071,11 @@ function renderLineChart(daily) {
                     label: '실제 ROAS (카페24)',
                     data: daily.map(d => {
                         const spend = parseFloat(d.spend || 0);
-                        const revenue = cafe24RevenueByDate[d.date_start] || 0;
+                        // CSV 업로드된 Meta 귀인 데이터 우선, 없으면 전체 주문 데이터
+                        const hasMeta = Object.keys(cafe24MetaByDate).length > 0;
+                        const revenue = hasMeta
+                            ? (cafe24MetaByDate[d.date_start] || 0)
+                            : (cafe24RevenueByDate[d.date_start] || 0);
                         return spend > 0 && revenue > 0 ? (revenue / spend * 100) : 0;
                     }),
                     borderColor: '#16a34a',

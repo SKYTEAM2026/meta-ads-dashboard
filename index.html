@@ -2496,16 +2496,19 @@ function renderCsvCreativeTable(rows, tbodyId, tfootId, noDataId, barColor) {
     const convValKey = usePurch ? 'purchVal' : 'convVal';
     rows.forEach(r => {
         const key = (r.adName || '(미분류)') + '||' + (r.adGroup || '');
-        if (!map[key]) map[key] = { adName:r.adName||'(미분류)', adGroup:r.adGroup||'', cost:0, impr:0, clicks:0, conv:0, convVal:0 };
+        if (!map[key]) map[key] = { adName:r.adName||'(미분류)', adGroup:r.adGroup||'', cost:0, impr:0, clicks:0, conv:0, convVal:0, ctrW:0, cpcW:0, cpmW:0 };
         map[key].cost += r.cost; map[key].impr += r.impr; map[key].clicks += r.clicks;
         map[key].conv += r[convKey]||0; map[key].convVal += r[convValKey]||0;
+        map[key].ctrW += (r.ctr||0) * r.cost;
+        map[key].cpcW += (r.cpc||0) * r.cost;
+        map[key].cpmW += (r.cpm||0) * r.cost;
     });
     const sorted = Object.values(map).sort((a,b) => b.cost - a.cost);
     const maxCost = Math.max(...sorted.map(c=>c.cost),1);
     document.getElementById(tbodyId).innerHTML = sorted.map(c => {
-        const ctr  = c.impr>0 ? (c.clicks/c.impr*100).toFixed(2)+'%' : '–';
-        const cpc  = c.clicks>0 ? fCur(c.cost/c.clicks) : '–';
-        const cpm  = c.impr>0 ? fCur(c.cost/c.impr*1000) : '–';
+        const ctr  = c.impr>0 ? (c.clicks/c.impr*100).toFixed(2)+'%' : (c.cost>0&&c.ctrW>0 ? (c.ctrW/c.cost).toFixed(2)+'%' : '–');
+        const cpc  = c.clicks>0 ? fCur(c.cost/c.clicks) : (c.cost>0&&c.cpcW>0 ? fCur(c.cpcW/c.cost) : '–');
+        const cpm  = c.impr>0 ? fCur(c.cost/c.impr*1000) : (c.cost>0&&c.cpmW>0 ? fCur(c.cpmW/c.cost) : '–');
         const cpr  = c.conv>0 ? fCur(c.cost/c.conv) : '–';
         const roas = c.cost>0&&c.convVal>0 ? (c.convVal/c.cost*100).toFixed(1)+'%' : '–';
         return `<tr>

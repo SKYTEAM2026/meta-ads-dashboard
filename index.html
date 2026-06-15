@@ -2441,9 +2441,9 @@ function renderCsvDailyTable(rows, tbodyId, tfootId, noDataId, convLabel) {
     const convKey = usePurch ? 'purch' : 'conv';
     const convValKey = usePurch ? 'purchVal' : 'convVal';
     document.getElementById(tbodyId).innerHTML = sorted.map(r => {
-        const ctr  = r.impr > 0 ? (r.clicks/r.impr*100).toFixed(2)+'%' : '–';
-        const cpc  = r.clicks > 0 ? fCur(r.cost/r.clicks) : '–';
-        const cpm  = r.impr > 0 ? fCur(r.cost/r.impr*1000) : '–';
+        const ctr  = r.impr > 0 ? (r.clicks/r.impr*100).toFixed(2)+'%' : (r.ctr > 0 ? r.ctr.toFixed(2)+'%' : '–');
+        const cpc  = r.clicks > 0 ? fCur(r.cost/r.clicks) : (r.cpc > 0 ? fCur(r.cpc) : '–');
+        const cpm  = r.impr > 0 ? fCur(r.cost/r.impr*1000) : (r.cpm > 0 ? fCur(r.cpm) : '–');
         const conv = r[convKey] || 0;
         const cval = r[convValKey] || 0;
         const cpr  = conv > 0 ? fCur(r.cost/conv) : '–';

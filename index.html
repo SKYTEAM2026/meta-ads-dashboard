@@ -1077,6 +1077,7 @@ async function init() {
         setBadge(first.name);
 
         document.getElementById('filterBar').style.display = '';
+        document.getElementById('platformTabs').style.display = '';
         await loadAll();
     } catch (e) {
         showError(e.message);

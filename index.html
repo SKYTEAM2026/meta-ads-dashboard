@@ -755,6 +755,123 @@
         </div>
 
     </div>
+
+    <!-- ── TIKTOK DASHBOARD ── -->
+    <div id="tiktokDashboard" style="display:none;">
+        <div class="card mb-4">
+            <div class="card-body p-4">
+                <div id="tiktokUploadArea" class="csv-upload-area">
+                    <div style="font-size:52px;color:var(--tiktok-pink);margin-bottom:12px;"><i class="bi bi-tiktok"></i></div>
+                    <h5 style="font-weight:700;margin-bottom:6px;">TikTok 광고 데이터 업로드</h5>
+                    <p class="csv-upload-hint">TikTok Ads Manager → 보고서 → 맞춤형 보고서 → <code>캠페인</code> 레벨 선택 후 CSV 내보내기</p>
+                    <p class="csv-upload-hint">필수 컬럼: 캠페인 이름, 지출 금액, 노출, 클릭수, CPC, CPM, 구매, 구매 가치, ROAS</p>
+                    <label class="btn-meta mt-3" style="cursor:pointer;background:var(--tiktok-pink);display:inline-block;padding:8px 20px;border-radius:8px;">
+                        <i class="bi bi-upload me-1"></i>CSV 파일 선택
+                        <input type="file" id="tiktokCsvInput" accept=".csv" style="display:none;" onchange="onTiktokCsvUpload(event)">
+                    </label>
+                    <div id="tiktokUploadError" style="display:none;color:#dc2626;font-size:13px;margin-top:12px;"></div>
+                </div>
+                <div id="tiktokUploadStatus" style="display:none;padding:12px 20px;background:var(--tiktok-bg);border-radius:10px;font-size:13px;color:var(--tiktok-pink);font-weight:600;margin-top:12px;">
+                    <i class="bi bi-check-circle me-1"></i><span id="tiktokUploadStatusText"></span>
+                    <label style="cursor:pointer;border:1.5px solid var(--tiktok-pink);color:var(--tiktok-pink);font-size:12px;padding:3px 10px;border-radius:6px;display:inline-block;margin-left:12px;font-weight:600;">
+                        <i class="bi bi-arrow-repeat me-1"></i>재업로드
+                        <input type="file" accept=".csv" style="display:none;" onchange="onTiktokCsvUpload(event)">
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div id="tiktokContent" style="display:none;">
+            <div class="row g-3 mb-4" id="tiktokKpiRow"></div>
+            <div class="card mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="section-title">캠페인 목록</h6>
+                        <span id="tiktokCampaignBadge" class="badge" style="background:var(--tiktok-pink);font-size:12px;"></span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>캠페인명</th>
+                                    <th class="text-end">지출금액</th>
+                                    <th class="text-end">구매전환값</th>
+                                    <th class="text-end">구매 수</th>
+                                    <th class="text-end">구매당 비용</th>
+                                    <th class="text-end">ROAS</th>
+                                    <th class="text-end">노출수</th>
+                                    <th class="text-end">클릭수</th>
+                                    <th class="text-end">CTR</th>
+                                    <th class="text-end">CPC</th>
+                                    <th class="text-end">CPM</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tiktokTbody"></tbody>
+                            <tfoot id="tiktokTfoot"></tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── GOOGLE DASHBOARD ── -->
+    <div id="googleDashboard" style="display:none;">
+        <div class="card mb-4">
+            <div class="card-body p-4">
+                <div id="googleUploadArea" class="csv-upload-area">
+                    <div style="font-size:52px;color:var(--google-blue);margin-bottom:12px;"><i class="bi bi-google"></i></div>
+                    <h5 style="font-weight:700;margin-bottom:6px;">Google 광고 데이터 업로드</h5>
+                    <p class="csv-upload-hint">Google Ads → 보고서 → <code>캠페인</code> 레벨 → 다운로드 → CSV</p>
+                    <p class="csv-upload-hint">필수 컬럼: 캠페인, 비용, 노출수, 클릭수, CTR, 평균 CPC, 전환수, 전환 가치, ROAS</p>
+                    <label class="btn-meta mt-3" style="cursor:pointer;background:var(--google-blue);display:inline-block;padding:8px 20px;border-radius:8px;">
+                        <i class="bi bi-upload me-1"></i>CSV 파일 선택
+                        <input type="file" id="googleCsvInput" accept=".csv" style="display:none;" onchange="onGoogleCsvUpload(event)">
+                    </label>
+                    <div id="googleUploadError" style="display:none;color:#dc2626;font-size:13px;margin-top:12px;"></div>
+                </div>
+                <div id="googleUploadStatus" style="display:none;padding:12px 20px;background:var(--google-bg);border-radius:10px;font-size:13px;color:var(--google-blue);font-weight:600;margin-top:12px;">
+                    <i class="bi bi-check-circle me-1"></i><span id="googleUploadStatusText"></span>
+                    <label style="cursor:pointer;border:1.5px solid var(--google-blue);color:var(--google-blue);font-size:12px;padding:3px 10px;border-radius:6px;display:inline-block;margin-left:12px;font-weight:600;">
+                        <i class="bi bi-arrow-repeat me-1"></i>재업로드
+                        <input type="file" accept=".csv" style="display:none;" onchange="onGoogleCsvUpload(event)">
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div id="googleContent" style="display:none;">
+            <div class="row g-3 mb-4" id="googleKpiRow"></div>
+            <div class="card mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="section-title">캠페인 목록</h6>
+                        <span id="googleCampaignBadge" class="badge" style="background:var(--google-blue);font-size:12px;"></span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>캠페인명</th>
+                                    <th class="text-end">비용</th>
+                                    <th class="text-end">전환 가치</th>
+                                    <th class="text-end">전환수</th>
+                                    <th class="text-end">전환당 비용</th>
+                                    <th class="text-end">ROAS</th>
+                                    <th class="text-end">노출수</th>
+                                    <th class="text-end">클릭수</th>
+                                    <th class="text-end">CTR</th>
+                                    <th class="text-end">CPC</th>
+                                    <th class="text-end">CPM</th>
+                                </tr>
+                            </thead>
+                            <tbody id="googleTbody"></tbody>
+                            <tfoot id="googleTfoot"></tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

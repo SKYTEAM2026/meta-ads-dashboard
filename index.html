@@ -2484,6 +2484,9 @@ function findColIdx(headers, ...names) {
 //  TIKTOK CSV
 // ═══════════════════════════════════════
 let tiktokData = null;
+let tiktokRawRows = [];
+let tiktokHasDate = false;
+let tiktokHasAdName = false;
 
 function onTiktokCsvUpload(event) {
     const file = event.target.files[0];
@@ -2494,14 +2497,18 @@ function onTiktokCsvUpload(event) {
         event.target.value = '';
         const errEl = document.getElementById('tiktokUploadError');
         if (!result) {
-            errEl.textContent = 'CSV 형식을 인식할 수 없습니다. TikTok Ads Manager에서 캠페인 레벨 보고서를 내보내 주세요.';
+            errEl.textContent = 'CSV 형식을 인식할 수 없습니다. TikTok Ads Manager에서 광고 레벨 보고서를 내보내 주세요.';
             errEl.style.display = '';
             return;
         }
         errEl.style.display = 'none';
-        tiktokData = result;
+        tiktokData = result.campaigns;
+        tiktokRawRows = result.rawRows;
+        tiktokHasDate = result.hasDate;
+        tiktokHasAdName = result.hasAdName;
+        closeTiktokDetail();
         try { localStorage.setItem('tiktokCsvData', JSON.stringify(result)); } catch(_) {}
-        renderTiktokDashboard(result);
+        renderTiktokDashboard(result.campaigns);
     };
     reader.readAsText(file, 'UTF-8');
 }
@@ -2509,7 +2516,6 @@ function onTiktokCsvUpload(event) {
 function parseTiktokCSV(text) {
     text = text.replace(/^﻿/, '');
     const lines = text.split('\n').map(l => l.replace(/\r$/,''));
-
     let headerIdx = -1;
     for (let i = 0; i < Math.min(15, lines.length); i++) {
         const low = lines[i].toLowerCase();
@@ -2518,7 +2524,6 @@ function parseTiktokCSV(text) {
         }
     }
     if (headerIdx === -1) return null;
-
     const headers = parseCSVRow(lines[headerIdx]);
     const iName     = findColIdx(headers, '캠페인 이름', '캠페인이름', 'Campaign name', 'Campaign');
     const iCost     = findColIdx(headers, '지출 금액', '지출금액', 'Cost', 'Amount spent', 'Spend');
@@ -2526,37 +2531,48 @@ function parseTiktokCSV(text) {
     const iClicks   = findColIdx(headers, '클릭수', '클릭', 'Clicks');
     const iPurch    = findColIdx(headers, '구매 건수', '구매건수', '구매', 'Complete payment', 'Purchase', 'Conversions');
     const iPurchVal = findColIdx(headers, '구매 가치', '구매가치', 'Complete payment value', 'Total conversion value', 'Purchase value', 'Conversion value');
-
+    const iDate     = findColIdx(headers, '날짜', 'Date', '일');
+    const iAdGroup  = findColIdx(headers, '광고 그룹 이름', '광고그룹이름', 'Ad group name', 'Adgroup');
+    const iAdName   = findColIdx(headers, '광고 이름', '광고이름', 'Ad name', 'Ad');
     if (iName === -1 || iCost === -1) return null;
-
-    const map = {};
+    const campaignMap = {};
+    const rawRows = [];
     for (let i = headerIdx + 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         const cols = parseCSVRow(lines[i]);
         if (cols.length < 3) continue;
-        const name = cols[iName]?.trim();
-        if (!name || /^(total|합계|소계)/i.test(name)) continue;
+        const campaign = cols[iName]?.trim();
+        if (!campaign || /^(total|합계|소계)/i.test(campaign)) continue;
         const cost     = parseNum(cols[iCost]);
         const impr     = iImpr !== -1 ? parseNum(cols[iImpr]) : 0;
         const clicks   = iClicks !== -1 ? parseNum(cols[iClicks]) : 0;
         const purch    = iPurch !== -1 ? parseNum(cols[iPurch]) : 0;
         const purchVal = iPurchVal !== -1 ? parseNum(cols[iPurchVal]) : 0;
+        const date     = iDate !== -1 ? (cols[iDate]?.trim() || '') : '';
+        const adGroup  = iAdGroup !== -1 ? (cols[iAdGroup]?.trim() || '') : '';
+        const adName   = iAdName !== -1 ? (cols[iAdName]?.trim() || '') : '';
         if (cost === 0 && impr === 0) continue;
-        if (!map[name]) map[name] = { name, cost:0, impr:0, clicks:0, purch:0, purchVal:0 };
-        map[name].cost += cost; map[name].impr += impr; map[name].clicks += clicks;
-        map[name].purch += purch; map[name].purchVal += purchVal;
+        if (!campaignMap[campaign]) campaignMap[campaign] = { name:campaign, cost:0, impr:0, clicks:0, purch:0, purchVal:0 };
+        campaignMap[campaign].cost += cost; campaignMap[campaign].impr += impr; campaignMap[campaign].clicks += clicks;
+        campaignMap[campaign].purch += purch; campaignMap[campaign].purchVal += purchVal;
+        rawRows.push({ date, campaign, adGroup, adName, cost, impr, clicks, purch, purchVal });
     }
-    const rows = Object.values(map);
-    if (rows.length === 0) return null;
-    return rows.map(c => ({
-        ...c,
-        ctr:  c.impr   > 0 ? c.clicks   / c.impr   * 100  : 0,
-        cpc:  c.clicks > 0 ? c.cost     / c.clicks         : 0,
-        cpm:  c.impr   > 0 ? c.cost     / c.impr   * 1000 : 0,
-        cpr:  c.purch  > 0 ? c.cost     / c.purch          : 0,
-        roas: c.cost   > 0 && c.purchVal > 0 ? c.purchVal / c.cost * 100 : 0,
-    }));
+    const campaigns = Object.values(campaignMap);
+    if (campaigns.length === 0) return null;
+    return {
+        campaigns: campaigns.map(c => ({
+            ...c,
+            ctr:  c.impr>0 ? c.clicks/c.impr*100 : 0,
+            cpc:  c.clicks>0 ? c.cost/c.clicks : 0,
+            cpm:  c.impr>0 ? c.cost/c.impr*1000 : 0,
+            cpr:  c.purch>0 ? c.cost/c.purch : 0,
+            roas: c.cost>0&&c.purchVal>0 ? c.purchVal/c.cost*100 : 0,
+        })),
+        rawRows,
+        hasDate:   iDate !== -1 && rawRows.some(r => r.date),
+        hasAdName: iAdName !== -1 && rawRows.some(r => r.adName),
+    };
 }
 
 function renderTiktokDashboard(data) {
@@ -2566,32 +2582,30 @@ function renderTiktokDashboard(data) {
     const totClicks = data.reduce((s,c)=>s+c.clicks,0);
     const totPurch  = data.reduce((s,c)=>s+c.purch,0);
     const totPVal   = data.reduce((s,c)=>s+c.purchVal,0);
-
     const kpis = [
-        { label:'총 지출',    value:fCur(totCost),                                                        icon:'bi-cash-coin',      bg:'#fff0f3', color:'#FE2C55' },
-        { label:'노출수',     value:fNum(totImpr),                                                        icon:'bi-eye',            bg:'#f0fdf4', color:'#16a34a' },
-        { label:'클릭수',     value:fNum(totClicks),                                                      icon:'bi-hand-index-thumb',bg:'#fefce8',color:'#ca8a04' },
-        { label:'CTR',        value:totImpr>0?(totClicks/totImpr*100).toFixed(2)+'%':'–',                 icon:'bi-graph-up-arrow', bg:'#fdf4ff', color:'#9333ea' },
-        { label:'구매전환값', value:totPVal?fCur(totPVal):'–',                                            icon:'bi-bag-check',      bg:'#e8f4fd', color:'#1877F2' },
-        { label:'ROAS',       value:totCost>0&&totPVal>0?(totPVal/totCost*100).toFixed(1)+'%':'–',        icon:'bi-graph-up',       bg:'#fff7ed', color:'#ea580c' },
+        { label:'총 지출',    value:fCur(totCost),                                                 icon:'bi-cash-coin',       bg:'#fff0f3', color:'#FE2C55' },
+        { label:'노출수',     value:fNum(totImpr),                                                 icon:'bi-eye',             bg:'#f0fdf4', color:'#16a34a' },
+        { label:'클릭수',     value:fNum(totClicks),                                               icon:'bi-hand-index-thumb',bg:'#fefce8', color:'#ca8a04' },
+        { label:'CTR',        value:totImpr>0?(totClicks/totImpr*100).toFixed(2)+'%':'–',          icon:'bi-graph-up-arrow',  bg:'#fdf4ff', color:'#9333ea' },
+        { label:'구매전환값', value:totPVal?fCur(totPVal):'–',                                     icon:'bi-bag-check',       bg:'#e8f4fd', color:'#1877F2' },
+        { label:'ROAS',       value:totCost>0&&totPVal>0?(totPVal/totCost*100).toFixed(1)+'%':'–', icon:'bi-graph-up',        bg:'#fff7ed', color:'#ea580c' },
     ];
     document.getElementById('tiktokKpiRow').innerHTML = kpis.map(k=>`
-        <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
-            <div class="kpi-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div><div class="kpi-label">${k.label}</div><div class="kpi-value" style="font-size:22px;">${k.value}</div></div>
-                    <div class="kpi-icon" style="background:${k.bg};color:${k.color};"><i class="bi ${k.icon}"></i></div>
-                </div>
+        <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6"><div class="kpi-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div><div class="kpi-label">${k.label}</div><div class="kpi-value" style="font-size:22px;">${k.value}</div></div>
+                <div class="kpi-icon" style="background:${k.bg};color:${k.color};"><i class="bi ${k.icon}"></i></div>
             </div>
-        </div>`).join('');
-
+        </div></div>`).join('');
     const maxCost = Math.max(...sorted.map(c=>c.cost),1);
+    const canDrill = tiktokRawRows.length > 0;
     document.getElementById('tiktokTbody').innerHTML = sorted.map(c=>`
-        <tr>
-            <td><div class="campaign-name">${esc(c.name)}</div></td>
-            <td class="text-end fw-semibold">
-                <div class="spend-bar-wrap">${fCur(c.cost)}<div class="spend-bar"><div class="spend-bar-fill" style="width:${(c.cost/maxCost*100).toFixed(1)}%;background:#FE2C55;"></div></div></div>
+        <tr ${canDrill ? `style="cursor:pointer;" data-campaign="${esc(c.name)}" onclick="showTiktokCampaignDetail(this.dataset.campaign)"` : ''}>
+            <td>
+                <div class="campaign-name">${esc(c.name)}</div>
+                ${canDrill ? '<div class="campaign-meta" style="color:var(--tiktok-pink)"><i class="bi bi-chevron-down" style="font-size:10px;"></i> 클릭하여 상세보기</div>' : ''}
             </td>
+            <td class="text-end fw-semibold"><div class="spend-bar-wrap">${fCur(c.cost)}<div class="spend-bar"><div class="spend-bar-fill" style="width:${(c.cost/maxCost*100).toFixed(1)}%;background:#FE2C55;"></div></div></div></td>
             <td class="text-end">${c.purchVal?fCur(c.purchVal):'–'}</td>
             <td class="text-end">${c.purch?fNum(c.purch):'–'}</td>
             <td class="text-end">${c.cpr?fCur(c.cpr):'–'}</td>
@@ -2602,24 +2616,18 @@ function renderTiktokDashboard(data) {
             <td class="text-end">${c.cpc?fCur(c.cpc):'–'}</td>
             <td class="text-end">${c.cpm?fCur(c.cpm):'–'}</td>
         </tr>`).join('');
-
-    const totCtr  = totImpr  > 0 ? (totClicks/totImpr*100).toFixed(2)+'%' : '–';
-    const totRoas = totCost  > 0 && totPVal > 0 ? (totPVal/totCost*100).toFixed(1)+'%' : '–';
+    const totCtr  = totImpr>0 ? (totClicks/totImpr*100).toFixed(2)+'%' : '–';
+    const totRoas = totCost>0&&totPVal>0 ? (totPVal/totCost*100).toFixed(1)+'%' : '–';
     document.getElementById('tiktokTfoot').innerHTML = `
         <tr class="total-row">
             <td>합계 (${sorted.length}개 캠페인)</td>
-            <td class="text-end">${fCur(totCost)}</td>
-            <td class="text-end">${totPVal?fCur(totPVal):'–'}</td>
-            <td class="text-end">${totPurch?fNum(totPurch):'–'}</td>
-            <td class="text-end">${totPurch?fCur(totCost/totPurch):'–'}</td>
-            <td class="text-end">${totRoas}</td>
-            <td class="text-end">${fNum(totImpr)}</td>
-            <td class="text-end">${fNum(totClicks)}</td>
-            <td class="text-end">${totCtr}</td>
+            <td class="text-end">${fCur(totCost)}</td><td class="text-end">${totPVal?fCur(totPVal):'–'}</td>
+            <td class="text-end">${totPurch?fNum(totPurch):'–'}</td><td class="text-end">${totPurch?fCur(totCost/totPurch):'–'}</td>
+            <td class="text-end">${totRoas}</td><td class="text-end">${fNum(totImpr)}</td>
+            <td class="text-end">${fNum(totClicks)}</td><td class="text-end">${totCtr}</td>
             <td class="text-end">${totClicks?fCur(totCost/totClicks):'–'}</td>
             <td class="text-end">${totImpr?fCur(totCost/totImpr*1000):'–'}</td>
         </tr>`;
-
     document.getElementById('tiktokCampaignBadge').textContent = `${sorted.length}개`;
     document.getElementById('tiktokUploadArea').style.display = 'none';
     document.getElementById('tiktokUploadStatus').style.display = '';
@@ -2631,6 +2639,9 @@ function renderTiktokDashboard(data) {
 //  GOOGLE CSV
 // ═══════════════════════════════════════
 let googleData = null;
+let googleRawRows = [];
+let googleHasDate = false;
+let googleHasAdName = false;
 
 function onGoogleCsvUpload(event) {
     const file = event.target.files[0];
@@ -2641,14 +2652,18 @@ function onGoogleCsvUpload(event) {
         event.target.value = '';
         const errEl = document.getElementById('googleUploadError');
         if (!result) {
-            errEl.textContent = 'CSV 형식을 인식할 수 없습니다. Google Ads에서 캠페인 레벨 보고서를 내보내 주세요.';
+            errEl.textContent = 'CSV 형식을 인식할 수 없습니다. Google Ads에서 광고 레벨 보고서를 내보내 주세요.';
             errEl.style.display = '';
             return;
         }
         errEl.style.display = 'none';
-        googleData = result;
+        googleData = result.campaigns;
+        googleRawRows = result.rawRows;
+        googleHasDate = result.hasDate;
+        googleHasAdName = result.hasAdName;
+        closeGoogleDetail();
         try { localStorage.setItem('googleCsvData', JSON.stringify(result)); } catch(_) {}
-        renderGoogleDashboard(result);
+        renderGoogleDashboard(result.campaigns);
     };
     reader.readAsText(file, 'UTF-8');
 }
@@ -2656,7 +2671,6 @@ function onGoogleCsvUpload(event) {
 function parseGoogleCSV(text) {
     text = text.replace(/^﻿/, '');
     const lines = text.split('\n').map(l => l.replace(/\r$/,''));
-
     let headerIdx = -1;
     for (let i = 0; i < Math.min(20, lines.length); i++) {
         const low = lines[i].toLowerCase();
@@ -2666,7 +2680,6 @@ function parseGoogleCSV(text) {
         }
     }
     if (headerIdx === -1) return null;
-
     const headers = parseCSVRow(lines[headerIdx]);
     const iName    = findColIdx(headers, '캠페인', 'Campaign');
     const iCost    = findColIdx(headers, '비용', 'Cost');
@@ -2674,38 +2687,49 @@ function parseGoogleCSV(text) {
     const iClicks  = findColIdx(headers, '클릭수', 'Clicks');
     const iConv    = findColIdx(headers, '전환수', 'Conversions', 'Conv.');
     const iConvVal = findColIdx(headers, '전환 가치', 'Conv. value', 'Conversion value', '전환가치');
-
+    const iDate    = findColIdx(headers, '날짜', 'Date', '일');
+    const iAdGroup = findColIdx(headers, '광고그룹', 'Ad group');
+    const iAdName  = findColIdx(headers, '광고', 'Ad', 'Headline', '광고명');
     if (iName === -1 || iCost === -1) return null;
-
-    const map = {};
+    const campaignMap = {};
+    const rawRows = [];
     for (let i = headerIdx + 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         const cols = parseCSVRow(lines[i]);
         if (cols.length < 2) continue;
-        const name = cols[iName]?.trim();
-        if (!name) continue;
-        if (/^(total|합계|소계|Google|Account|--)/i.test(name) || name.startsWith('--')) continue;
+        const campaign = cols[iName]?.trim();
+        if (!campaign) continue;
+        if (/^(total|합계|소계|Google|Account|--)/i.test(campaign) || campaign.startsWith('--')) continue;
         const cost    = parseNum(cols[iCost]);
-        const impr    = iImpr   !== -1 ? parseNum(cols[iImpr])   : 0;
+        const impr    = iImpr !== -1 ? parseNum(cols[iImpr]) : 0;
         const clicks  = iClicks !== -1 ? parseNum(cols[iClicks]) : 0;
-        const conv    = iConv   !== -1 ? parseNum(cols[iConv])   : 0;
-        const convVal = iConvVal!== -1 ? parseNum(cols[iConvVal]): 0;
+        const conv    = iConv !== -1 ? parseNum(cols[iConv]) : 0;
+        const convVal = iConvVal !== -1 ? parseNum(cols[iConvVal]) : 0;
+        const date    = iDate !== -1 ? (cols[iDate]?.trim() || '') : '';
+        const adGroup = iAdGroup !== -1 ? (cols[iAdGroup]?.trim() || '') : '';
+        const adName  = iAdName !== -1 ? (cols[iAdName]?.trim() || '') : '';
         if (cost === 0 && impr === 0) continue;
-        if (!map[name]) map[name] = { name, cost:0, impr:0, clicks:0, conv:0, convVal:0 };
-        map[name].cost += cost; map[name].impr += impr; map[name].clicks += clicks;
-        map[name].conv += conv; map[name].convVal += convVal;
+        if (!campaignMap[campaign]) campaignMap[campaign] = { name:campaign, cost:0, impr:0, clicks:0, conv:0, convVal:0 };
+        campaignMap[campaign].cost += cost; campaignMap[campaign].impr += impr; campaignMap[campaign].clicks += clicks;
+        campaignMap[campaign].conv += conv; campaignMap[campaign].convVal += convVal;
+        rawRows.push({ date, campaign, adGroup, adName, cost, impr, clicks, conv, convVal });
     }
-    const rows = Object.values(map);
-    if (rows.length === 0) return null;
-    return rows.map(c => ({
-        ...c,
-        ctr:  c.impr   > 0 ? c.clicks  / c.impr   * 100  : 0,
-        cpc:  c.clicks > 0 ? c.cost    / c.clicks         : 0,
-        cpm:  c.impr   > 0 ? c.cost    / c.impr   * 1000 : 0,
-        cpr:  c.conv   > 0 ? c.cost    / c.conv           : 0,
-        roas: c.cost   > 0 && c.convVal > 0 ? c.convVal / c.cost * 100 : 0,
-    }));
+    const campaigns = Object.values(campaignMap);
+    if (campaigns.length === 0) return null;
+    return {
+        campaigns: campaigns.map(c => ({
+            ...c,
+            ctr:  c.impr>0 ? c.clicks/c.impr*100 : 0,
+            cpc:  c.clicks>0 ? c.cost/c.clicks : 0,
+            cpm:  c.impr>0 ? c.cost/c.impr*1000 : 0,
+            cpr:  c.conv>0 ? c.cost/c.conv : 0,
+            roas: c.cost>0&&c.convVal>0 ? c.convVal/c.cost*100 : 0,
+        })),
+        rawRows,
+        hasDate:   iDate !== -1 && rawRows.some(r => r.date),
+        hasAdName: iAdName !== -1 && rawRows.some(r => r.adName),
+    };
 }
 
 function renderGoogleDashboard(data) {
@@ -2715,32 +2739,30 @@ function renderGoogleDashboard(data) {
     const totClicks = data.reduce((s,c)=>s+c.clicks,0);
     const totConv   = data.reduce((s,c)=>s+c.conv,0);
     const totCVal   = data.reduce((s,c)=>s+c.convVal,0);
-
     const kpis = [
-        { label:'총 비용',    value:fCur(totCost),                                                       icon:'bi-cash-coin',      bg:'#e8f0fe', color:'#4285F4' },
-        { label:'노출수',     value:fNum(totImpr),                                                       icon:'bi-eye',            bg:'#f0fdf4', color:'#34A853' },
-        { label:'클릭수',     value:fNum(totClicks),                                                     icon:'bi-hand-index-thumb',bg:'#fefce8',color:'#FBBC04' },
-        { label:'CTR',        value:totImpr>0?(totClicks/totImpr*100).toFixed(2)+'%':'–',                icon:'bi-graph-up-arrow', bg:'#fdf4ff', color:'#9333ea' },
-        { label:'전환 가치',  value:totCVal?fCur(totCVal):'–',                                           icon:'bi-bag-check',      bg:'#fff7ed', color:'#ea580c' },
-        { label:'ROAS',       value:totCost>0&&totCVal>0?(totCVal/totCost*100).toFixed(1)+'%':'–',       icon:'bi-graph-up',       bg:'#fef2f2', color:'#EA4335' },
+        { label:'총 비용',   value:fCur(totCost),                                                  icon:'bi-cash-coin',       bg:'#e8f0fe', color:'#4285F4' },
+        { label:'노출수',    value:fNum(totImpr),                                                  icon:'bi-eye',             bg:'#f0fdf4', color:'#34A853' },
+        { label:'클릭수',    value:fNum(totClicks),                                                icon:'bi-hand-index-thumb',bg:'#fefce8', color:'#FBBC04' },
+        { label:'CTR',       value:totImpr>0?(totClicks/totImpr*100).toFixed(2)+'%':'–',           icon:'bi-graph-up-arrow',  bg:'#fdf4ff', color:'#9333ea' },
+        { label:'전환 가치', value:totCVal?fCur(totCVal):'–',                                      icon:'bi-bag-check',       bg:'#fff7ed', color:'#ea580c' },
+        { label:'ROAS',      value:totCost>0&&totCVal>0?(totCVal/totCost*100).toFixed(1)+'%':'–',  icon:'bi-graph-up',        bg:'#fef2f2', color:'#EA4335' },
     ];
     document.getElementById('googleKpiRow').innerHTML = kpis.map(k=>`
-        <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
-            <div class="kpi-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div><div class="kpi-label">${k.label}</div><div class="kpi-value" style="font-size:22px;">${k.value}</div></div>
-                    <div class="kpi-icon" style="background:${k.bg};color:${k.color};"><i class="bi ${k.icon}"></i></div>
-                </div>
+        <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6"><div class="kpi-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div><div class="kpi-label">${k.label}</div><div class="kpi-value" style="font-size:22px;">${k.value}</div></div>
+                <div class="kpi-icon" style="background:${k.bg};color:${k.color};"><i class="bi ${k.icon}"></i></div>
             </div>
-        </div>`).join('');
-
+        </div></div>`).join('');
     const maxCost = Math.max(...sorted.map(c=>c.cost),1);
+    const canDrill = googleRawRows.length > 0;
     document.getElementById('googleTbody').innerHTML = sorted.map(c=>`
-        <tr>
-            <td><div class="campaign-name">${esc(c.name)}</div></td>
-            <td class="text-end fw-semibold">
-                <div class="spend-bar-wrap">${fCur(c.cost)}<div class="spend-bar"><div class="spend-bar-fill" style="width:${(c.cost/maxCost*100).toFixed(1)}%;background:#4285F4;"></div></div></div>
+        <tr ${canDrill ? `style="cursor:pointer;" data-campaign="${esc(c.name)}" onclick="showGoogleCampaignDetail(this.dataset.campaign)"` : ''}>
+            <td>
+                <div class="campaign-name">${esc(c.name)}</div>
+                ${canDrill ? '<div class="campaign-meta" style="color:var(--google-blue)"><i class="bi bi-chevron-down" style="font-size:10px;"></i> 클릭하여 상세보기</div>' : ''}
             </td>
+            <td class="text-end fw-semibold"><div class="spend-bar-wrap">${fCur(c.cost)}<div class="spend-bar"><div class="spend-bar-fill" style="width:${(c.cost/maxCost*100).toFixed(1)}%;background:#4285F4;"></div></div></div></td>
             <td class="text-end">${c.convVal?fCur(c.convVal):'–'}</td>
             <td class="text-end">${c.conv?fNum(c.conv):'–'}</td>
             <td class="text-end">${c.cpr?fCur(c.cpr):'–'}</td>
@@ -2751,24 +2773,18 @@ function renderGoogleDashboard(data) {
             <td class="text-end">${c.cpc?fCur(c.cpc):'–'}</td>
             <td class="text-end">${c.cpm?fCur(c.cpm):'–'}</td>
         </tr>`).join('');
-
-    const totCtr  = totImpr > 0 ? (totClicks/totImpr*100).toFixed(2)+'%' : '–';
-    const totRoas = totCost > 0 && totCVal > 0 ? (totCVal/totCost*100).toFixed(1)+'%' : '–';
+    const totCtr  = totImpr>0 ? (totClicks/totImpr*100).toFixed(2)+'%' : '–';
+    const totRoas = totCost>0&&totCVal>0 ? (totCVal/totCost*100).toFixed(1)+'%' : '–';
     document.getElementById('googleTfoot').innerHTML = `
         <tr class="total-row">
             <td>합계 (${sorted.length}개 캠페인)</td>
-            <td class="text-end">${fCur(totCost)}</td>
-            <td class="text-end">${totCVal?fCur(totCVal):'–'}</td>
-            <td class="text-end">${totConv?fNum(totConv):'–'}</td>
-            <td class="text-end">${totConv?fCur(totCost/totConv):'–'}</td>
-            <td class="text-end">${totRoas}</td>
-            <td class="text-end">${fNum(totImpr)}</td>
-            <td class="text-end">${fNum(totClicks)}</td>
-            <td class="text-end">${totCtr}</td>
+            <td class="text-end">${fCur(totCost)}</td><td class="text-end">${totCVal?fCur(totCVal):'–'}</td>
+            <td class="text-end">${totConv?fNum(totConv):'–'}</td><td class="text-end">${totConv?fCur(totCost/totConv):'–'}</td>
+            <td class="text-end">${totRoas}</td><td class="text-end">${fNum(totImpr)}</td>
+            <td class="text-end">${fNum(totClicks)}</td><td class="text-end">${totCtr}</td>
             <td class="text-end">${totClicks?fCur(totCost/totClicks):'–'}</td>
             <td class="text-end">${totImpr?fCur(totCost/totImpr*1000):'–'}</td>
         </tr>`;
-
     document.getElementById('googleCampaignBadge').textContent = `${sorted.length}개`;
     document.getElementById('googleUploadArea').style.display = 'none';
     document.getElementById('googleUploadStatus').style.display = '';

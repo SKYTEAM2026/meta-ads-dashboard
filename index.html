@@ -2552,7 +2552,7 @@ function renderCsvCreativeTable(rows, tbodyId, tfootId, noDataId, barColor) {
 // ═══════════════════════════════════════
 function showTiktokCampaignDetail(campaignName) {
     document.querySelectorAll('#tiktokTbody tr').forEach(tr => {
-        tr.classList.toggle('selected-row', tr.dataset.campaign === campaignName);
+        tr.classList.toggle('row-selected', tr.dataset.campaign === campaignName);
     });
     document.getElementById('tiktokDetailTitle').textContent = campaignName;
     document.getElementById('tiktokDetailPanel').style.display = '';

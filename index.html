@@ -2801,13 +2801,17 @@ function renderTiktokDashboard(data) {
     const totClicks = data.reduce((s,c)=>s+c.clicks,0);
     const totPurch  = data.reduce((s,c)=>s+c.purch,0);
     const totPVal   = data.reduce((s,c)=>s+c.purchVal,0);
+    const totCtrW   = data.reduce((s,c)=>s+(c.ctrW||0),0);
+    const totCpcW   = data.reduce((s,c)=>s+(c.cpcW||0),0);
+    const totCpmW   = data.reduce((s,c)=>s+(c.cpmW||0),0);
+    const avgCtr = totImpr>0 ? (totClicks/totImpr*100).toFixed(2)+'%' : (totCost>0&&totCtrW>0 ? (totCtrW/totCost).toFixed(2)+'%' : '–');
     const kpis = [
         { label:'총 지출',    value:fCur(totCost),                                                 icon:'bi-cash-coin',       bg:'#fff0f3', color:'#FE2C55' },
-        { label:'노출수',     value:fNum(totImpr),                                                 icon:'bi-eye',             bg:'#f0fdf4', color:'#16a34a' },
-        { label:'클릭수',     value:fNum(totClicks),                                               icon:'bi-hand-index-thumb',bg:'#fefce8', color:'#ca8a04' },
-        { label:'CTR',        value:totImpr>0?(totClicks/totImpr*100).toFixed(2)+'%':'–',          icon:'bi-graph-up-arrow',  bg:'#fdf4ff', color:'#9333ea' },
-        { label:'구매전환값', value:totPVal?fCur(totPVal):'–',                                     icon:'bi-bag-check',       bg:'#e8f4fd', color:'#1877F2' },
-        { label:'ROAS',       value:totCost>0&&totPVal>0?(totPVal/totCost*100).toFixed(1)+'%':'–', icon:'bi-graph-up',        bg:'#fff7ed', color:'#ea580c' },
+        { label:'구매수',     value:totPurch?fNum(totPurch):'–',                                   icon:'bi-bag-check',       bg:'#e8f4fd', color:'#1877F2' },
+        { label:'구매당 비용',value:totPurch?fCur(totCost/totPurch):'–',                           icon:'bi-receipt',         bg:'#fff7ed', color:'#ea580c' },
+        { label:'CTR',        value:avgCtr,                                                        icon:'bi-graph-up-arrow',  bg:'#fdf4ff', color:'#9333ea' },
+        { label:'CPC',        value:totClicks>0?fCur(totCost/totClicks):(totCost>0&&totCpcW>0?fCur(totCpcW/totCost):'–'), icon:'bi-hand-index-thumb', bg:'#fefce8', color:'#ca8a04' },
+        { label:'CPM',        value:totImpr>0?fCur(totCost/totImpr*1000):(totCost>0&&totCpmW>0?fCur(totCpmW/totCost):'–'), icon:'bi-eye', bg:'#f0fdf4', color:'#16a34a' },
     ];
     document.getElementById('tiktokKpiRow').innerHTML = kpis.map(k=>`
         <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6"><div class="kpi-card">

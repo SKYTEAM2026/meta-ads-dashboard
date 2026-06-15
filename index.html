@@ -2733,12 +2733,12 @@ function parseTiktokCSV(text) {
     if (headerIdx === -1) return null;
     const headers = parseCSVRow(lines[headerIdx]);
     const iName     = findColIdx(headers, '캠페인 이름', '캠페인이름', 'Campaign name', 'Campaign');
-    const iCost     = findColIdx(headers, '지출 금액', '지출금액', 'Cost', 'Amount spent', 'Spend');
-    const iImpr     = findColIdx(headers, '노출', 'Impressions');
-    const iClicks   = findColIdx(headers, '클릭수', '클릭', 'Clicks');
-    const iPurch    = findColIdx(headers, '구매 건수', '구매건수', '구매', 'Complete payment', 'Purchase', 'Conversions');
-    const iPurchVal = findColIdx(headers, '구매 가치', '구매가치', 'Complete payment value', 'Total conversion value', 'Purchase value', 'Conversion value');
-    const iDate     = findColIdx(headers, '날짜', 'Date', '일');
+    const iCost     = findColIdx(headers, '지출 금액', '지출금액', '비용', 'Cost', 'Amount spent', 'Spend');
+    const iImpr     = findColIdx(headers, '노출', '노출수', 'Impressions', 'Impression');
+    const iClicks   = findColIdx(headers, '클릭수', '클릭', 'Clicks', 'Click');
+    const iPurch    = findColIdx(headers, '구매 건수', '구매건수', '구매', '전환수', 'Complete payment', 'Purchase', 'Conversions');
+    const iPurchVal = findColIdx(headers, '구매 가치', '구매가치', '전환 가치', 'Complete payment value', 'Total conversion value', 'Purchase value', 'Conversion value');
+    const iDate     = findColIdx(headers, '날짜', '일별', 'Date', '일');
     const iAdGroup  = findColIdx(headers, '광고 그룹 이름', '광고그룹이름', 'Ad group name', 'Adgroup');
     const iAdName   = findColIdx(headers, '광고 이름', '광고이름', 'Ad name', 'Ad');
     if (iName === -1 || iCost === -1) return null;

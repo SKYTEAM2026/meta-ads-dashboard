@@ -2839,17 +2839,19 @@ function renderTiktokDashboard(data) {
             <td class="text-end">${c.cpc?fCur(c.cpc):'–'}</td>
             <td class="text-end">${c.cpm?fCur(c.cpm):'–'}</td>
         </tr>`).join('');
-    const totCtr  = totImpr>0 ? (totClicks/totImpr*100).toFixed(2)+'%' : '–';
+    const totCtr  = totImpr>0 ? (totClicks/totImpr*100).toFixed(2)+'%' : (totCost>0&&totCtrW>0?(totCtrW/totCost).toFixed(2)+'%':'–');
+    const totCpc  = totClicks>0 ? fCur(totCost/totClicks) : (totCost>0&&totCpcW>0?fCur(totCpcW/totCost):'–');
+    const totCpm  = totImpr>0 ? fCur(totCost/totImpr*1000) : (totCost>0&&totCpmW>0?fCur(totCpmW/totCost):'–');
     const totRoas = totCost>0&&totPVal>0 ? (totPVal/totCost*100).toFixed(1)+'%' : '–';
     document.getElementById('tiktokTfoot').innerHTML = `
         <tr class="total-row">
             <td>합계 (${sorted.length}개 캠페인)</td>
             <td class="text-end">${fCur(totCost)}</td><td class="text-end">${totPVal?fCur(totPVal):'–'}</td>
             <td class="text-end">${totPurch?fNum(totPurch):'–'}</td><td class="text-end">${totPurch?fCur(totCost/totPurch):'–'}</td>
-            <td class="text-end">${totRoas}</td><td class="text-end">${fNum(totImpr)}</td>
-            <td class="text-end">${fNum(totClicks)}</td><td class="text-end">${totCtr}</td>
-            <td class="text-end">${totClicks?fCur(totCost/totClicks):'–'}</td>
-            <td class="text-end">${totImpr?fCur(totCost/totImpr*1000):'–'}</td>
+            <td class="text-end">${totRoas}</td><td class="text-end">${totImpr?fNum(totImpr):'–'}</td>
+            <td class="text-end">${totClicks?fNum(totClicks):'–'}</td><td class="text-end">${totCtr}</td>
+            <td class="text-end">${totCpc}</td>
+            <td class="text-end">${totCpm}</td>
         </tr>`;
     document.getElementById('tiktokCampaignBadge').textContent = `${sorted.length}개`;
     document.getElementById('tiktokUploadArea').style.display = 'none';

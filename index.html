@@ -2255,6 +2255,7 @@ function showLoading(v) {
     document.getElementById('loadingBox').style.display = v ? '' : 'none';
 }
 function showDashboard() {
+    metaReady = true;
     document.getElementById('dashboard').style.display = '';
 }
 function showError(msg) {

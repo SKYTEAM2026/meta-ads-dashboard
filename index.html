@@ -2741,6 +2741,9 @@ function parseTiktokCSV(text) {
     const iDate     = findColIdx(headers, '날짜', '일별', 'Date', '일');
     const iAdGroup  = findColIdx(headers, '광고 그룹 이름', '광고그룹이름', 'Ad group name', 'Adgroup');
     const iAdName   = findColIdx(headers, '광고 이름', '광고이름', 'Ad name', 'Ad');
+    const iCtr      = findColIdx(headers, 'CTR(목적지)', 'CTR', 'Click through rate');
+    const iCpc      = findColIdx(headers, 'CPC(목적지)', 'CPC', 'Cost per click');
+    const iCpm      = findColIdx(headers, 'CPM');
     if (iName === -1 || iCost === -1) return null;
     const campaignMap = {};
     const rawRows = [];
@@ -2756,23 +2759,29 @@ function parseTiktokCSV(text) {
         const clicks   = iClicks !== -1 ? parseNum(cols[iClicks]) : 0;
         const purch    = iPurch !== -1 ? parseNum(cols[iPurch]) : 0;
         const purchVal = iPurchVal !== -1 ? parseNum(cols[iPurchVal]) : 0;
+        const ctr      = iCtr !== -1 ? parseNum(cols[iCtr]) : 0;
+        const cpc      = iCpc !== -1 ? parseNum(cols[iCpc]) : 0;
+        const cpm      = iCpm !== -1 ? parseNum(cols[iCpm]) : 0;
         const date     = iDate !== -1 ? (cols[iDate]?.trim() || '') : '';
         const adGroup  = iAdGroup !== -1 ? (cols[iAdGroup]?.trim() || '') : '';
         const adName   = iAdName !== -1 ? (cols[iAdName]?.trim() || '') : '';
-        if (cost === 0 && impr === 0) continue;
-        if (!campaignMap[campaign]) campaignMap[campaign] = { name:campaign, cost:0, impr:0, clicks:0, purch:0, purchVal:0 };
+        if (cost === 0 && impr === 0 && ctr === 0) continue;
+        if (!campaignMap[campaign]) campaignMap[campaign] = { name:campaign, cost:0, impr:0, clicks:0, purch:0, purchVal:0, ctrW:0, cpcW:0, cpmW:0 };
         campaignMap[campaign].cost += cost; campaignMap[campaign].impr += impr; campaignMap[campaign].clicks += clicks;
         campaignMap[campaign].purch += purch; campaignMap[campaign].purchVal += purchVal;
-        rawRows.push({ date, campaign, adGroup, adName, cost, impr, clicks, purch, purchVal });
+        campaignMap[campaign].ctrW += ctr * cost;
+        campaignMap[campaign].cpcW += cpc * cost;
+        campaignMap[campaign].cpmW += cpm * cost;
+        rawRows.push({ date, campaign, adGroup, adName, cost, impr, clicks, purch, purchVal, ctr, cpc, cpm });
     }
     const campaigns = Object.values(campaignMap);
     if (campaigns.length === 0) return null;
     return {
         campaigns: campaigns.map(c => ({
             ...c,
-            ctr:  c.impr>0 ? c.clicks/c.impr*100 : 0,
-            cpc:  c.clicks>0 ? c.cost/c.clicks : 0,
-            cpm:  c.impr>0 ? c.cost/c.impr*1000 : 0,
+            ctr:  c.impr>0 ? c.clicks/c.impr*100 : (c.cost>0 ? c.ctrW/c.cost : 0),
+            cpc:  c.clicks>0 ? c.cost/c.clicks    : (c.cost>0 ? c.cpcW/c.cost : 0),
+            cpm:  c.impr>0 ? c.cost/c.impr*1000   : (c.cost>0 ? c.cpmW/c.cost : 0),
             cpr:  c.purch>0 ? c.cost/c.purch : 0,
             roas: c.cost>0&&c.purchVal>0 ? c.purchVal/c.cost*100 : 0,
         })),

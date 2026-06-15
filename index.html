@@ -2425,6 +2425,211 @@ function setBadge(name) {
 // ═══════════════════════════════════════
 //  PLATFORM SWITCHING
 // ═══════════════════════════════════════
+// ═══════════════════════════════════════
+//  CSV DETAIL PANEL HELPERS (shared)
+// ═══════════════════════════════════════
+function renderCsvDailyTable(rows, tbodyId, tfootId, noDataId, convLabel) {
+    if (!rows || rows.length === 0) {
+        document.getElementById(tbodyId).innerHTML = '';
+        document.getElementById(tfootId).innerHTML = '';
+        document.getElementById(noDataId).style.display = '';
+        return;
+    }
+    document.getElementById(noDataId).style.display = 'none';
+    const sorted = [...rows].sort((a,b) => (a.date||'').localeCompare(b.date||''));
+    const usePurch = 'purch' in (sorted[0] || {});
+    const convKey = usePurch ? 'purch' : 'conv';
+    const convValKey = usePurch ? 'purchVal' : 'convVal';
+    document.getElementById(tbodyId).innerHTML = sorted.map(r => {
+        const ctr  = r.impr > 0 ? (r.clicks/r.impr*100).toFixed(2)+'%' : '–';
+        const cpc  = r.clicks > 0 ? fCur(r.cost/r.clicks) : '–';
+        const cpm  = r.impr > 0 ? fCur(r.cost/r.impr*1000) : '–';
+        const conv = r[convKey] || 0;
+        const cval = r[convValKey] || 0;
+        const cpr  = conv > 0 ? fCur(r.cost/conv) : '–';
+        const roas = r.cost > 0 && cval > 0 ? (cval/r.cost*100).toFixed(1)+'%' : '–';
+        return `<tr>
+            <td>${esc(r.date||'–')}</td>
+            <td class="text-end">${fCur(r.cost)}</td>
+            <td class="text-end">${cval?fCur(cval):'–'}</td>
+            <td class="text-end">${conv?fNum(conv):'–'}</td>
+            <td class="text-end">${cpr}</td>
+            <td class="text-end">${roas}</td>
+            <td class="text-end">${r.impr?fNum(r.impr):'–'}</td>
+            <td class="text-end">${r.clicks?fNum(r.clicks):'–'}</td>
+            <td class="text-end">${ctr}</td>
+            <td class="text-end">${cpc}</td>
+            <td class="text-end">${cpm}</td>
+        </tr>`;
+    }).join('');
+    const tCost = sorted.reduce((s,r)=>s+r.cost,0);
+    const tImpr = sorted.reduce((s,r)=>s+r.impr,0);
+    const tClk  = sorted.reduce((s,r)=>s+r.clicks,0);
+    const tConv = sorted.reduce((s,r)=>s+(r[convKey]||0),0);
+    const tCVal = sorted.reduce((s,r)=>s+(r[convValKey]||0),0);
+    document.getElementById(tfootId).innerHTML = `<tr class="total-row">
+        <td>합계 (${sorted.length}일)</td>
+        <td class="text-end">${fCur(tCost)}</td>
+        <td class="text-end">${tCVal?fCur(tCVal):'–'}</td>
+        <td class="text-end">${tConv?fNum(tConv):'–'}</td>
+        <td class="text-end">${tConv?fCur(tCost/tConv):'–'}</td>
+        <td class="text-end">${tCost>0&&tCVal>0?(tCVal/tCost*100).toFixed(1)+'%':'–'}</td>
+        <td class="text-end">${fNum(tImpr)}</td>
+        <td class="text-end">${fNum(tClk)}</td>
+        <td class="text-end">${tImpr>0?(tClk/tImpr*100).toFixed(2)+'%':'–'}</td>
+        <td class="text-end">${tClk?fCur(tCost/tClk):'–'}</td>
+        <td class="text-end">${tImpr?fCur(tCost/tImpr*1000):'–'}</td>
+    </tr>`;
+}
+
+function renderCsvCreativeTable(rows, tbodyId, tfootId, noDataId, barColor) {
+    if (!rows || rows.length === 0) {
+        document.getElementById(tbodyId).innerHTML = '';
+        document.getElementById(tfootId).innerHTML = '';
+        document.getElementById(noDataId).style.display = '';
+        return;
+    }
+    document.getElementById(noDataId).style.display = 'none';
+    const map = {};
+    const usePurch = 'purch' in (rows[0] || {});
+    const convKey = usePurch ? 'purch' : 'conv';
+    const convValKey = usePurch ? 'purchVal' : 'convVal';
+    rows.forEach(r => {
+        const key = (r.adName || '(미분류)') + '||' + (r.adGroup || '');
+        if (!map[key]) map[key] = { adName:r.adName||'(미분류)', adGroup:r.adGroup||'', cost:0, impr:0, clicks:0, conv:0, convVal:0 };
+        map[key].cost += r.cost; map[key].impr += r.impr; map[key].clicks += r.clicks;
+        map[key].conv += r[convKey]||0; map[key].convVal += r[convValKey]||0;
+    });
+    const sorted = Object.values(map).sort((a,b) => b.cost - a.cost);
+    const maxCost = Math.max(...sorted.map(c=>c.cost),1);
+    document.getElementById(tbodyId).innerHTML = sorted.map(c => {
+        const ctr  = c.impr>0 ? (c.clicks/c.impr*100).toFixed(2)+'%' : '–';
+        const cpc  = c.clicks>0 ? fCur(c.cost/c.clicks) : '–';
+        const cpm  = c.impr>0 ? fCur(c.cost/c.impr*1000) : '–';
+        const cpr  = c.conv>0 ? fCur(c.cost/c.conv) : '–';
+        const roas = c.cost>0&&c.convVal>0 ? (c.convVal/c.cost*100).toFixed(1)+'%' : '–';
+        return `<tr>
+            <td>
+                <div class="campaign-name" style="font-size:13px;">${esc(c.adName)}</div>
+                ${c.adGroup ? `<div class="campaign-meta">${esc(c.adGroup)}</div>` : ''}
+            </td>
+            <td class="text-end fw-semibold">
+                <div class="spend-bar-wrap">${fCur(c.cost)}<div class="spend-bar"><div class="spend-bar-fill" style="width:${(c.cost/maxCost*100).toFixed(1)}%;background:${barColor};"></div></div></div>
+            </td>
+            <td class="text-end">${c.convVal?fCur(c.convVal):'–'}</td>
+            <td class="text-end">${c.conv?fNum(c.conv):'–'}</td>
+            <td class="text-end">${cpr}</td>
+            <td class="text-end">${roas}</td>
+            <td class="text-end">${c.impr?fNum(c.impr):'–'}</td>
+            <td class="text-end">${c.clicks?fNum(c.clicks):'–'}</td>
+            <td class="text-end">${ctr}</td>
+            <td class="text-end">${cpc}</td>
+            <td class="text-end">${cpm}</td>
+        </tr>`;
+    }).join('');
+    const tCost = sorted.reduce((s,c)=>s+c.cost,0);
+    const tImpr = sorted.reduce((s,c)=>s+c.impr,0);
+    const tClk  = sorted.reduce((s,c)=>s+c.clicks,0);
+    const tConv = sorted.reduce((s,c)=>s+c.conv,0);
+    const tCVal = sorted.reduce((s,c)=>s+c.convVal,0);
+    document.getElementById(tfootId).innerHTML = `<tr class="total-row">
+        <td>합계 (${sorted.length}개 소재)</td>
+        <td class="text-end">${fCur(tCost)}</td>
+        <td class="text-end">${tCVal?fCur(tCVal):'–'}</td>
+        <td class="text-end">${tConv?fNum(tConv):'–'}</td>
+        <td class="text-end">${tConv?fCur(tCost/tConv):'–'}</td>
+        <td class="text-end">${tCost>0&&tCVal>0?(tCVal/tCost*100).toFixed(1)+'%':'–'}</td>
+        <td class="text-end">${fNum(tImpr)}</td>
+        <td class="text-end">${fNum(tClk)}</td>
+        <td class="text-end">${tImpr>0?(tClk/tImpr*100).toFixed(2)+'%':'–'}</td>
+        <td class="text-end">${tClk?fCur(tCost/tClk):'–'}</td>
+        <td class="text-end">${tImpr?fCur(tCost/tImpr*1000):'–'}</td>
+    </tr>`;
+}
+
+// ═══════════════════════════════════════
+//  TIKTOK DETAIL PANEL
+// ═══════════════════════════════════════
+function showTiktokCampaignDetail(campaignName) {
+    document.querySelectorAll('#tiktokTbody tr').forEach(tr => {
+        tr.classList.toggle('selected-row', tr.dataset.campaign === campaignName);
+    });
+    document.getElementById('tiktokDetailTitle').textContent = campaignName;
+    document.getElementById('tiktokDetailPanel').style.display = '';
+    document.getElementById('tiktokDetailPanel').scrollIntoView({ behavior:'smooth', block:'nearest' });
+    const rows = tiktokRawRows.filter(r => r.campaign === campaignName);
+    if (tiktokHasDate) {
+        renderCsvDailyTable(rows, 'ttDailyTbody', 'ttDailyTfoot', 'ttDailyNoData');
+    } else {
+        document.getElementById('ttDailyTbody').innerHTML = '';
+        document.getElementById('ttDailyTfoot').innerHTML = '';
+        document.getElementById('ttDailyNoData').style.display = '';
+    }
+    if (tiktokHasAdName) {
+        renderCsvCreativeTable(rows, 'ttCreativeTbody', 'ttCreativeTfoot', 'ttCreativeNoData', '#FE2C55');
+    } else {
+        document.getElementById('ttCreativeTbody').innerHTML = '';
+        document.getElementById('ttCreativeTfoot').innerHTML = '';
+        document.getElementById('ttCreativeNoData').style.display = '';
+    }
+    switchTiktokTab('daily');
+}
+
+function closeTiktokDetail() {
+    document.getElementById('tiktokDetailPanel').style.display = 'none';
+    document.querySelectorAll('#tiktokTbody tr').forEach(tr => tr.classList.remove('selected-row'));
+}
+
+function switchTiktokTab(tab) {
+    document.getElementById('tt-tab-btn-daily').classList.toggle('active', tab === 'daily');
+    document.getElementById('tt-tab-btn-creative').classList.toggle('active', tab === 'creative');
+    document.getElementById('ttTabDaily').style.display = tab === 'daily' ? '' : 'none';
+    document.getElementById('ttTabCreative').style.display = tab === 'creative' ? '' : 'none';
+}
+
+// ═══════════════════════════════════════
+//  GOOGLE DETAIL PANEL
+// ═══════════════════════════════════════
+function showGoogleCampaignDetail(campaignName) {
+    document.querySelectorAll('#googleTbody tr').forEach(tr => {
+        tr.classList.toggle('selected-row', tr.dataset.campaign === campaignName);
+    });
+    document.getElementById('googleDetailTitle').textContent = campaignName;
+    document.getElementById('googleDetailPanel').style.display = '';
+    document.getElementById('googleDetailPanel').scrollIntoView({ behavior:'smooth', block:'nearest' });
+    const rows = googleRawRows.filter(r => r.campaign === campaignName);
+    if (googleHasDate) {
+        renderCsvDailyTable(rows, 'ggDailyTbody', 'ggDailyTfoot', 'ggDailyNoData');
+    } else {
+        document.getElementById('ggDailyTbody').innerHTML = '';
+        document.getElementById('ggDailyTfoot').innerHTML = '';
+        document.getElementById('ggDailyNoData').style.display = '';
+    }
+    if (googleHasAdName) {
+        renderCsvCreativeTable(rows, 'ggCreativeTbody', 'ggCreativeTfoot', 'ggCreativeNoData', '#4285F4');
+    } else {
+        document.getElementById('ggCreativeTbody').innerHTML = '';
+        document.getElementById('ggCreativeTfoot').innerHTML = '';
+        document.getElementById('ggCreativeNoData').style.display = '';
+    }
+    switchGoogleTab('daily');
+}
+
+function closeGoogleDetail() {
+    document.getElementById('googleDetailPanel').style.display = 'none';
+    document.querySelectorAll('#googleTbody tr').forEach(tr => tr.classList.remove('selected-row'));
+}
+
+function switchGoogleTab(tab) {
+    document.getElementById('gg-tab-btn-daily').classList.toggle('active', tab === 'daily');
+    document.getElementById('gg-tab-btn-creative').classList.toggle('active', tab === 'creative');
+    document.getElementById('ggTabDaily').style.display = tab === 'daily' ? '' : 'none';
+    document.getElementById('ggTabCreative').style.display = tab === 'creative' ? '' : 'none';
+}
+
+// ═══════════════════════════════════════
+//  PLATFORM SWITCH
+// ═══════════════════════════════════════
 let activePlatform = 'meta';
 let metaReady = false;
 
@@ -2440,6 +2645,8 @@ function switchPlatform(platform) {
     document.getElementById('dashboard').style.display    = (isMeta && metaReady) ? '' : 'none';
     const panel = document.getElementById('campaignDailyPanel');
     if (panel && !isMeta) panel.style.display = 'none';
+    if (platform !== 'tiktok') closeTiktokDetail();
+    if (platform !== 'google') closeGoogleDetail();
     document.getElementById('tiktokDashboard').style.display = platform === 'tiktok' ? '' : 'none';
     document.getElementById('googleDashboard').style.display = platform === 'google' ? '' : 'none';
     if (platform === 'tiktok' && tiktokData) renderTiktokDashboard(tiktokData);

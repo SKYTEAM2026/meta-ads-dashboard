@@ -2667,7 +2667,7 @@ function showTiktokCampaignDetail(campaignName) {
     });
     document.getElementById('tiktokDetailTitle').textContent = campaignName;
     document.getElementById('tiktokDetailPanel').style.display = '';
-    document.getElementById('tiktokDetailPanel').scrollIntoView({ behavior:'smooth', block:'nearest' });
+    setTimeout(() => document.getElementById('tiktokDetailPanel').scrollIntoView({ behavior:'smooth', block:'start' }), 60);
     const rows = tiktokFilteredRawRows.filter(r => r.campaign === campaignName);
 
     renderTiktokDetailKpis(rows, 'ttDailyKpiRow', 'daily');

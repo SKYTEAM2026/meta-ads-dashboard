@@ -2953,7 +2953,7 @@ function renderTiktokDashboard(data) {
             </div>
         </div></div>`).join('');
     const maxCost = Math.max(...sorted.map(c=>c.cost),1);
-    const canDrill = tiktokRawRows.length > 0;
+    const canDrill = tiktokFilteredRawRows.length > 0;
     document.getElementById('tiktokTbody').innerHTML = sorted.map(c=>`
         <tr ${canDrill ? `style="cursor:pointer;" data-campaign="${esc(c.name)}" onclick="showTiktokCampaignDetail(this.dataset.campaign)"` : ''}>
             <td>

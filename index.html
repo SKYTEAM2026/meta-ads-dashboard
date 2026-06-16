@@ -1227,14 +1227,7 @@ function parseCafe24CSV(text) {
     const statusEl = document.getElementById('cafe24UploadStatus');
     statusEl.style.display = '';
     if (dateKeys.length > 0) {
-        // 범위 키에서 실제 날짜 추출
-        const extractDate = (k, side) => {
-            const m = k.match(/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/);
-            return m ? m[side === 'start' ? 1 : 2] : k;
-        };
-        const since = extractDate(dateKeys[0], 'start');
-        const until  = extractDate(dateKeys[dateKeys.length-1], 'end');
-        statusEl.textContent = `✓ ${since}~${until} (Meta 매출 ${metaRows}건 로드됨)`;
+        statusEl.textContent = `✓ ${dateKeys[0]}~${dateKeys[dateKeys.length-1]} (Meta 매출 ${metaRows}건 로드됨)`;
         statusEl.style.color = '';
     } else {
         statusEl.textContent = `⚠ Meta 채널 데이터 없음 (전체 ${totalRows}행, channel 컬럼 확인 필요)`;

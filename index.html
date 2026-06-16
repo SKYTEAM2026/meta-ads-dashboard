@@ -2933,6 +2933,8 @@ function parseTiktokCSV(text) {
         rawRows,
         hasDate:   iDate !== -1 && rawRows.some(r => r.date),
         hasAdName: iAdName !== -1 && rawRows.some(r => r.adName),
+        hasStatus: iStatus !== -1,
+        statuses:  iStatus !== -1 ? [...new Set(rawRows.map(r => r.status).filter(Boolean))] : [],
     };
 }
 

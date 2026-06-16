@@ -2820,12 +2820,17 @@ function closeTiktokDetail() {
 // ═══════════════════════════════════════
 function showGoogleCampaignDetail(campaignName) {
     document.querySelectorAll('#googleTbody tr').forEach(tr => {
-        tr.classList.toggle('selected-row', tr.dataset.campaign === campaignName);
+        tr.classList.toggle('row-selected', tr.dataset.campaign === campaignName);
     });
     document.getElementById('googleDetailTitle').textContent = campaignName;
     document.getElementById('googleDetailPanel').style.display = '';
-    document.getElementById('googleDetailPanel').scrollIntoView({ behavior:'smooth', block:'nearest' });
-    const rows = googleRawRows.filter(r => r.campaign === campaignName);
+    setTimeout(() => document.getElementById('googleDetailPanel').scrollIntoView({ behavior:'smooth', block:'start' }), 60);
+    const rows = googleFilteredRawRows.filter(r => r.campaign === campaignName);
+    const dateRows = rows.filter(r => r.date);
+    document.getElementById('googleDetailMeta').textContent = dateRows.length ? `${dateRows.length}일` : '';
+
+    renderGoogleDetailKpis(rows, 'ggDailyKpiRow', 'daily');
+    renderGoogleDailyChart(rows);
     if (googleHasDate) {
         renderCsvDailyTable(rows, 'ggDailyTbody', 'ggDailyTfoot', 'ggDailyNoData');
     } else {
@@ -2833,6 +2838,8 @@ function showGoogleCampaignDetail(campaignName) {
         document.getElementById('ggDailyTfoot').innerHTML = '';
         document.getElementById('ggDailyNoData').style.display = '';
     }
+
+    renderGoogleDetailKpis(rows, 'ggCreativeKpiRow', 'creative');
     if (googleHasAdName) {
         renderCsvCreativeTable(rows, 'ggCreativeTbody', 'ggCreativeTfoot', 'ggCreativeNoData', '#4285F4');
     } else {
@@ -2841,6 +2848,130 @@ function showGoogleCampaignDetail(campaignName) {
         document.getElementById('ggCreativeNoData').style.display = '';
     }
     switchGoogleTab('daily');
+}
+
+function renderGoogleDetailKpis(rows, kpiRowId, type) {
+    const tCost   = rows.reduce((s,r)=>s+r.cost, 0);
+    const tImpr   = rows.reduce((s,r)=>s+r.impr, 0);
+    const tClk    = rows.reduce((s,r)=>s+r.clicks, 0);
+    const tConv   = rows.reduce((s,r)=>s+(r.conv||0), 0);
+    const tCVal   = rows.reduce((s,r)=>s+(r.convVal||0), 0);
+    const cpr     = tConv>0 ? fCur(tCost/tConv) : '–';
+    const roas    = tCost>0&&tCVal>0 ? (tCVal/tCost*100).toFixed(1)+'%' : '–';
+    const ctr     = tImpr>0 ? (tClk/tImpr*100).toFixed(2)+'%' : '–';
+    let kpis;
+    if (type === 'creative') {
+        const uniqueAds = new Set(rows.map(r=>r.adName).filter(Boolean)).size;
+        kpis = [
+            { label:'광고 수',    value:uniqueAds+'개',         icon:'bi-images',        bg:'#e8f0fe', color:'#4285F4' },
+            { label:'총 비용',    value:fCur(tCost),            icon:'bi-cash-coin',     bg:'#f0fdf4', color:'#34A853' },
+            { label:'전환 가치',  value:tCVal?fCur(tCVal):'–', icon:'bi-bag-check',     bg:'#fefce8', color:'#FBBC04' },
+            { label:'전환수',     value:tConv?fNum(tConv):'–', icon:'bi-check-circle',  bg:'#fdf4ff', color:'#9333ea' },
+            { label:'전환당 비용',value:cpr,                    icon:'bi-cursor-fill',   bg:'#fff7ed', color:'#ea580c' },
+            { label:'ROAS',       value:roas,                   icon:'bi-graph-up-arrow',bg:'#fef2f2', color:'#EA4335' },
+        ];
+    } else {
+        kpis = [
+            { label:'총 비용',    value:fCur(tCost),            icon:'bi-cash-coin',     bg:'#e8f0fe', color:'#4285F4' },
+            { label:'전환 가치',  value:tCVal?fCur(tCVal):'–', icon:'bi-bag-check',     bg:'#f0fdf4', color:'#34A853' },
+            { label:'전환수',     value:tConv?fNum(tConv):'–', icon:'bi-check-circle',  bg:'#fefce8', color:'#FBBC04' },
+            { label:'전환당 비용',value:cpr,                    icon:'bi-cursor-fill',   bg:'#fdf4ff', color:'#9333ea' },
+            { label:'ROAS',       value:roas,                   icon:'bi-graph-up-arrow',bg:'#fff7ed', color:'#ea580c' },
+            { label:'CTR',        value:ctr,                    icon:'bi-bar-chart-fill',bg:'#fef2f2', color:'#EA4335' },
+        ];
+    }
+    document.getElementById(kpiRowId).innerHTML = kpis.map(k=>`
+        <div class="col-xl-2 col-lg-4 col-md-4 col-6">
+            <div class="daily-kpi-item">
+                <div class="daily-kpi-icon" style="background:${k.bg};color:${k.color};">
+                    <i class="bi ${k.icon}"></i>
+                </div>
+                <div>
+                    <div class="daily-kpi-label">${k.label}</div>
+                    <div class="daily-kpi-value">${k.value}</div>
+                </div>
+            </div>
+        </div>`).join('');
+}
+
+function renderGoogleDailyChart(rows) {
+    const sorted = [...rows].filter(r => r.date).sort((a,b) => (a.date||'').localeCompare(b.date||''));
+    const wrap = document.getElementById('ggDailyChartWrap');
+    if (sorted.length === 0) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+    const ctx = document.getElementById('googleDailyChart').getContext('2d');
+    if (googleDailyChartInst) googleDailyChartInst.destroy();
+    const labels = sorted.map(r => {
+        const d = r.date.replace(/\./g,'-').replace(/\//g,'-');
+        const dt = new Date(d);
+        return isNaN(dt) ? r.date : `${dt.getMonth()+1}/${dt.getDate()}`;
+    });
+    googleDailyChartInst = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: '비용',
+                    data: sorted.map(r => r.cost),
+                    backgroundColor: 'rgba(66,133,244,0.65)',
+                    borderColor: '#4285F4',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    yAxisID: 'yLeft',
+                    order: 2,
+                },
+                {
+                    label: '전환수',
+                    type: 'line',
+                    data: sorted.map(r => r.conv || 0),
+                    borderColor: '#FBBC04',
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    yAxisID: 'yRight',
+                    order: 1,
+                },
+                {
+                    label: '전환 가치',
+                    type: 'line',
+                    data: sorted.map(r => r.convVal || 0),
+                    borderColor: '#34A853',
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    yAxisID: 'yLeft',
+                    order: 0,
+                    hidden: true,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position:'top', labels:{ usePointStyle:true, boxWidth:8, font:{size:12} } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            if (ctx.dataset.label === '비용')    return ` 비용: ${fCur(ctx.raw)}`;
+                            if (ctx.dataset.label === '전환수')  return ` 전환수: ${fNum(ctx.raw)}`;
+                            if (ctx.dataset.label === '전환 가치') return ` 전환 가치: ${fCur(ctx.raw)}`;
+                            return ` ${ctx.dataset.label}: ${ctx.raw}`;
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: { grid:{ display:false }, ticks:{ font:{ size:11 } } },
+                yLeft: { position:'left', grid:{ color:'rgba(0,0,0,0.04)' }, ticks:{ font:{size:11}, callback: v => fCurShort(v) } },
+                yRight: { position:'right', grid:{ display:false }, ticks:{ font:{size:11}, callback: v => fNumShort(v) } },
+            },
+        },
+    });
 }
 
 function closeGoogleDetail() {

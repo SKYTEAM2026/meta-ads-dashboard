@@ -2888,8 +2888,8 @@ function parseTiktokCSV(text) {
     const iCost     = findColIdx(headers, '지출 금액', '지출금액', '비용', 'Cost', 'Amount spent', 'Spend');
     const iImpr     = findColIdx(headers, '노출', '노출수', 'Impressions', 'Impression');
     const iClicks   = findColIdx(headers, '클릭수', '클릭', 'Clicks', 'Click');
-    const iPurch    = findColIdx(headers, '전환수', '구매 건수', '구매건수', 'Complete payment', 'Purchase', 'Conversions');
-    const iPurchVal = findColIdx(headers, '구매 가치', '구매가치', '전환 가치', 'Complete payment value', 'Total conversion value', 'Purchase value', 'Conversion value');
+    const iPurch    = findColIdx(headers, '완료된 결제', '완료된결제', '구매 건수', '구매건수', '전환수', 'Complete payment', 'Purchase', 'Conversions');
+    const iPurchVal = findColIdx(headers, '완료된 결제 가치', '완료된결제가치', '구매 가치', '구매가치', '전환 가치', 'Complete payment value', 'Total conversion value', 'Purchase value', 'Conversion value');
     const iDate     = findColIdx(headers, '날짜', '일별', 'Date', '일');
     const iAdGroup  = findColIdx(headers, '광고 그룹 이름', '광고그룹이름', 'Ad group name', 'Adgroup');
     const iAdName   = findColIdx(headers, '광고 이름', '광고이름', 'Ad name', 'Ad');

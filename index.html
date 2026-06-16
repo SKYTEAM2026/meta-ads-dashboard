@@ -1234,13 +1234,18 @@ function parseCafe24CSV(text) {
 
 function sumTermRevenue(termData, since, until) {
     if (!termData) return 0;
+    const dayDiff = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000) + 1;
     return Object.entries(termData).reduce((s, [d, v]) => {
         const m = d.match(/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/);
         if (m) {
-            // 범위 키: 활성 기간과 겹치면 포함
-            return (m[1] <= until && m[2] >= since) ? s + v : s;
+            const [, rs, re] = m;
+            if (rs > until || re < since) return s;  // 겹침 없음
+            const overlapStart = rs > since ? rs : since;
+            const overlapEnd   = re < until ? re : until;
+            const overlapDays  = dayDiff(overlapStart, overlapEnd);
+            const totalDays    = dayDiff(rs, re);
+            return s + v * (overlapDays / totalDays);
         }
-        // 개별 날짜 키
         return (d >= since && d <= until) ? s + v : s;
     }, 0);
 }

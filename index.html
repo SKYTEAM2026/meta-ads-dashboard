@@ -2853,11 +2853,13 @@ function applyTiktokFilters() {
 
     const campaignMap = {};
     for (const r of rows) {
-        if (!campaignMap[r.campaign]) campaignMap[r.campaign] = { name:r.campaign, cost:0, impr:0, clicks:0, purch:0, purchVal:0, ctrW:0, cpcW:0, cpmW:0, status:r.status||'' };
+        if (!campaignMap[r.campaign]) campaignMap[r.campaign] = { name:r.campaign, cost:0, impr:0, clicks:0, purch:0, purchVal:0, ctrW:0, cpcW:0, cpmW:0, cprW:0, roasW:0, status:r.status||'' };
         const c = campaignMap[r.campaign];
         c.cost += r.cost; c.impr += r.impr; c.clicks += r.clicks;
         c.purch += r.purch; c.purchVal += r.purchVal;
-        c.ctrW += r.ctr * r.cost; c.cpcW += r.cpc * r.cost; c.cpmW += r.cpm * r.cost;
+        c.ctrW  += r.ctr * r.cost; c.cpcW += r.cpc * r.cost; c.cpmW += r.cpm * r.cost;
+        c.cprW  += (r.cprDirect||0) * r.cost;
+        c.roasW += (r.roasDirect||0) * r.cost;
     }
 
     const filteredData = Object.values(campaignMap).map(c => ({
@@ -2865,8 +2867,8 @@ function applyTiktokFilters() {
         ctr:  c.impr>0  ? c.clicks/c.impr*100  : (c.cost>0 ? c.ctrW/c.cost : 0),
         cpc:  c.clicks>0 ? c.cost/c.clicks      : (c.cost>0 ? c.cpcW/c.cost : 0),
         cpm:  c.impr>0  ? c.cost/c.impr*1000    : (c.cost>0 ? c.cpmW/c.cost : 0),
-        cpr:  c.purch>0 ? c.cost/c.purch : 0,
-        roas: c.cost>0&&c.purchVal>0 ? c.purchVal/c.cost*100 : 0,
+        cpr:  c.purch>0 ? c.cost/c.purch : (c.cost>0&&c.cprW>0 ? c.cprW/c.cost : 0),
+        roas: c.purchVal>0&&c.cost>0 ? c.purchVal/c.cost*100 : (c.cost>0&&c.roasW>0 ? c.roasW/c.cost*100 : 0),
     }));
 
     renderTiktokDashboard(filteredData.length ? filteredData : []);

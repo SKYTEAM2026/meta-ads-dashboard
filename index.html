@@ -1189,15 +1189,19 @@ function parseCafe24CSV(text) {
         if (!META_CHANNELS.has(channel)) continue;
         metaRows++;
 
-        const date   = (cols[idx('date')] || '').trim();
-        const term   = (cols[idx('term')] || '').trim();
-        const amount = parseNum(cols[idx('order_amount')] || '0');
-        if (!date || !amount) continue;
+        const rawDate = (cols[idx('date')] || '').trim();
+        const term    = (cols[idx('term')] || '').trim();
+        const amount  = parseNum(cols[idx('order_amount')] || '0');
+        if (!rawDate || !amount) continue;
 
-        cafe24MetaByDate[date] = (cafe24MetaByDate[date] || 0) + amount;
+        // 기간 형식 "YYYY-MM-DD ~ YYYY-MM-DD" 정규화
+        const rangeMatch = rawDate.match(/^(\d{4}-\d{2}-\d{2})\s*~\s*(\d{4}-\d{2}-\d{2})$/);
+        const dateKey = rangeMatch ? `${rangeMatch[1]}~${rangeMatch[2]}` : rawDate;
+
+        cafe24MetaByDate[dateKey] = (cafe24MetaByDate[dateKey] || 0) + amount;
         if (term) {
             if (!cafe24MetaByTerm[term]) cafe24MetaByTerm[term] = {};
-            cafe24MetaByTerm[term][date] = (cafe24MetaByTerm[term][date] || 0) + amount;
+            cafe24MetaByTerm[term][dateKey] = (cafe24MetaByTerm[term][dateKey] || 0) + amount;
         }
     }
 

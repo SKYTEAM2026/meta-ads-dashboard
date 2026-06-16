@@ -2665,6 +2665,86 @@ function renderTiktokDetailKpis(rows, kpiRowId, type) {
         </div>`).join('');
 }
 
+function renderTiktokDailyChart(rows) {
+    const sorted = [...rows].filter(r => r.date).sort((a,b) => (a.date||'').localeCompare(b.date||''));
+    const wrap = document.getElementById('ttDailyChartWrap');
+    if (sorted.length === 0) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+    const ctx = document.getElementById('tiktokDailyChart').getContext('2d');
+    if (tiktokDailyChartInst) tiktokDailyChartInst.destroy();
+    const labels = sorted.map(r => {
+        const d = r.date.replace(/\./g,'-').replace(/\//g,'-');
+        const dt = new Date(d);
+        return isNaN(dt) ? r.date : `${dt.getMonth()+1}/${dt.getDate()}`;
+    });
+    tiktokDailyChartInst = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: '지출',
+                    data: sorted.map(r => r.cost),
+                    backgroundColor: 'rgba(254,44,85,0.65)',
+                    borderColor: '#FE2C55',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    yAxisID: 'yLeft',
+                    order: 2,
+                },
+                {
+                    label: '구매 수',
+                    type: 'line',
+                    data: sorted.map(r => r.purch || 0),
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    yAxisID: 'yRight',
+                    order: 1,
+                },
+                {
+                    label: '구매전환값',
+                    type: 'line',
+                    data: sorted.map(r => r.purchVal || 0),
+                    borderColor: '#16a34a',
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    yAxisID: 'yLeft',
+                    order: 0,
+                    hidden: true,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position:'top', labels:{ usePointStyle:true, boxWidth:8, font:{size:12} } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            if (ctx.dataset.label === '지출')      return ` 지출: ${fCur(ctx.raw)}`;
+                            if (ctx.dataset.label === '구매 수')   return ` 구매 수: ${fNum(ctx.raw)}`;
+                            if (ctx.dataset.label === '구매전환값') return ` 구매전환값: ${fCur(ctx.raw)}`;
+                            return ` ${ctx.dataset.label}: ${ctx.raw}`;
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: { grid:{ display:false }, ticks:{ font:{ size:11 } } },
+                yLeft: { position:'left', grid:{ color:'rgba(0,0,0,0.04)' }, ticks:{ font:{size:11}, callback: v => fCurShort(v) } },
+                yRight: { position:'right', grid:{ display:false }, ticks:{ font:{size:11}, callback: v => fNumShort(v) } },
+            },
+        },
+    });
+}
+
 function showTiktokCampaignDetail(campaignName) {
     document.querySelectorAll('#tiktokTbody tr').forEach(tr => {
         tr.classList.toggle('row-selected', tr.dataset.campaign === campaignName);
@@ -2675,6 +2755,7 @@ function showTiktokCampaignDetail(campaignName) {
     const rows = tiktokFilteredRawRows.filter(r => r.campaign === campaignName);
 
     renderTiktokDetailKpis(rows, 'ttDailyKpiRow', 'daily');
+    renderTiktokDailyChart(rows);
     if (tiktokHasDate) {
         renderCsvDailyTable(rows, 'ttDailyTbody', 'ttDailyTfoot', 'ttDailyNoData');
     } else {

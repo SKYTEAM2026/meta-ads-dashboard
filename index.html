@@ -2874,6 +2874,7 @@ function parseTiktokCSV(text) {
     const iCtr      = findColIdx(headers, 'CTR(목적지)', 'CTR', 'Click through rate');
     const iCpc      = findColIdx(headers, 'CPC(목적지)', 'CPC', 'Cost per click');
     const iCpm      = findColIdx(headers, 'CPM');
+    const iStatus   = findColIdx(headers, '상태', '캠페인 상태', 'Campaign Status', 'Status');
     if (iName === -1 || iCost === -1) return null;
     const campaignMap = {};
     const rawRows = [];
@@ -2895,14 +2896,18 @@ function parseTiktokCSV(text) {
         const date     = iDate !== -1 ? (cols[iDate]?.trim() || '') : '';
         const adGroup  = iAdGroup !== -1 ? (cols[iAdGroup]?.trim() || '') : '';
         const adName   = iAdName !== -1 ? (cols[iAdName]?.trim() || '') : '';
+        const rawSt    = iStatus !== -1 ? (cols[iStatus]?.trim() || '') : '';
+        const status   = /active|활성|게재중/i.test(rawSt) ? '활성'
+                       : /pause|일시중지|중지/i.test(rawSt) ? '일시중지'
+                       : rawSt;
         if (cost === 0 && impr === 0 && ctr === 0) continue;
-        if (!campaignMap[campaign]) campaignMap[campaign] = { name:campaign, cost:0, impr:0, clicks:0, purch:0, purchVal:0, ctrW:0, cpcW:0, cpmW:0 };
+        if (!campaignMap[campaign]) campaignMap[campaign] = { name:campaign, cost:0, impr:0, clicks:0, purch:0, purchVal:0, ctrW:0, cpcW:0, cpmW:0, status };
         campaignMap[campaign].cost += cost; campaignMap[campaign].impr += impr; campaignMap[campaign].clicks += clicks;
         campaignMap[campaign].purch += purch; campaignMap[campaign].purchVal += purchVal;
         campaignMap[campaign].ctrW += ctr * cost;
         campaignMap[campaign].cpcW += cpc * cost;
         campaignMap[campaign].cpmW += cpm * cost;
-        rawRows.push({ date, campaign, adGroup, adName, cost, impr, clicks, purch, purchVal, ctr, cpc, cpm });
+        rawRows.push({ date, campaign, adGroup, adName, cost, impr, clicks, purch, purchVal, ctr, cpc, cpm, status });
     }
     const campaigns = Object.values(campaignMap);
     if (campaigns.length === 0) return null;

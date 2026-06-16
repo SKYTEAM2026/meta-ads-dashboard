@@ -2888,8 +2888,10 @@ function parseTiktokCSV(text) {
     const iCost     = findColIdx(headers, '지출 금액', '지출금액', '비용', 'Cost', 'Amount spent', 'Spend');
     const iImpr     = findColIdx(headers, '노출', '노출수', 'Impressions', 'Impression');
     const iClicks   = findColIdx(headers, '클릭수', '클릭', 'Clicks', 'Click');
-    const iPurch    = findColIdx(headers, '완료된 결제', '완료된결제', '구매 건수', '구매건수', '전환수', 'Complete payment', 'Purchase', 'Conversions');
-    const iPurchVal = findColIdx(headers, '완료된 결제 가치', '완료된결제가치', '구매 가치', '구매가치', '전환 가치', 'Complete payment value', 'Total conversion value', 'Purchase value', 'Conversion value');
+    const iPurch    = findColIdx(headers, '구매 수', '구매수', '완료된 결제', '완료된결제', '구매 건수', '구매건수', '전환수', 'Complete payment', 'Purchase', 'Conversions');
+    const iPurchVal = findColIdx(headers, '구매 금액', '구매금액', '완료된 결제 가치', '완료된결제가치', '구매 가치', '구매가치', '전환 가치', 'Complete payment value', 'Total conversion value', 'Purchase value', 'Conversion value');
+    const iCprDirect = findColIdx(headers, '구매당 비용', '구매당비용', 'Cost per purchase');
+    const iRoasDirect = findColIdx(headers, '결제 완료 ROAS', '결제완료ROAS', 'Purchase ROAS', 'Complete payment ROAS');
     const iDate     = findColIdx(headers, '날짜', '일별', 'Date', '일');
     const iAdGroup  = findColIdx(headers, '광고 그룹 이름', '광고그룹이름', 'Ad group name', 'Adgroup');
     const iAdName   = findColIdx(headers, '광고 이름', '광고이름', 'Ad name', 'Ad');
@@ -2912,6 +2914,8 @@ function parseTiktokCSV(text) {
         const clicks   = iClicks !== -1 ? parseNum(cols[iClicks]) : 0;
         const purch    = iPurch !== -1 ? parseNum(cols[iPurch]) : 0;
         const purchVal = iPurchVal !== -1 ? parseNum(cols[iPurchVal]) : 0;
+        const cprDirect  = iCprDirect !== -1 ? parseNum(cols[iCprDirect]) : 0;
+        const roasDirect = iRoasDirect !== -1 ? parseNum(cols[iRoasDirect]) : 0;
         const ctr      = iCtr !== -1 ? parseNum(cols[iCtr]) : 0;
         const cpc      = iCpc !== -1 ? parseNum(cols[iCpc]) : 0;
         const cpm      = iCpm !== -1 ? parseNum(cols[iCpm]) : 0;
@@ -2923,13 +2927,15 @@ function parseTiktokCSV(text) {
                        : /pause|일시.?중지|disable|inactive/i.test(rawSt) ? '일시중지'
                        : rawSt;
         if (cost === 0 && impr === 0 && ctr === 0) continue;
-        if (!campaignMap[campaign]) campaignMap[campaign] = { name:campaign, cost:0, impr:0, clicks:0, purch:0, purchVal:0, ctrW:0, cpcW:0, cpmW:0, status };
+        if (!campaignMap[campaign]) campaignMap[campaign] = { name:campaign, cost:0, impr:0, clicks:0, purch:0, purchVal:0, ctrW:0, cpcW:0, cpmW:0, cprW:0, roasW:0, status };
         campaignMap[campaign].cost += cost; campaignMap[campaign].impr += impr; campaignMap[campaign].clicks += clicks;
         campaignMap[campaign].purch += purch; campaignMap[campaign].purchVal += purchVal;
-        campaignMap[campaign].ctrW += ctr * cost;
-        campaignMap[campaign].cpcW += cpc * cost;
-        campaignMap[campaign].cpmW += cpm * cost;
-        rawRows.push({ date, campaign, adGroup, adName, cost, impr, clicks, purch, purchVal, ctr, cpc, cpm, status });
+        campaignMap[campaign].ctrW  += ctr * cost;
+        campaignMap[campaign].cpcW  += cpc * cost;
+        campaignMap[campaign].cpmW  += cpm * cost;
+        campaignMap[campaign].cprW  += cprDirect * cost;
+        campaignMap[campaign].roasW += roasDirect * cost;
+        rawRows.push({ date, campaign, adGroup, adName, cost, impr, clicks, purch, purchVal, cprDirect, roasDirect, ctr, cpc, cpm, status });
     }
     const campaigns = Object.values(campaignMap);
     if (campaigns.length === 0) return null;
@@ -2939,8 +2945,8 @@ function parseTiktokCSV(text) {
             ctr:  c.impr>0 ? c.clicks/c.impr*100 : (c.cost>0 ? c.ctrW/c.cost : 0),
             cpc:  c.clicks>0 ? c.cost/c.clicks    : (c.cost>0 ? c.cpcW/c.cost : 0),
             cpm:  c.impr>0 ? c.cost/c.impr*1000   : (c.cost>0 ? c.cpmW/c.cost : 0),
-            cpr:  c.purch>0 ? c.cost/c.purch : 0,
-            roas: c.cost>0&&c.purchVal>0 ? c.purchVal/c.cost*100 : 0,
+            cpr:  c.purch>0 ? c.cost/c.purch : (c.cost>0&&c.cprW>0 ? c.cprW/c.cost : 0),
+            roas: c.purchVal>0&&c.cost>0 ? c.purchVal/c.cost*100 : (c.cost>0&&c.roasW>0 ? c.roasW/c.cost*100 : 0),
         })),
         rawRows,
         hasDate:   iDate !== -1 && rawRows.some(r => r.date),

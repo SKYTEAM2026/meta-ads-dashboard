@@ -2088,7 +2088,8 @@ function renderCreativeTable(insights, adMap) {
 
     const totCtr  = totImpr > 0 ? (totClicks/totImpr*100).toFixed(2) + '%' : '–';
     const totRoas = totConvVal > 0 ? (totConvVal/totSpend*100).toFixed(1) + '%' : '–';
-    const totMetaRevenue = Object.values(cafe24MetaByDate).reduce((s, v) => s + v, 0);
+    const { since: tSince, until: tUntil } = getActiveDateRange();
+    const totMetaRevenue = sumTermRevenue(cafe24MetaByDate, tSince, tUntil);
     const totRealRoas = totSpend > 0 && totMetaRevenue > 0 ? (totMetaRevenue / totSpend * 100).toFixed(1) + '%' : '–';
     document.getElementById('creativeTableFoot').innerHTML = `
         <tr class="total-row">

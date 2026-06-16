@@ -2693,7 +2693,17 @@ function switchPlatform(platform) {
     if (platform !== 'google') closeGoogleDetail();
     document.getElementById('tiktokDashboard').style.display = platform === 'tiktok' ? '' : 'none';
     document.getElementById('googleDashboard').style.display = platform === 'google' ? '' : 'none';
-    if (platform === 'tiktok' && tiktokData) renderTiktokDashboard(tiktokData);
+    if (platform === 'tiktok') {
+        for (const acct of ['써마드', '아치핀']) {
+            if (!tiktokStore[acct]) {
+                try {
+                    const s = localStorage.getItem(`tiktokCsvData_${acct}`);
+                    if (s) tiktokStore[acct] = JSON.parse(s);
+                } catch(_) {}
+            }
+        }
+        switchTiktokAccount(tiktokActiveAccount);
+    }
     if (platform === 'google' && googleData) renderGoogleDashboard(googleData);
 }
 

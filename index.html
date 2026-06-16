@@ -1819,11 +1819,14 @@ async function showCampaignDaily(row) {
         document.getElementById('dailyPanelLoading').style.display = 'none';
 
         if (daily.length === 0) {
-            document.getElementById('dailyPanelContent').innerHTML =
-                '<div class="no-data"><i class="bi bi-inbox"></i>해당 기간에 성과 데이터가 없습니다</div>';
+            document.getElementById('dailyKpiRow').innerHTML = '';
+            document.getElementById('dailyTableBody').innerHTML = '';
+            document.getElementById('dailyTableFoot').innerHTML = '';
+            document.getElementById('dailyNoData').style.display = '';
             document.getElementById('dailyPanelContent').style.display = '';
             return;
         }
+        document.getElementById('dailyNoData').style.display = 'none';
         renderDailyKPI(daily);
         renderCampaignDailyChart(daily);
         renderDailyTable(daily);

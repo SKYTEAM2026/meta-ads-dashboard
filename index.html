@@ -2601,7 +2601,7 @@ function showTiktokCampaignDetail(campaignName) {
     document.getElementById('tiktokDetailTitle').textContent = campaignName;
     document.getElementById('tiktokDetailPanel').style.display = '';
     document.getElementById('tiktokDetailPanel').scrollIntoView({ behavior:'smooth', block:'nearest' });
-    const rows = tiktokRawRows.filter(r => r.campaign === campaignName);
+    const rows = tiktokFilteredRawRows.filter(r => r.campaign === campaignName);
     if (tiktokHasDate) {
         renderCsvDailyTable(rows, 'ttDailyTbody', 'ttDailyTfoot', 'ttDailyNoData');
     } else {

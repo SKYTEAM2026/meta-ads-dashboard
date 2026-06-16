@@ -3469,8 +3469,22 @@ function parseGoogleCSV(text) {
     const iConv    = findColIdx(headers, '전환수', 'Conversions', 'Conv.');
     const iConvVal = findColIdx(headers, '전환 가치', 'Conv. value', 'Conversion value', '전환가치');
     const iDate    = findColIdx(headers, '날짜', 'Date', '일');
-    const iAdGroup = findColIdx(headers, '광고그룹', 'Ad group');
-    const iAdName  = findColIdx(headers, '광고', 'Ad', 'Headline', '광고명');
+    const iAdGroup = findColIdx(headers, '광고그룹', 'Ad group', 'Adgroup');
+    const iAdName  = (() => {
+        for (const name of ['광고명', '광고이름', 'Ad name', 'Adname', 'Headline 1', 'Headline1']) {
+            const idx = headers.findIndex(h => {
+                const hh = h.toLowerCase().replace(/\s/g,'');
+                const nn = name.toLowerCase().replace(/\s/g,'');
+                return hh === nn || hh.includes(nn);
+            });
+            if (idx !== -1 && idx !== iAdGroup) return idx;
+        }
+        return headers.findIndex((h, i) => {
+            if (i === iAdGroup) return false;
+            const hh = h.toLowerCase().replace(/\s/g,'');
+            return hh === '광고' || (hh === 'ad');
+        });
+    })();
     const iStatus  = findColIdx(headers, '캠페인 상태', '상태', 'Campaign status', 'Status');
     const iCtr     = findColIdx(headers, 'CTR', '클릭률');
     const iCpc     = findColIdx(headers, '평균 CPC', 'Avg. CPC', 'CPC');

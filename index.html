@@ -2779,6 +2779,13 @@ function showTiktokCampaignDetail(campaignName) {
     }
 }
 
+function switchTiktokTab(tab) {
+    document.getElementById('tt-tab-btn-daily').classList.toggle('active', tab === 'daily');
+    document.getElementById('tt-tab-btn-creative').classList.toggle('active', tab === 'creative');
+    document.getElementById('ttTabDaily').style.display = tab === 'daily' ? '' : 'none';
+    document.getElementById('ttTabCreative').style.display = tab === 'creative' ? '' : 'none';
+}
+
 function closeTiktokDetail() {
     document.getElementById('tiktokDetailPanel').style.display = 'none';
     document.querySelectorAll('#tiktokTbody tr').forEach(tr => tr.classList.remove('row-selected'));

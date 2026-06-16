@@ -2988,7 +2988,12 @@ function renderTiktokDashboard(data) {
     document.getElementById('tiktokCampaignBadge').textContent = `${sorted.length}개`;
     document.getElementById('tiktokUploadArea').style.display = 'none';
     document.getElementById('tiktokUploadStatus').style.display = '';
-    document.getElementById('tiktokUploadStatusText').textContent = `${sorted.length}개 캠페인 로드됨`;
+    const totalCampaigns = tiktokData ? tiktokData.length : sorted.length;
+    const statusText = sorted.length < totalCampaigns
+        ? `${sorted.length}개 캠페인 (전체 ${totalCampaigns}개 중 필터)`
+        : `${sorted.length}개 캠페인 로드됨`;
+    document.getElementById('tiktokUploadStatusText').textContent = statusText;
+    document.getElementById('tiktokAcctBadge').textContent = tiktokActiveAccount;
     document.getElementById('tiktokContent').style.display = '';
 }
 

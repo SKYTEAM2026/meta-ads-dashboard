@@ -405,6 +405,18 @@
         .platform-tab.active[data-platform="tiktok"] { border-color:var(--tiktok-pink); color:var(--tiktok-pink); background:var(--tiktok-bg); }
         .platform-tab.active[data-platform="google"] { border-color:var(--google-blue); color:var(--google-blue); background:var(--google-bg); }
 
+        /* ── TIKTOK ACCOUNT TABS ── */
+        .tt-acct-tabs { display:flex; gap:6px; }
+        .tt-acct-btn {
+            padding:5px 16px; border-radius:8px;
+            border:2px solid var(--border); background:#fff;
+            font-size:13px; font-weight:600; cursor:pointer;
+            transition:all 0.15s; color:var(--text-secondary);
+            white-space:nowrap;
+        }
+        .tt-acct-btn:hover { background:#f8f9fa; }
+        .tt-acct-btn.active { border-color:var(--tiktok-pink); color:var(--tiktok-pink); background:var(--tiktok-bg); }
+
         /* ── CSV UPLOAD ── */
         .csv-upload-area {
             border:2px dashed var(--border); border-radius:16px;

@@ -2845,7 +2845,7 @@ function applyTiktokFilters() {
         });
     }
 
-    if (statusVal) {
+    if (statusVal && tiktokRawRows.some(r => r.status)) {
         rows = rows.filter(r => r.status === statusVal);
     }
 

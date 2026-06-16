@@ -3233,20 +3233,80 @@ function onGoogleCsvUpload(event) {
         event.target.value = '';
         const errEl = document.getElementById('googleUploadError');
         if (!result) {
-            errEl.textContent = 'CSV 형식을 인식할 수 없습니다. Google Ads에서 광고 레벨 보고서를 내보내 주세요.';
+            errEl.textContent = 'CSV 형식을 인식할 수 없습니다. Google Ads에서 캠페인 레벨 보고서를 내보내 주세요.';
             errEl.style.display = '';
             return;
         }
         errEl.style.display = 'none';
-        googleData = result.campaigns;
-        googleRawRows = result.rawRows;
-        googleHasDate = result.hasDate;
-        googleHasAdName = result.hasAdName;
-        closeGoogleDetail();
         try { localStorage.setItem('googleCsvData', JSON.stringify(result)); } catch(_) {}
-        renderGoogleDashboard(result.campaigns);
+        loadGoogleData(result);
     };
     reader.readAsText(file, 'UTF-8');
+}
+
+function loadGoogleData(result) {
+    googleData = result.campaigns;
+    googleRawRows = result.rawRows;
+    googleFilteredRawRows = result.rawRows;
+    googleHasDate = result.hasDate;
+    googleHasAdName = result.hasAdName;
+    closeGoogleDetail();
+    document.getElementById('googleFilterBar').style.display = '';
+    document.getElementById('ggDateFrom').value = '';
+    document.getElementById('ggDateTo').value = '';
+    document.getElementById('ggApplyBtn').disabled = true;
+    const statuses = result.statuses ?? [...new Set(result.rawRows.map(r => r.status).filter(Boolean))];
+    const sel = document.getElementById('ggStatusFilter');
+    if (statuses.length) {
+        sel.innerHTML = '<option value="">전체</option>' + statuses.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+    } else {
+        sel.innerHTML = '<option value="">전체</option><option value="활성">활성</option><option value="일시중지">일시중지</option>';
+    }
+    sel.value = '';
+    applyGoogleFilters();
+}
+
+function onGoogleDateInput() {
+    const f = document.getElementById('ggDateFrom').value;
+    const t = document.getElementById('ggDateTo').value;
+    document.getElementById('ggApplyBtn').disabled = !f && !t;
+}
+
+function applyGoogleFilters() {
+    if (!googleData) return;
+    const fromVal   = document.getElementById('ggDateFrom').value;
+    const toVal     = document.getElementById('ggDateTo').value;
+    const statusVal = document.getElementById('ggStatusFilter').value;
+    let rows = googleRawRows;
+    if (fromVal || toVal) {
+        rows = rows.filter(r => {
+            if (!r.date) return true;
+            const d = r.date.replace(/\//g, '-').replace(/\./g, '-');
+            if (fromVal && d < fromVal) return false;
+            if (toVal   && d > toVal)   return false;
+            return true;
+        });
+    }
+    if (statusVal && googleRawRows.some(r => r.status)) {
+        rows = rows.filter(r => r.status === statusVal);
+    }
+    googleFilteredRawRows = rows;
+    const campaignMap = {};
+    for (const r of rows) {
+        if (!campaignMap[r.campaign]) campaignMap[r.campaign] = { name:r.campaign, cost:0, impr:0, clicks:0, conv:0, convVal:0, status:r.status||'' };
+        const c = campaignMap[r.campaign];
+        c.cost += r.cost; c.impr += r.impr; c.clicks += r.clicks;
+        c.conv += r.conv; c.convVal += r.convVal;
+    }
+    const filtered = Object.values(campaignMap).map(c => ({
+        ...c,
+        ctr:  c.impr>0 ? c.clicks/c.impr*100 : 0,
+        cpc:  c.clicks>0 ? c.cost/c.clicks : 0,
+        cpm:  c.impr>0 ? c.cost/c.impr*1000 : 0,
+        cpr:  c.conv>0 ? c.cost/c.conv : 0,
+        roas: c.cost>0&&c.convVal>0 ? c.convVal/c.cost*100 : 0,
+    }));
+    renderGoogleDashboard(filtered.length ? filtered : []);
 }
 
 function parseGoogleCSV(text) {

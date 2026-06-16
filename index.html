@@ -1265,14 +1265,8 @@ function loadCafe24FromStorage() {
         cafe24MetaByTerm = JSON.parse(byTerm);
         const dateKeys = Object.keys(cafe24MetaByDate).sort();
         if (dateKeys.length > 0) {
-            const extractDate = (k, side) => {
-                const m = k.match(/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/);
-                return m ? m[side === 'start' ? 1 : 2] : k;
-            };
-            const since = extractDate(dateKeys[0], 'start');
-            const until  = extractDate(dateKeys[dateKeys.length-1], 'end');
             const statusEl = document.getElementById('cafe24UploadStatus');
-            statusEl.textContent = `✓ ${since}~${until} (Meta 매출 로드됨)`;
+            statusEl.textContent = `✓ ${dateKeys[0]}~${dateKeys[dateKeys.length-1]} (Meta 매출 로드됨)`;
             statusEl.style.display = '';
         }
     } catch(e) {}

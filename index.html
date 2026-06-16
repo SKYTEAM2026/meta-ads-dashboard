@@ -3271,9 +3271,14 @@ function parseGoogleCSV(text) {
     const iDate    = findColIdx(headers, '날짜', 'Date', '일');
     const iAdGroup = findColIdx(headers, '광고그룹', 'Ad group');
     const iAdName  = findColIdx(headers, '광고', 'Ad', 'Headline', '광고명');
+    const iStatus  = findColIdx(headers, '캠페인 상태', '상태', 'Campaign status', 'Status');
+    const iCtr     = findColIdx(headers, 'CTR', '클릭률');
+    const iCpc     = findColIdx(headers, '평균 CPC', 'Avg. CPC', 'CPC');
+    const iCpm     = findColIdx(headers, 'CPM', '평균 CPM');
     if (iName === -1 || iCost === -1) return null;
     const campaignMap = {};
     const rawRows = [];
+    const statusSet = new Set();
     for (let i = headerIdx + 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
@@ -3290,14 +3295,23 @@ function parseGoogleCSV(text) {
         const date    = iDate !== -1 ? (cols[iDate]?.trim() || '') : '';
         const adGroup = iAdGroup !== -1 ? (cols[iAdGroup]?.trim() || '') : '';
         const adName  = iAdName !== -1 ? (cols[iAdName]?.trim() || '') : '';
+        const rawSt   = iStatus !== -1 ? (cols[iStatus]?.trim() || '') : '';
+        const status  = /active|활성|게재.?중|enable/i.test(rawSt) ? '활성'
+                      : /pause|일시.?중지|disable|inactive/i.test(rawSt) ? '일시중지'
+                      : rawSt;
+        const ctrDirect = iCtr !== -1 ? parseNum(cols[iCtr]) : 0;
+        const cpcDirect = iCpc !== -1 ? parseNum(cols[iCpc]) : 0;
+        const cpmDirect = iCpm !== -1 ? parseNum(cols[iCpm]) : 0;
         if (cost === 0 && impr === 0) continue;
-        if (!campaignMap[campaign]) campaignMap[campaign] = { name:campaign, cost:0, impr:0, clicks:0, conv:0, convVal:0 };
+        if (status) statusSet.add(status);
+        if (!campaignMap[campaign]) campaignMap[campaign] = { name:campaign, cost:0, impr:0, clicks:0, conv:0, convVal:0, status };
         campaignMap[campaign].cost += cost; campaignMap[campaign].impr += impr; campaignMap[campaign].clicks += clicks;
         campaignMap[campaign].conv += conv; campaignMap[campaign].convVal += convVal;
-        rawRows.push({ date, campaign, adGroup, adName, cost, impr, clicks, conv, convVal });
+        rawRows.push({ date, campaign, adGroup, adName, status, cost, impr, clicks, conv, convVal, ctrDirect, cpcDirect, cpmDirect });
     }
     const campaigns = Object.values(campaignMap);
     if (campaigns.length === 0) return null;
+    const statuses = [...statusSet];
     return {
         campaigns: campaigns.map(c => ({
             ...c,
@@ -3310,6 +3324,8 @@ function parseGoogleCSV(text) {
         rawRows,
         hasDate:   iDate !== -1 && rawRows.some(r => r.date),
         hasAdName: iAdName !== -1 && rawRows.some(r => r.adName),
+        hasStatus: iStatus !== -1,
+        statuses,
     };
 }
 

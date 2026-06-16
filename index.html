@@ -1172,21 +1172,26 @@ function onCafe24CsvUpload(event) {
 }
 
 function parseCafe24CSV(text) {
-    const lines = text.trim().split('\n');
-    const headers = lines[0].replace(/\r/g,'').split(',');
+    text = text.replace(/^﻿/, '');  // BOM 제거
+    const lines = text.trim().split('\n').map(l => l.replace(/\r$/, ''));
+    const headers = parseCSVRow(lines[0]);
     const idx = h => headers.indexOf(h);
 
     cafe24MetaByDate = {};
     cafe24MetaByTerm = {};
 
+    let totalRows = 0, metaRows = 0;
     for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].replace(/\r/g,'').split(',');
+        if (!lines[i].trim()) continue;
+        const cols = parseCSVRow(lines[i]);
+        totalRows++;
         const channel = (cols[idx('channel')] || '').trim();
         if (!META_CHANNELS.has(channel)) continue;
+        metaRows++;
 
         const date   = (cols[idx('date')] || '').trim();
         const term   = (cols[idx('term')] || '').trim();
-        const amount = parseFloat(cols[idx('order_amount')] || 0);
+        const amount = parseNum(cols[idx('order_amount')] || '0');
         if (!date || !amount) continue;
 
         cafe24MetaByDate[date] = (cafe24MetaByDate[date] || 0) + amount;
@@ -1196,21 +1201,22 @@ function parseCafe24CSV(text) {
         }
     }
 
-    // localStorage에 저장
     try {
         localStorage.setItem('cafe24MetaByDate', JSON.stringify(cafe24MetaByDate));
         localStorage.setItem('cafe24MetaByTerm', JSON.stringify(cafe24MetaByTerm));
     } catch(e) {}
 
-    // 날짜 범위 표시
     const dates = Object.keys(cafe24MetaByDate).sort();
     const statusEl = document.getElementById('cafe24UploadStatus');
+    statusEl.style.display = '';
     if (dates.length > 0) {
-        statusEl.textContent = `✓ ${dates[0]}~${dates[dates.length-1]} (Meta 매출 로드됨)`;
-        statusEl.style.display = '';
+        statusEl.textContent = `✓ ${dates[0]}~${dates[dates.length-1]} (Meta 매출 ${metaRows}건 로드됨)`;
+        statusEl.style.color = '';
+    } else {
+        statusEl.textContent = `⚠ Meta 채널 데이터 없음 (전체 ${totalRows}행, channel 컬럼 확인 필요)`;
+        statusEl.style.color = '#dc2626';
     }
 
-    // 차트 및 테이블 갱신
     if (state.dailyData) renderLineChart(state.dailyData);
     if (state.creativeInsights) renderCreativeTable(state.creativeInsights, state.adMap || {});
 }

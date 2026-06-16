@@ -2734,8 +2734,11 @@ function findColIdx(headers, ...names) {
 // ═══════════════════════════════════════
 //  TIKTOK CSV
 // ═══════════════════════════════════════
+let tiktokActiveAccount = '써마드';
+let tiktokStore = { '써마드': null, '아치핀': null };
 let tiktokData = null;
 let tiktokRawRows = [];
+let tiktokFilteredRawRows = [];
 let tiktokHasDate = false;
 let tiktokHasAdName = false;
 

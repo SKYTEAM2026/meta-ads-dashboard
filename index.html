@@ -3019,7 +3019,16 @@ function switchPlatform(platform) {
         }
         switchTiktokAccount(tiktokActiveAccount);
     }
-    if (platform === 'google' && googleData) renderGoogleDashboard(googleData);
+    if (platform === 'google') {
+        if (!googleData) {
+            try {
+                const s = localStorage.getItem('googleCsvData');
+                if (s) loadGoogleData(JSON.parse(s));
+            } catch(_) {}
+        } else {
+            renderGoogleDashboard(googleData);
+        }
+    }
 }
 
 // ═══════════════════════════════════════

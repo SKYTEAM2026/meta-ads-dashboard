@@ -2033,10 +2033,10 @@ function renderCreativeTable(insights, adMap) {
         const cpc     = ins.cpc ? fCur(parseFloat(ins.cpc)) : (clicks ? fCur(spend/clicks) : '–');
         const cpm     = ins.cpm ? fCur(parseFloat(ins.cpm)) : (impr ? fCur(spend/impr*1000) : '–');
         const ad      = adMap[ins.ad_id] || {};
-        // 카페24 실제 ROAS: term 매칭 (기간 내 합산)
+        // 카페24 실제 ROAS: term 매칭 (기간 내 합산, 범위 날짜 지원)
         const termData = cafe24MetaByTerm[ins.ad_name];
         const { since: rSince, until: rUntil } = getActiveDateRange();
-        const termRevenue = termData ? Object.entries(termData).filter(([d]) => d >= rSince && d <= rUntil).reduce((s, [, v]) => s + v, 0) : 0;
+        const termRevenue = sumTermRevenue(termData, rSince, rUntil);
         const realRoas = spend > 0 && termRevenue > 0 ? (termRevenue / spend * 100).toFixed(1) + '%' : '–';
         const pct     = maxSpend > 0 ? (spend / maxSpend * 100).toFixed(1) : 0;
         const thumb   = ad.thumb

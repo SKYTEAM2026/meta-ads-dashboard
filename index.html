@@ -2783,8 +2783,24 @@ function loadTiktokAccountData(result) {
     document.getElementById('tiktokFilterBar').style.display = '';
     document.getElementById('ttDateFrom').value = '';
     document.getElementById('ttDateTo').value = '';
-    document.getElementById('ttStatusFilter').value = '';
     document.getElementById('ttApplyBtn').disabled = true;
+
+    // 상태 드롭다운 동적 구성
+    const sel = document.getElementById('ttStatusFilter');
+    sel.innerHTML = '<option value="">전체</option>';
+    if (result.hasStatus && result.statuses.length) {
+        result.statuses.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = s;
+            sel.appendChild(opt);
+        });
+        sel.disabled = false;
+    } else {
+        sel.disabled = true;
+    }
+    sel.value = '';
+
     applyTiktokFilters();
 }
 

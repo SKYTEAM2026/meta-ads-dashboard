@@ -3219,8 +3219,10 @@ function renderTiktokDashboard(data) {
 // ═══════════════════════════════════════
 let googleData = null;
 let googleRawRows = [];
+let googleFilteredRawRows = [];
 let googleHasDate = false;
 let googleHasAdName = false;
+let googleDailyChartInst = null;
 
 function onGoogleCsvUpload(event) {
     const file = event.target.files[0];

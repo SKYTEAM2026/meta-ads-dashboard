@@ -2756,15 +2756,98 @@ function onTiktokCsvUpload(event) {
             return;
         }
         errEl.style.display = 'none';
-        tiktokData = result.campaigns;
-        tiktokRawRows = result.rawRows;
-        tiktokHasDate = result.hasDate;
-        tiktokHasAdName = result.hasAdName;
-        closeTiktokDetail();
-        try { localStorage.setItem('tiktokCsvData', JSON.stringify(result)); } catch(_) {}
-        renderTiktokDashboard(result.campaigns);
+        tiktokStore[tiktokActiveAccount] = result;
+        try { localStorage.setItem(`tiktokCsvData_${tiktokActiveAccount}`, JSON.stringify(result)); } catch(_) {}
+        loadTiktokAccountData(result);
     };
     reader.readAsText(file, 'UTF-8');
+}
+
+function loadTiktokAccountData(result) {
+    tiktokData = result.campaigns;
+    tiktokRawRows = result.rawRows;
+    tiktokFilteredRawRows = result.rawRows;
+    tiktokHasDate = result.hasDate;
+    tiktokHasAdName = result.hasAdName;
+    closeTiktokDetail();
+    document.getElementById('tiktokFilterBar').style.display = '';
+    document.getElementById('ttDateFrom').value = '';
+    document.getElementById('ttDateTo').value = '';
+    document.getElementById('ttStatusFilter').value = '';
+    document.getElementById('ttApplyBtn').disabled = true;
+    applyTiktokFilters();
+}
+
+function switchTiktokAccount(name) {
+    tiktokActiveAccount = name;
+    document.querySelectorAll('.tt-acct-btn').forEach(b => b.classList.toggle('active', b.dataset.account === name));
+    closeTiktokDetail();
+    const stored = tiktokStore[name];
+    if (stored) {
+        loadTiktokAccountData(stored);
+    } else {
+        tiktokData = null;
+        tiktokRawRows = [];
+        tiktokFilteredRawRows = [];
+        tiktokHasDate = false;
+        tiktokHasAdName = false;
+        document.getElementById('tiktokFilterBar').style.display = 'none';
+        document.getElementById('tiktokUploadArea').style.display = '';
+        document.getElementById('tiktokUploadStatus').style.display = 'none';
+        document.getElementById('tiktokContent').style.display = 'none';
+        document.getElementById('tiktokAcctBadge').textContent = '';
+    }
+}
+
+function onTiktokDateInput() {
+    const from = document.getElementById('ttDateFrom').value;
+    const to   = document.getElementById('ttDateTo').value;
+    document.getElementById('ttApplyBtn').disabled = !(from || to);
+}
+
+function applyTiktokFilters() {
+    if (!tiktokData) return;
+    const fromVal  = document.getElementById('ttDateFrom').value;
+    const toVal    = document.getElementById('ttDateTo').value;
+    const statusVal = document.getElementById('ttStatusFilter').value;
+
+    let rows = tiktokRawRows;
+
+    if (fromVal || toVal) {
+        rows = rows.filter(r => {
+            if (!r.date) return true;
+            const d = r.date.replace(/\//g, '-').replace(/\./g, '-');
+            if (fromVal && d < fromVal) return false;
+            if (toVal   && d > toVal)   return false;
+            return true;
+        });
+    }
+
+    if (statusVal) {
+        rows = rows.filter(r => r.status === statusVal);
+    }
+
+    tiktokFilteredRawRows = rows;
+
+    const campaignMap = {};
+    for (const r of rows) {
+        if (!campaignMap[r.campaign]) campaignMap[r.campaign] = { name:r.campaign, cost:0, impr:0, clicks:0, purch:0, purchVal:0, ctrW:0, cpcW:0, cpmW:0, status:r.status||'' };
+        const c = campaignMap[r.campaign];
+        c.cost += r.cost; c.impr += r.impr; c.clicks += r.clicks;
+        c.purch += r.purch; c.purchVal += r.purchVal;
+        c.ctrW += r.ctr * r.cost; c.cpcW += r.cpc * r.cost; c.cpmW += r.cpm * r.cost;
+    }
+
+    const filteredData = Object.values(campaignMap).map(c => ({
+        ...c,
+        ctr:  c.impr>0  ? c.clicks/c.impr*100  : (c.cost>0 ? c.ctrW/c.cost : 0),
+        cpc:  c.clicks>0 ? c.cost/c.clicks      : (c.cost>0 ? c.cpcW/c.cost : 0),
+        cpm:  c.impr>0  ? c.cost/c.impr*1000    : (c.cost>0 ? c.cpmW/c.cost : 0),
+        cpr:  c.purch>0 ? c.cost/c.purch : 0,
+        roas: c.cost>0&&c.purchVal>0 ? c.purchVal/c.cost*100 : 0,
+    }));
+
+    renderTiktokDashboard(filteredData.length ? filteredData : []);
 }
 
 function parseTiktokCSV(text) {

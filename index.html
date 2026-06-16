@@ -3185,6 +3185,17 @@ function checkPassword() {
 }
 
 // ── START ──
+// 기존 단일 키 데이터를 써마드 계정으로 마이그레이션
+(function migrateTiktokStorage() {
+    try {
+        const old = localStorage.getItem('tiktokCsvData');
+        if (old && !localStorage.getItem('tiktokCsvData_써마드')) {
+            localStorage.setItem('tiktokCsvData_써마드', old);
+            localStorage.removeItem('tiktokCsvData');
+        }
+    } catch(_) {}
+})();
+
 if (sessionStorage.getItem('pw_ok') === '1') {
     document.getElementById('passwordScreen').style.display = 'none';
     init();

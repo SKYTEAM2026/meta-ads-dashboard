@@ -2907,8 +2907,8 @@ function parseTiktokCSV(text) {
         const adGroup  = iAdGroup !== -1 ? (cols[iAdGroup]?.trim() || '') : '';
         const adName   = iAdName !== -1 ? (cols[iAdName]?.trim() || '') : '';
         const rawSt    = iStatus !== -1 ? (cols[iStatus]?.trim() || '') : '';
-        const status   = /active|활성|게재중/i.test(rawSt) ? '활성'
-                       : /pause|일시중지|중지/i.test(rawSt) ? '일시중지'
+        const status   = /active|활성|게재.?중|enable/i.test(rawSt) ? '활성'
+                       : /pause|일시.?중지|disable|inactive/i.test(rawSt) ? '일시중지'
                        : rawSt;
         if (cost === 0 && impr === 0 && ctr === 0) continue;
         if (!campaignMap[campaign]) campaignMap[campaign] = { name:campaign, cost:0, impr:0, clicks:0, purch:0, purchVal:0, ctrW:0, cpcW:0, cpmW:0, status };

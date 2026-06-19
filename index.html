@@ -3538,6 +3538,8 @@ function applyTiktokFilters() {
         c.cprW  += (r.cprDirect||0) * r.cost;
         c.roasW += (r.roasDirect||0) * r.cost;
     }
+    // CSV에 상태 없으면 manual status로 보완
+    Object.values(campaignMap).forEach(c => { if (!c.status) c.status = tiktokManualStatus[c.name] || ''; });
 
     const filteredData = Object.values(campaignMap).map(c => ({
         ...c,

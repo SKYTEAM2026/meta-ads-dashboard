@@ -1379,6 +1379,24 @@ function onGoogleCafe24CsvUpload(event) {
     reader.readAsText(file, 'UTF-8');
 }
 
+function loadTiktokManualStatus() {
+    const account = document.getElementById('tiktokAccountSelect')?.value || 'default';
+    try { tiktokManualStatus = JSON.parse(localStorage.getItem('tiktokManualStatus_' + account) || '{}'); }
+    catch(e) { tiktokManualStatus = {}; }
+}
+function saveTiktokManualStatus() {
+    const account = document.getElementById('tiktokAccountSelect')?.value || 'default';
+    localStorage.setItem('tiktokManualStatus_' + account, JSON.stringify(tiktokManualStatus));
+}
+function toggleTiktokCampaignStatus(name) {
+    const cur = tiktokManualStatus[name] || '';
+    const next = cur === '' ? '활성' : cur === '활성' ? '일시중지' : '';
+    if (next === '') delete tiktokManualStatus[name];
+    else tiktokManualStatus[name] = next;
+    saveTiktokManualStatus();
+    renderTiktokDashboard();
+}
+
 function loadTiktokCafe24FromStorage() {
     try {
         const byDate = localStorage.getItem('cafe24TiktokByDate');

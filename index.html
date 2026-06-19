@@ -3672,12 +3672,18 @@ function renderTiktokDashboard(data) {
     document.getElementById('tiktokTbody').innerHTML = sorted.map(c=>{
         const termRev  = sumTermRevenue(cafe24TiktokByTerm[c.name], ttSince, ttUntil);
         const realRoas = c.cost>0 && termRev>0 ? (termRev/c.cost*100).toFixed(1)+'%' : '–';
+        const scTt = c.status === '활성' ? 's-active' : c.status === '일시중지' ? 's-paused' : '';
+        const safeN = esc(c.name).replace(/'/g, "\\'");
+        const statusTd = c.status
+            ? `<span class="s-badge ${scTt}" onclick="event.stopPropagation();toggleTiktokCampaignStatus('${safeN}')" style="cursor:pointer;" title="클릭하여 변경">${esc(c.status)}</span>`
+            : `<span style="color:#bbb;font-size:11px;cursor:pointer;" onclick="event.stopPropagation();toggleTiktokCampaignStatus('${safeN}')" title="클릭하여 상태 설정">＋설정</span>`;
         return `
         <tr ${canDrill ? `style="cursor:pointer;" data-campaign="${esc(c.name)}" onclick="showTiktokCampaignDetail(this.dataset.campaign)"` : ''}>
             <td>
                 <div class="campaign-name">${esc(c.name)}</div>
                 ${canDrill ? '<div class="campaign-meta" style="color:var(--tiktok-pink)"><i class="bi bi-chevron-down" style="font-size:10px;"></i> 클릭하여 상세보기</div>' : ''}
             </td>
+            <td>${statusTd}</td>
             <td class="text-end fw-semibold"><div class="spend-bar-wrap">${fCur(c.cost)}<div class="spend-bar"><div class="spend-bar-fill" style="width:${(c.cost/maxCost*100).toFixed(1)}%;background:#FE2C55;"></div></div></div></td>
             <td class="text-end">${c.purchVal?fCur(c.purchVal):'–'}</td>
             <td class="text-end">${c.purch?fNum(c.purch):'–'}</td>

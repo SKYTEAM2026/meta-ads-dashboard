@@ -3301,6 +3301,7 @@ function renderGoogleDailyChart(rows) {
 function closeGoogleDetail() {
     document.getElementById('googleDetailPanel').style.display = 'none';
     document.querySelectorAll('#googleTbody tr').forEach(tr => tr.classList.remove('row-selected'));
+    document.querySelectorAll('#ggCreativeTbody .csv-ad-daily-expanded').forEach(el => el.remove());
 }
 
 function switchGoogleTab(tab) {

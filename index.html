@@ -1174,7 +1174,14 @@ let cafe24RevenueByDate = {};
 let cafe24MetaByDate = {};   // CSV 업로드 후: Meta 귀인 일별 매출
 let cafe24MetaByTerm = {};   // CSV 업로드 후: term → {date → 매출}
 
-const META_CHANNELS = new Set(['fb','FB','facebook','ABO','ASC','CBO','TF_TA','ig','instagram','fb-SiteLink']);
+const META_CHANNELS    = new Set(['fb','FB','facebook','ABO','ASC','CBO','TF_TA','ig','instagram','fb-SiteLink']);
+const TIKTOK_CHANNELS  = new Set(['tiktok','TikTok','tt','TT','tik-tok','tiktokads']);
+const GOOGLE_CHANNELS  = new Set(['google','Google','gg','GDN','gdn','pmax','PMAX','cpc','CPC','google_ads','googleads']);
+
+let cafe24TiktokByDate = {};
+let cafe24TiktokByTerm = {};
+let cafe24GoogleByDate = {};
+let cafe24GoogleByTerm = {};
 
 function onCafe24CsvUpload(event) {
     const file = event.target.files[0];

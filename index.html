@@ -3188,6 +3188,7 @@ function switchPlatform(platform) {
     document.getElementById('tiktokDashboard').style.display = platform === 'tiktok' ? '' : 'none';
     document.getElementById('googleDashboard').style.display = platform === 'google' ? '' : 'none';
     if (platform === 'tiktok') {
+        loadTiktokCafe24FromStorage();
         for (const acct of ['써마드', '아치핀']) {
             if (!tiktokStore[acct]) {
                 try {
@@ -3199,6 +3200,7 @@ function switchPlatform(platform) {
         switchTiktokAccount(tiktokActiveAccount);
     }
     if (platform === 'google') {
+        loadGoogleCafe24FromStorage();
         if (!googleData) {
             try {
                 const s = localStorage.getItem('googleCsvData');

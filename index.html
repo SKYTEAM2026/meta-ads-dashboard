@@ -968,6 +968,13 @@
             <select id="ggStatusFilter" class="form-select form-select-sm" style="width:auto;" onchange="applyGoogleFilters()">
                 <option value="">전체</option>
             </select>
+            <div class="ms-auto d-flex align-items-center gap-2">
+                <label id="ggCafe24UploadLabel" class="btn-outline-meta btn-sm" style="cursor:pointer;border-color:#16a34a;color:#16a34a;padding:4px 10px;border-radius:6px;border:1px solid;font-size:12px;white-space:nowrap;" title="카페24 광고 유입 분석 CSV 업로드 (Google 채널 필터)">
+                    <i class="bi bi-upload me-1"></i>카페24 실적 업로드
+                    <input type="file" id="ggCafe24CsvInput" accept=".csv" style="display:none;" onchange="onGoogleCafe24CsvUpload(event)">
+                </label>
+                <span id="ggCafe24UploadStatus" style="font-size:11px;color:#16a34a;display:none;white-space:nowrap;"></span>
+            </div>
         </div>
         <div class="card mb-4">
             <div class="card-body p-4">

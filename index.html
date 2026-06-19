@@ -1295,6 +1295,120 @@ function loadCafe24FromStorage() {
     } catch(e) {}
 }
 
+function _parseCafe24Csv(text, channelSet, byDate, byTerm) {
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) return { totalRows: 0, matched: 0 };
+    const headers = parseCSVRow(lines[0]);
+    const idx = h => headers.indexOf(h);
+    let totalRows = 0, matched = 0;
+    for (let i = 1; i < lines.length; i++) {
+        const cols = parseCSVRow(lines[i]);
+        totalRows++;
+        const channel = (cols[idx('channel')] || '').trim();
+        if (!channelSet.has(channel)) continue;
+        matched++;
+        const rawDate = (cols[idx('date')] || '').trim();
+        const amount  = parseNum(cols[idx('revenue')] || '0');
+        const term    = (cols[idx('term')] || '').trim();
+        const rangeMatch = rawDate.match(/^(\d{4}-\d{2}-\d{2})\s*~\s*(\d{4}-\d{2}-\d{2})$/);
+        if (rangeMatch) {
+            const start = new Date(rangeMatch[1]), end = new Date(rangeMatch[2]);
+            const totalDays = Math.round((end - start) / 86400000) + 1;
+            if (totalDays <= 0) continue;
+            const daily = amount / totalDays;
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                const dk = d.toISOString().slice(0, 10);
+                byDate[dk] = (byDate[dk] || 0) + daily;
+                if (term) { if (!byTerm[term]) byTerm[term] = {}; byTerm[term][dk] = (byTerm[term][dk] || 0) + daily; }
+            }
+        } else {
+            byDate[rawDate] = (byDate[rawDate] || 0) + amount;
+            if (term) { if (!byTerm[term]) byTerm[term] = {}; byTerm[term][rawDate] = (byTerm[term][rawDate] || 0) + amount; }
+        }
+    }
+    return { totalRows, matched };
+}
+
+function onTiktokCafe24CsvUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        event.target.value = '';
+        cafe24TiktokByDate = {}; cafe24TiktokByTerm = {};
+        const { totalRows, matched } = _parseCafe24Csv(e.target.result, TIKTOK_CHANNELS, cafe24TiktokByDate, cafe24TiktokByTerm);
+        try { localStorage.setItem('cafe24TiktokByDate', JSON.stringify(cafe24TiktokByDate)); localStorage.setItem('cafe24TiktokByTerm', JSON.stringify(cafe24TiktokByTerm)); } catch(_) {}
+        const dateKeys = Object.keys(cafe24TiktokByDate).sort();
+        const statusEl = document.getElementById('ttCafe24UploadStatus');
+        statusEl.style.display = '';
+        if (dateKeys.length > 0) {
+            statusEl.textContent = `✓ ${dateKeys[0]}~${dateKeys[dateKeys.length-1]} (TikTok ${matched}건)`;
+            statusEl.style.color = '#16a34a';
+        } else {
+            statusEl.textContent = `⚠ TikTok 채널 없음 (${totalRows}행, channel 값 확인 필요)`;
+            statusEl.style.color = '#dc2626';
+        }
+        if (tiktokData) applyTiktokFilters();
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+function onGoogleCafe24CsvUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        event.target.value = '';
+        cafe24GoogleByDate = {}; cafe24GoogleByTerm = {};
+        const { totalRows, matched } = _parseCafe24Csv(e.target.result, GOOGLE_CHANNELS, cafe24GoogleByDate, cafe24GoogleByTerm);
+        try { localStorage.setItem('cafe24GoogleByDate', JSON.stringify(cafe24GoogleByDate)); localStorage.setItem('cafe24GoogleByTerm', JSON.stringify(cafe24GoogleByTerm)); } catch(_) {}
+        const dateKeys = Object.keys(cafe24GoogleByDate).sort();
+        const statusEl = document.getElementById('ggCafe24UploadStatus');
+        statusEl.style.display = '';
+        if (dateKeys.length > 0) {
+            statusEl.textContent = `✓ ${dateKeys[0]}~${dateKeys[dateKeys.length-1]} (Google ${matched}건)`;
+            statusEl.style.color = '#16a34a';
+        } else {
+            statusEl.textContent = `⚠ Google 채널 없음 (${totalRows}행, channel 값 확인 필요)`;
+            statusEl.style.color = '#dc2626';
+        }
+        if (googleData) applyGoogleFilters();
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+function loadTiktokCafe24FromStorage() {
+    try {
+        const byDate = localStorage.getItem('cafe24TiktokByDate');
+        const byTerm = localStorage.getItem('cafe24TiktokByTerm');
+        if (!byDate || !byTerm) return;
+        cafe24TiktokByDate = JSON.parse(byDate);
+        cafe24TiktokByTerm = JSON.parse(byTerm);
+        const dateKeys = Object.keys(cafe24TiktokByDate).sort();
+        if (dateKeys.length > 0) {
+            const statusEl = document.getElementById('ttCafe24UploadStatus');
+            statusEl.textContent = `✓ ${dateKeys[0]}~${dateKeys[dateKeys.length-1]} (TikTok 매출 로드됨)`;
+            statusEl.style.display = '';
+        }
+    } catch(_) {}
+}
+
+function loadGoogleCafe24FromStorage() {
+    try {
+        const byDate = localStorage.getItem('cafe24GoogleByDate');
+        const byTerm = localStorage.getItem('cafe24GoogleByTerm');
+        if (!byDate || !byTerm) return;
+        cafe24GoogleByDate = JSON.parse(byDate);
+        cafe24GoogleByTerm = JSON.parse(byTerm);
+        const dateKeys = Object.keys(cafe24GoogleByDate).sort();
+        if (dateKeys.length > 0) {
+            const statusEl = document.getElementById('ggCafe24UploadStatus');
+            statusEl.textContent = `✓ ${dateKeys[0]}~${dateKeys[dateKeys.length-1]} (Google 매출 로드됨)`;
+            statusEl.style.display = '';
+        }
+    } catch(_) {}
+}
+
 async function fetchCafe24Data() {
     try {
         const res = await fetch('./data/cafe24_sales.json?t=' + Date.now());

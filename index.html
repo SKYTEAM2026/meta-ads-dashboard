@@ -3758,7 +3758,12 @@ function renderGoogleDashboard(data) {
         </div></div>`).join('');
     const maxCost = Math.max(...sorted.map(c=>c.cost),1);
     const canDrill = googleRawRows.length > 0;
-    document.getElementById('googleTbody').innerHTML = sorted.map(c=>`
+    const ggSince = document.getElementById('ggDateFrom').value || '0000-01-01';
+    const ggUntil = document.getElementById('ggDateTo').value || '9999-12-31';
+    document.getElementById('googleTbody').innerHTML = sorted.map(c=>{
+        const termRev  = sumTermRevenue(cafe24GoogleByTerm[c.name], ggSince, ggUntil);
+        const realRoas = c.cost>0 && termRev>0 ? (termRev/c.cost*100).toFixed(1)+'%' : '–';
+        return `
         <tr ${canDrill ? `style="cursor:pointer;" data-campaign="${esc(c.name)}" onclick="showGoogleCampaignDetail(this.dataset.campaign)"` : ''}>
             <td>
                 <div class="campaign-name">${esc(c.name)}</div>
@@ -3769,20 +3774,26 @@ function renderGoogleDashboard(data) {
             <td class="text-end">${c.conv?fNum(c.conv):'–'}</td>
             <td class="text-end">${c.cpr?fCur(c.cpr):'–'}</td>
             <td class="text-end">${c.roas?c.roas.toFixed(1)+'%':'–'}</td>
+            <td class="text-end" style="color:#16a34a;font-weight:${realRoas!=='–'?'600':'400'}">${realRoas}</td>
             <td class="text-end">${c.impr?fNum(c.impr):'–'}</td>
             <td class="text-end">${c.clicks?fNum(c.clicks):'–'}</td>
             <td class="text-end">${c.ctr?c.ctr.toFixed(2)+'%':'–'}</td>
             <td class="text-end">${c.cpc?fCur(c.cpc):'–'}</td>
             <td class="text-end">${c.cpm?fCur(c.cpm):'–'}</td>
-        </tr>`).join('');
+        </tr>`;
+    }).join('');
     const totCtr  = totImpr>0 ? (totClicks/totImpr*100).toFixed(2)+'%' : '–';
     const totRoas = totCost>0&&totCVal>0 ? (totCVal/totCost*100).toFixed(1)+'%' : '–';
+    const totGgRevenue  = sumTermRevenue(cafe24GoogleByDate, ggSince, ggUntil);
+    const totRealRoasGg = totCost>0 && totGgRevenue>0 ? (totGgRevenue/totCost*100).toFixed(1)+'%' : '–';
     document.getElementById('googleTfoot').innerHTML = `
         <tr class="total-row">
             <td>합계 (${sorted.length}개 캠페인)</td>
             <td class="text-end">${fCur(totCost)}</td><td class="text-end">${totCVal?fCur(totCVal):'–'}</td>
             <td class="text-end">${totConv?fNum(totConv):'–'}</td><td class="text-end">${totConv?fCur(totCost/totConv):'–'}</td>
-            <td class="text-end">${totRoas}</td><td class="text-end">${fNum(totImpr)}</td>
+            <td class="text-end">${totRoas}</td>
+            <td class="text-end" style="color:#16a34a;">${totRealRoasGg}</td>
+            <td class="text-end">${fNum(totImpr)}</td>
             <td class="text-end">${fNum(totClicks)}</td><td class="text-end">${totCtr}</td>
             <td class="text-end">${totClicks?fCur(totCost/totClicks):'–'}</td>
             <td class="text-end">${totImpr?fCur(totCost/totImpr*1000):'–'}</td>

@@ -3915,12 +3915,14 @@ function renderGoogleDashboard(data) {
     document.getElementById('googleTbody').innerHTML = sorted.map(c=>{
         const termRev  = sumTermRevenue(cafe24GoogleByTerm[c.name], ggSince, ggUntil);
         const realRoas = c.cost>0 && termRev>0 ? (termRev/c.cost*100).toFixed(1)+'%' : '–';
+        const scGg = c.status === '활성' ? 's-active' : c.status === '일시중지' ? 's-paused' : '';
         return `
         <tr ${canDrill ? `style="cursor:pointer;" data-campaign="${esc(c.name)}" onclick="showGoogleCampaignDetail(this.dataset.campaign)"` : ''}>
             <td>
                 <div class="campaign-name">${esc(c.name)}</div>
                 ${canDrill ? '<div class="campaign-meta" style="color:var(--google-blue)"><i class="bi bi-chevron-down" style="font-size:10px;"></i> 클릭하여 상세보기</div>' : ''}
             </td>
+            <td>${c.status ? `<span class="s-badge ${scGg}">${esc(c.status)}</span>` : '–'}</td>
             <td class="text-end fw-semibold"><div class="spend-bar-wrap">${fCur(c.cost)}<div class="spend-bar"><div class="spend-bar-fill" style="width:${(c.cost/maxCost*100).toFixed(1)}%;background:#4285F4;"></div></div></div></td>
             <td class="text-end">${c.convVal?fCur(c.convVal):'–'}</td>
             <td class="text-end">${c.conv?fNum(c.conv):'–'}</td>
@@ -3940,7 +3942,7 @@ function renderGoogleDashboard(data) {
     const totRealRoasGg = totCost>0 && totGgRevenue>0 ? (totGgRevenue/totCost*100).toFixed(1)+'%' : '–';
     document.getElementById('googleTfoot').innerHTML = `
         <tr class="total-row">
-            <td>합계 (${sorted.length}개 캠페인)</td>
+            <td>합계 (${sorted.length}개 캠페인)</td><td></td>
             <td class="text-end">${fCur(totCost)}</td><td class="text-end">${totCVal?fCur(totCVal):'–'}</td>
             <td class="text-end">${totConv?fNum(totConv):'–'}</td><td class="text-end">${totConv?fCur(totCost/totConv):'–'}</td>
             <td class="text-end">${totRoas}</td>

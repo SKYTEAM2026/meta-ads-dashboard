@@ -1883,6 +1883,10 @@ function renderCampaignTable(campaigns, insightsMap) {
         totSpend += spend; totConvVal += convVal; totResults += results;
         totImpr += impr; totClicks += clicks;
 
+        const { since: rSince, until: rUntil } = getActiveDateRange();
+        const campRevenue = sumTermRevenue(cafe24MetaByTerm[c.name], rSince, rUntil);
+        const realRoas = spend > 0 && campRevenue > 0 ? (campRevenue / spend * 100).toFixed(1) + '%' : '–';
+
         return `
             <tr data-id="${c.id}" data-name="${esc(c.name)}" onclick="showCampaignDaily(this)">
                 <td>
@@ -1896,6 +1900,7 @@ function renderCampaignTable(campaigns, insightsMap) {
                 <td class="text-end">${results ? fNum(results) : '–'}</td>
                 <td class="text-end">${cpr}</td>
                 <td class="text-end">${roas}</td>
+                <td class="text-end" style="color:#16a34a;font-weight:${realRoas!=='–'?'600':'400'}">${realRoas}</td>
                 <td class="text-end">${ins.ctr ? parseFloat(ins.ctr).toFixed(2) + '%' : '–'}</td>
                 <td class="text-end">${ins.cpc ? fCur(parseFloat(ins.cpc)) : '–'}</td>
                 <td class="text-end">${ins.cpm ? fCur(parseFloat(ins.cpm)) : '–'}</td>

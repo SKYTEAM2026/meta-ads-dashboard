@@ -3136,6 +3136,7 @@ function switchTiktokTab(tab) {
 function closeTiktokDetail() {
     document.getElementById('tiktokDetailPanel').style.display = 'none';
     document.querySelectorAll('#tiktokTbody tr').forEach(tr => tr.classList.remove('row-selected'));
+    document.querySelectorAll('#ttCreativeTbody .csv-ad-daily-expanded').forEach(el => el.remove());
 }
 
 // ═══════════════════════════════════════

@@ -1225,7 +1225,11 @@ function parseCafe24CSV(text) {
         const amount   = parseNum(cols[idx('order_amount')] || '0');
         if (!rawDate || !amount) continue;
 
-        const addMeta = (key, dk, val) => { if (!key) return; if (!cafe24MetaByTerm[key]) cafe24MetaByTerm[key] = {}; cafe24MetaByTerm[key][dk] = (cafe24MetaByTerm[key][dk] || 0) + val; const lk = key.toLowerCase(); if (lk !== key) { if (!cafe24MetaByTerm[lk]) cafe24MetaByTerm[lk] = {}; cafe24MetaByTerm[lk][dk] = (cafe24MetaByTerm[lk][dk] || 0) + val; } };
+        const addMeta = (key, dk, val) => {
+            if (!key) return;
+            const keys = new Set([key, key.toLowerCase(), key.replace(/\s*\(.*?\)\s*$/, '').trim(), key.replace(/\s*\(.*?\)\s*$/, '').trim().toLowerCase()]);
+            keys.forEach(k => { if (!k) return; if (!cafe24MetaByTerm[k]) cafe24MetaByTerm[k] = {}; cafe24MetaByTerm[k][dk] = (cafe24MetaByTerm[k][dk] || 0) + val; });
+        };
         const rangeMatch = rawDate.match(/^(\d{4}-\d{2}-\d{2})\s*~\s*(\d{4}-\d{2}-\d{2})$/);
         if (rangeMatch) {
             const start = new Date(rangeMatch[1]);

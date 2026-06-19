@@ -1309,9 +1309,11 @@ function _parseCafe24Csv(text, channelSet, byDate, byTerm) {
         const channel = (cols[idx('channel')] || '').trim();
         if (!channelSet.has(channel)) continue;
         matched++;
-        const rawDate = (cols[idx('date')] || '').trim();
-        const amount  = parseNum(cols[idx('revenue')] || '0');
-        const term    = (cols[idx('term')] || '').trim();
+        const rawDate  = (cols[idx('date')] || '').trim();
+        const amount   = parseNum(cols[idx('order_amount')] || cols[idx('revenue')] || '0');
+        const term     = (cols[idx('term')] || '').trim();
+        const campaign = (cols[idx('campaign')] || '').trim();
+        const addToTerm = (key, dk, val) => { if (!key) return; if (!byTerm[key]) byTerm[key] = {}; byTerm[key][dk] = (byTerm[key][dk] || 0) + val; };
         const rangeMatch = rawDate.match(/^(\d{4}-\d{2}-\d{2})\s*~\s*(\d{4}-\d{2}-\d{2})$/);
         if (rangeMatch) {
             const start = new Date(rangeMatch[1]), end = new Date(rangeMatch[2]);
@@ -1321,11 +1323,13 @@ function _parseCafe24Csv(text, channelSet, byDate, byTerm) {
             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                 const dk = d.toISOString().slice(0, 10);
                 byDate[dk] = (byDate[dk] || 0) + daily;
-                if (term) { if (!byTerm[term]) byTerm[term] = {}; byTerm[term][dk] = (byTerm[term][dk] || 0) + daily; }
+                addToTerm(campaign, dk, daily);
+                addToTerm(term, dk, daily);
             }
         } else {
             byDate[rawDate] = (byDate[rawDate] || 0) + amount;
-            if (term) { if (!byTerm[term]) byTerm[term] = {}; byTerm[term][rawDate] = (byTerm[term][rawDate] || 0) + amount; }
+            addToTerm(campaign, rawDate, amount);
+            addToTerm(term, rawDate, amount);
         }
     }
     return { totalRows, matched };

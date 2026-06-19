@@ -2711,23 +2711,32 @@ function renderCsvDailyTable(rows, tbodyId, tfootId, noDataId, convLabel) {
         return;
     }
     document.getElementById(noDataId).style.display = 'none';
-    const sorted = [...rows].sort((a,b) => (a.date||'').localeCompare(b.date||''));
-    const usePurch = 'purch' in (sorted[0] || {});
+    const usePurch = 'purch' in (rows[0] || {});
     const convKey = usePurch ? 'purch' : 'conv';
     const convValKey = usePurch ? 'purchVal' : 'convVal';
+    // 날짜별 집계 (같은 날짜 여러 행 → 1행으로 합산)
+    const dayMap = {};
+    rows.forEach(r => {
+        const dk = r.date || '–';
+        if (!dayMap[dk]) dayMap[dk] = { date:dk, cost:0, impr:0, clicks:0, conv:0, convVal:0 };
+        dayMap[dk].cost    += r.cost;
+        dayMap[dk].impr    += r.impr;
+        dayMap[dk].clicks  += r.clicks;
+        dayMap[dk].conv    += r[convKey]   || 0;
+        dayMap[dk].convVal += r[convValKey]|| 0;
+    });
+    const sorted = Object.values(dayMap).sort((a,b) => a.date.localeCompare(b.date));
     document.getElementById(tbodyId).innerHTML = sorted.map(r => {
-        const ctr  = r.impr > 0 ? (r.clicks/r.impr*100).toFixed(2)+'%' : (r.ctr > 0 ? r.ctr.toFixed(2)+'%' : '–');
-        const cpc  = r.clicks > 0 ? fCur(r.cost/r.clicks) : (r.cpc > 0 ? fCur(r.cpc) : '–');
-        const cpm  = r.impr > 0 ? fCur(r.cost/r.impr*1000) : (r.cpm > 0 ? fCur(r.cpm) : '–');
-        const conv = r[convKey] || 0;
-        const cval = r[convValKey] || 0;
-        const cpr  = conv > 0 ? fCur(r.cost/conv) : '–';
-        const roas = r.cost > 0 && cval > 0 ? (cval/r.cost*100).toFixed(1)+'%' : '–';
+        const ctr  = r.impr  > 0 ? (r.clicks/r.impr*100).toFixed(2)+'%' : '–';
+        const cpc  = r.clicks > 0 ? fCur(r.cost/r.clicks) : '–';
+        const cpm  = r.impr  > 0 ? fCur(r.cost/r.impr*1000) : '–';
+        const cpr  = r.conv  > 0 ? fCur(r.cost/r.conv) : '–';
+        const roas = r.cost  > 0 && r.convVal > 0 ? (r.convVal/r.cost*100).toFixed(1)+'%' : '–';
         return `<tr>
             <td>${esc(r.date||'–')}</td>
             <td class="text-end">${fCur(r.cost)}</td>
-            <td class="text-end">${cval?fCur(cval):'–'}</td>
-            <td class="text-end">${conv?fNum(conv):'–'}</td>
+            <td class="text-end">${r.convVal?fCur(r.convVal):'–'}</td>
+            <td class="text-end">${r.conv?fNum(r.conv):'–'}</td>
             <td class="text-end">${cpr}</td>
             <td class="text-end">${roas}</td>
             <td class="text-end">${r.impr?fNum(r.impr):'–'}</td>
@@ -2740,8 +2749,8 @@ function renderCsvDailyTable(rows, tbodyId, tfootId, noDataId, convLabel) {
     const tCost = sorted.reduce((s,r)=>s+r.cost,0);
     const tImpr = sorted.reduce((s,r)=>s+r.impr,0);
     const tClk  = sorted.reduce((s,r)=>s+r.clicks,0);
-    const tConv = sorted.reduce((s,r)=>s+(r[convKey]||0),0);
-    const tCVal = sorted.reduce((s,r)=>s+(r[convValKey]||0),0);
+    const tConv = sorted.reduce((s,r)=>s+r.conv,0);
+    const tCVal = sorted.reduce((s,r)=>s+r.convVal,0);
     document.getElementById(tfootId).innerHTML = `<tr class="total-row">
         <td>합계 (${sorted.length}일)</td>
         <td class="text-end">${fCur(tCost)}</td>

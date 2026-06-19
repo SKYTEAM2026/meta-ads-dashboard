@@ -1884,7 +1884,8 @@ function renderCampaignTable(campaigns, insightsMap) {
         totImpr += impr; totClicks += clicks;
 
         const { since: rSince, until: rUntil } = getActiveDateRange();
-        const campRevenue = sumTermRevenue(cafe24MetaByTerm[c.name], rSince, rUntil);
+        const metaLookup = n => cafe24MetaByTerm[n] || cafe24MetaByTerm[n.toLowerCase()];
+        const campRevenue = sumTermRevenue(metaLookup(c.name), rSince, rUntil);
         const realRoas = spend > 0 && campRevenue > 0 ? (campRevenue / spend * 100).toFixed(1) + '%' : '–';
 
         return `

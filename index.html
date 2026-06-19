@@ -3490,7 +3490,13 @@ function renderTiktokDashboard(data) {
         </div></div>`).join('');
     const maxCost = Math.max(...sorted.map(c=>c.cost),1);
     const canDrill = tiktokFilteredRawRows.length > 0;
-    document.getElementById('tiktokTbody').innerHTML = sorted.map(c=>`
+    const hasTtCafe24 = Object.keys(cafe24TiktokByDate).length > 0;
+    const ttSince = document.getElementById('ttDateFrom').value || '0000-01-01';
+    const ttUntil = document.getElementById('ttDateTo').value || '9999-12-31';
+    document.getElementById('tiktokTbody').innerHTML = sorted.map(c=>{
+        const termRev  = sumTermRevenue(cafe24TiktokByTerm[c.name], ttSince, ttUntil);
+        const realRoas = c.cost>0 && termRev>0 ? (termRev/c.cost*100).toFixed(1)+'%' : '–';
+        return `
         <tr ${canDrill ? `style="cursor:pointer;" data-campaign="${esc(c.name)}" onclick="showTiktokCampaignDetail(this.dataset.campaign)"` : ''}>
             <td>
                 <div class="campaign-name">${esc(c.name)}</div>
@@ -3501,22 +3507,28 @@ function renderTiktokDashboard(data) {
             <td class="text-end">${c.purch?fNum(c.purch):'–'}</td>
             <td class="text-end">${c.cpr?fCur(c.cpr):'–'}</td>
             <td class="text-end">${c.roas?c.roas.toFixed(1)+'%':'–'}</td>
+            <td class="text-end" style="color:#16a34a;font-weight:${realRoas!=='–'?'600':'400'}">${realRoas}</td>
             <td class="text-end">${c.impr?fNum(c.impr):'–'}</td>
             <td class="text-end">${c.clicks?fNum(c.clicks):'–'}</td>
             <td class="text-end">${c.ctr?c.ctr.toFixed(2)+'%':'–'}</td>
             <td class="text-end">${c.cpc?fCur(c.cpc):'–'}</td>
             <td class="text-end">${c.cpm?fCur(c.cpm):'–'}</td>
-        </tr>`).join('');
+        </tr>`;
+    }).join('');
     const totCtr  = totImpr>0 ? (totClicks/totImpr*100).toFixed(2)+'%' : (totCost>0&&totCtrW>0?(totCtrW/totCost).toFixed(2)+'%':'–');
     const totCpc  = totClicks>0 ? fCur(totCost/totClicks) : (totCost>0&&totCpcW>0?fCur(totCpcW/totCost):'–');
     const totCpm  = totImpr>0 ? fCur(totCost/totImpr*1000) : (totCost>0&&totCpmW>0?fCur(totCpmW/totCost):'–');
     const totRoas = totCost>0&&totPVal>0 ? (totPVal/totCost*100).toFixed(1)+'%' : '–';
+    const totTtRevenue  = sumTermRevenue(cafe24TiktokByDate, ttSince, ttUntil);
+    const totRealRoasTt = totCost>0 && totTtRevenue>0 ? (totTtRevenue/totCost*100).toFixed(1)+'%' : '–';
     document.getElementById('tiktokTfoot').innerHTML = `
         <tr class="total-row">
             <td>합계 (${sorted.length}개 캠페인)</td>
             <td class="text-end">${fCur(totCost)}</td><td class="text-end">${totPVal?fCur(totPVal):'–'}</td>
             <td class="text-end">${totPurch?fNum(totPurch):'–'}</td><td class="text-end">${totPurch?fCur(totCost/totPurch):'–'}</td>
-            <td class="text-end">${totRoas}</td><td class="text-end">${totImpr?fNum(totImpr):'–'}</td>
+            <td class="text-end">${totRoas}</td>
+            <td class="text-end" style="color:#16a34a;">${totRealRoasTt}</td>
+            <td class="text-end">${totImpr?fNum(totImpr):'–'}</td>
             <td class="text-end">${totClicks?fNum(totClicks):'–'}</td><td class="text-end">${totCtr}</td>
             <td class="text-end">${totCpc}</td>
             <td class="text-end">${totCpm}</td>

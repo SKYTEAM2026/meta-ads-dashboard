@@ -3355,6 +3355,7 @@ function switchPlatform(platform) {
     document.getElementById('googleDashboard').style.display = platform === 'google' ? '' : 'none';
     if (platform === 'tiktok') {
         loadTiktokCafe24FromStorage();
+        loadTiktokManualStatus();
         for (const acct of ['써마드', '아치핀']) {
             if (!tiktokStore[acct]) {
                 try {

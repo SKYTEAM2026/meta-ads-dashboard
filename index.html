@@ -1218,12 +1218,13 @@ function parseCafe24CSV(text) {
         if (!META_CHANNELS.has(channel)) continue;
         metaRows++;
 
-        const rawDate = (cols[idx('date')] || '').trim();
-        const term    = (cols[idx('term')] || '').trim();
-        const amount  = parseNum(cols[idx('order_amount')] || '0');
+        const rawDate  = (cols[idx('date')] || '').trim();
+        const term     = (cols[idx('term')] || '').trim();
+        const campaign = (cols[idx('campaign')] || '').trim();
+        const amount   = parseNum(cols[idx('order_amount')] || '0');
         if (!rawDate || !amount) continue;
 
-        // 기간 형식 "YYYY-MM-DD ~ YYYY-MM-DD" → 각 날짜에 균등 배분
+        const addMeta = (key, dk, val) => { if (!key) return; if (!cafe24MetaByTerm[key]) cafe24MetaByTerm[key] = {}; cafe24MetaByTerm[key][dk] = (cafe24MetaByTerm[key][dk] || 0) + val; };
         const rangeMatch = rawDate.match(/^(\d{4}-\d{2}-\d{2})\s*~\s*(\d{4}-\d{2}-\d{2})$/);
         if (rangeMatch) {
             const start = new Date(rangeMatch[1]);
@@ -1233,17 +1234,13 @@ function parseCafe24CSV(text) {
             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                 const dk = d.toISOString().slice(0, 10);
                 cafe24MetaByDate[dk] = (cafe24MetaByDate[dk] || 0) + daily;
-                if (term) {
-                    if (!cafe24MetaByTerm[term]) cafe24MetaByTerm[term] = {};
-                    cafe24MetaByTerm[term][dk] = (cafe24MetaByTerm[term][dk] || 0) + daily;
-                }
+                addMeta(campaign, dk, daily);
+                addMeta(term, dk, daily);
             }
         } else {
             cafe24MetaByDate[rawDate] = (cafe24MetaByDate[rawDate] || 0) + amount;
-            if (term) {
-                if (!cafe24MetaByTerm[term]) cafe24MetaByTerm[term] = {};
-                cafe24MetaByTerm[term][rawDate] = (cafe24MetaByTerm[term][rawDate] || 0) + amount;
-            }
+            addMeta(campaign, rawDate, amount);
+            addMeta(term, rawDate, amount);
         }
     }
 

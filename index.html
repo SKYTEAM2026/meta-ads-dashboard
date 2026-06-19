@@ -3673,7 +3673,8 @@ function renderTiktokDashboard(data) {
     const ttSince = document.getElementById('ttDateFrom').value || '0000-01-01';
     const ttUntil = document.getElementById('ttDateTo').value || '9999-12-31';
     document.getElementById('tiktokTbody').innerHTML = sorted.map(c=>{
-        const termRev  = sumTermRevenue(cafe24TiktokByTerm[c.name], ttSince, ttUntil);
+        const ttLookup = n => cafe24TiktokByTerm[n] || cafe24TiktokByTerm[n.replace(/\s*\(.*?\)\s*$/, '').trim()];
+        const termRev  = sumTermRevenue(ttLookup(c.name), ttSince, ttUntil);
         const realRoas = c.cost>0 && termRev>0 ? (termRev/c.cost*100).toFixed(1)+'%' : '–';
         return `
         <tr ${canDrill ? `style="cursor:pointer;" data-campaign="${esc(c.name)}" onclick="showTiktokCampaignDetail(this.dataset.campaign)"` : ''}>

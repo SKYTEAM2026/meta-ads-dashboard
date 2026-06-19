@@ -1197,6 +1197,9 @@ function onCafe24CsvUpload(event) {
     reader.onload = e => {
         parseCafe24CSV(e.target.result);
         event.target.value = '';
+        if (state.campaigns && state.campaignInsights) {
+            renderCampaignTable(state.campaigns, state.campaignInsights);
+        }
     };
     reader.readAsText(file, 'UTF-8');
 }

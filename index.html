@@ -3518,8 +3518,12 @@ function applyTiktokFilters() {
         });
     }
 
-    if (statusVal && tiktokRawRows.some(r => r.status)) {
-        rows = rows.filter(r => r.status === statusVal);
+    const hasCsvStatus = tiktokRawRows.some(r => r.status);
+    if (statusVal) {
+        rows = rows.filter(r => {
+            const eff = r.status || tiktokManualStatus[r.campaign] || '';
+            return eff === statusVal;
+        });
     }
 
     tiktokFilteredRawRows = rows;

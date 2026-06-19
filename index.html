@@ -3646,12 +3646,14 @@ function renderTiktokDashboard(data) {
     document.getElementById('tiktokTbody').innerHTML = sorted.map(c=>{
         const termRev  = sumTermRevenue(cafe24TiktokByTerm[c.name], ttSince, ttUntil);
         const realRoas = c.cost>0 && termRev>0 ? (termRev/c.cost*100).toFixed(1)+'%' : '–';
+        const scTt = c.status === '활성' ? 's-active' : c.status === '일시중지' ? 's-paused' : '';
         return `
         <tr ${canDrill ? `style="cursor:pointer;" data-campaign="${esc(c.name)}" onclick="showTiktokCampaignDetail(this.dataset.campaign)"` : ''}>
             <td>
                 <div class="campaign-name">${esc(c.name)}</div>
                 ${canDrill ? '<div class="campaign-meta" style="color:var(--tiktok-pink)"><i class="bi bi-chevron-down" style="font-size:10px;"></i> 클릭하여 상세보기</div>' : ''}
             </td>
+            <td>${c.status ? `<span class="s-badge ${scTt}">${esc(c.status)}</span>` : '–'}</td>
             <td class="text-end fw-semibold"><div class="spend-bar-wrap">${fCur(c.cost)}<div class="spend-bar"><div class="spend-bar-fill" style="width:${(c.cost/maxCost*100).toFixed(1)}%;background:#FE2C55;"></div></div></div></td>
             <td class="text-end">${c.purchVal?fCur(c.purchVal):'–'}</td>
             <td class="text-end">${c.purch?fNum(c.purch):'–'}</td>
@@ -3673,7 +3675,7 @@ function renderTiktokDashboard(data) {
     const totRealRoasTt = totCost>0 && totTtRevenue>0 ? (totTtRevenue/totCost*100).toFixed(1)+'%' : '–';
     document.getElementById('tiktokTfoot').innerHTML = `
         <tr class="total-row">
-            <td>합계 (${sorted.length}개 캠페인)</td>
+            <td>합계 (${sorted.length}개 캠페인)</td><td></td>
             <td class="text-end">${fCur(totCost)}</td><td class="text-end">${totPVal?fCur(totPVal):'–'}</td>
             <td class="text-end">${totPurch?fNum(totPurch):'–'}</td><td class="text-end">${totPurch?fCur(totCost/totPurch):'–'}</td>
             <td class="text-end">${totRoas}</td>

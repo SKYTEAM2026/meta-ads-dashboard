@@ -2650,10 +2650,14 @@ function esc(s) {
 //  UI STATE
 // ═══════════════════════════════════════
 function showLoading(v) {
+    // Meta 탭이 아닐 때 loadingBox를 새로 띄우지 않음 (숨기는 건 항상 허용)
+    if (v && activePlatform !== 'meta') return;
     document.getElementById('loadingBox').style.display = v ? '' : 'none';
 }
 function showDashboard() {
     metaReady = true;
+    // 비동기 완료 시 다른 탭으로 이동해 있으면 Meta 화면을 덮지 않음
+    if (activePlatform !== 'meta') return;
     document.getElementById('dashboard').style.display = '';
 }
 function showError(msg) {
@@ -2680,11 +2684,14 @@ function showError(msg) {
         document.getElementById('errorMsg').innerHTML =
             `${msg}<br><span style="font-size:11px;color:#9b1c1c;">${tokenHint}</span>`;
     }
-    box.style.display = 'block';
-    document.getElementById('dashboard').style.display = 'none';
+    // 다른 탭으로 이동한 상태면 에러 박스를 강제로 띄우지 않음
+    if (activePlatform === 'meta') {
+        box.style.display = 'block';
+        document.getElementById('dashboard').style.display = 'none';
+    }
     showLoading(false);
 
-    if (isExpired) {
+    if (isExpired && activePlatform === 'meta') {
         setTimeout(() => openTokenModal(), 300);
     }
 }

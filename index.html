@@ -3805,6 +3805,7 @@ function renderTiktokDashboard(data) {
                 <div class="campaign-name">${esc(c.name)}</div>
                 ${canDrill ? '<div class="campaign-meta" style="color:var(--tiktok-pink)"><i class="bi bi-chevron-down" style="font-size:10px;"></i> 클릭하여 상세보기</div>' : ''}
             </td>
+            <td class="text-end">${c.budget?fCur(c.budget):'–'}</td>
             <td class="text-end fw-semibold"><div class="spend-bar-wrap">${fCur(c.cost)}<div class="spend-bar"><div class="spend-bar-fill" style="width:${(c.cost/maxCost*100).toFixed(1)}%;background:#FE2C55;"></div></div></div></td>
             <td class="text-end">${c.purchVal?fCur(c.purchVal):'–'}</td>
             <td class="text-end">${c.purch?fNum(c.purch):'–'}</td>

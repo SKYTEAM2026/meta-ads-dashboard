@@ -2100,7 +2100,8 @@ function closeCampaignDaily() {
     if (panel) panel.style.display = 'none';
     document.querySelectorAll('#campaignTbody tr').forEach(tr => tr.classList.remove('row-selected'));
     if (campaignDailyChartInst) { campaignDailyChartInst.destroy(); campaignDailyChartInst = null; }
-    currentCampaignId = null;
+    currentCampaignId   = null;
+    currentCampaignName = null;
     creativeTabLoaded = false;
 }
 

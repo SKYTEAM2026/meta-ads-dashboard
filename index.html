@@ -2574,7 +2574,10 @@ function renderCampaignDailyChart(daily) {
 
 function renderDailyTable(daily) {
     const PTYPES = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
-    let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0;
+    let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0, totCafe24Rev = 0;
+
+    const metaLookup = n => cafe24MetaByTerm[n] || cafe24MetaByTerm[n.toLowerCase()];
+    const termData = currentCampaignName ? metaLookup(currentCampaignName) : null;
 
     const rows = daily.map(d => {
         const spend   = parseFloat(d.spend || 0);
@@ -2588,8 +2591,10 @@ function renderDailyTable(daily) {
         const ctr     = d.ctr ? parseFloat(d.ctr).toFixed(2) + '%' : (impr > 0 ? (clicks/impr*100).toFixed(2)+'%' : '–');
         const cpc     = d.cpc ? fCur(parseFloat(d.cpc)) : (clicks ? fCur(spend/clicks) : '–');
         const cpm     = d.cpm ? fCur(parseFloat(d.cpm)) : (impr ? fCur(spend/impr*1000) : '–');
+        const cafe24Rev = termData ? (termData[d.date_start] || 0) : 0;
+        const realRoas  = spend > 0 && cafe24Rev > 0 ? (cafe24Rev / spend * 100).toFixed(1) + '%' : '–';
         totSpend += spend; totConvVal += convVal; totResults += results;
-        totImpr += impr; totClicks += clicks;
+        totImpr += impr; totClicks += clicks; totCafe24Rev += cafe24Rev;
         return `
             <tr>
                 <td style="white-space:nowrap;">${formatDate(d.date_start)}</td>
@@ -2598,6 +2603,7 @@ function renderDailyTable(daily) {
                 <td class="text-end">${results ? fNum(results) : '–'}</td>
                 <td class="text-end">${cpr}</td>
                 <td class="text-end">${roas}</td>
+                <td class="text-end" style="color:${realRoas !== '–' ? '#16a34a' : 'inherit'};font-weight:${realRoas !== '–' ? '600' : 'normal'};">${realRoas}</td>
                 <td class="text-end">${ctr}</td>
                 <td class="text-end">${cpc}</td>
                 <td class="text-end">${cpm}</td>
@@ -2607,8 +2613,9 @@ function renderDailyTable(daily) {
 
     document.getElementById('dailyTableBody').innerHTML = rows;
 
-    const totCtr  = totImpr > 0 ? (totClicks/totImpr*100).toFixed(2) + '%' : '–';
-    const totRoas = totConvVal > 0 ? (totConvVal/totSpend*100).toFixed(1) + '%' : '–';
+    const totCtr     = totImpr > 0 ? (totClicks/totImpr*100).toFixed(2) + '%' : '–';
+    const totRoas    = totConvVal > 0 ? (totConvVal/totSpend*100).toFixed(1) + '%' : '–';
+    const totRealRoas = totCafe24Rev > 0 && totSpend > 0 ? (totCafe24Rev/totSpend*100).toFixed(1) + '%' : '–';
     document.getElementById('dailyTableFoot').innerHTML = `
         <tr class="total-row">
             <td>합계 (${daily.length}일)</td>
@@ -2617,6 +2624,7 @@ function renderDailyTable(daily) {
             <td class="text-end">${totResults ? fNum(totResults) : '–'}</td>
             <td class="text-end">${totResults ? fCur(totSpend/totResults) : '–'}</td>
             <td class="text-end">${totRoas}</td>
+            <td class="text-end" style="color:${totRealRoas !== '–' ? '#16a34a' : 'inherit'};font-weight:${totRealRoas !== '–' ? '600' : 'normal'};">${totRealRoas}</td>
             <td class="text-end">${totCtr}</td>
             <td class="text-end">${totClicks ? fCur(totSpend/totClicks) : '–'}</td>
             <td class="text-end">${totImpr ? fCur(totSpend/totImpr*1000) : '–'}</td>

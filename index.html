@@ -2225,8 +2225,8 @@ async function loadAdsetTab(campaignId) {
             const life  = a.lifetime_budget ? parseFloat(a.lifetime_budget) : 0;
             totDaily += daily; totLife += life;
             const budgetStr = daily ? `일 ${fCur(daily)}` : life ? `총 ${fCur(life)}` : '–';
-            return `<tr>
-                <td>${esc(a.name)}</td>
+            return `<tr style="cursor:pointer;" data-adset-id="${esc(a.id)}" data-adset-name="${esc(a.name)}" onclick="toggleAdsetCreatives(this)">
+                <td><span class="campaign-name">${esc(a.name)}</span> <i class="bi bi-chevron-down" style="font-size:10px;color:var(--text-secondary);margin-left:4px;"></i></td>
                 <td>${statusBadge(a.status)}</td>
                 <td class="text-end fw-semibold">${budgetStr}</td>
             </tr>`;

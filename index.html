@@ -3922,7 +3922,7 @@ function applyGoogleFilters() {
     googleFilteredRawRows = rows;
     const campaignMap = {};
     for (const r of rows) {
-        if (!campaignMap[r.campaign]) campaignMap[r.campaign] = { name:r.campaign, cost:0, impr:0, clicks:0, conv:0, convVal:0, status:r.status||'' };
+        if (!campaignMap[r.campaign]) campaignMap[r.campaign] = { name:r.campaign, cost:0, impr:0, clicks:0, conv:0, convVal:0, status:r.status||'', budget:r.budget||0 };
         const c = campaignMap[r.campaign];
         c.cost += r.cost; c.impr += r.impr; c.clicks += r.clicks;
         c.conv += r.conv; c.convVal += r.convVal;

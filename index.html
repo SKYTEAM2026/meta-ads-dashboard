@@ -1500,7 +1500,8 @@ async function init() {
 
         const first = accounts[0];
         if (!first?.id) throw new Error('광고 계정 ID를 읽을 수 없습니다. 토큰 권한(ads_read)을 확인해 주세요.');
-        state.accountId = first.id;
+        state.accountId   = first.id;
+        state.accountName = first.name;
         state.currency = first.currency || 'KRW';
         setBadge(first.name);
 

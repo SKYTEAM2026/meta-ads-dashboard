@@ -2194,6 +2194,58 @@ function switchTab(tab, skipLoad) {
     }
 }
 
+// ── 광고 세트 로드 ──
+async function loadAdsetTab(campaignId) {
+    document.getElementById('adsetLoading').style.display = '';
+    document.getElementById('adsetContent').style.display = 'none';
+    document.getElementById('adsetNoData').style.display = 'none';
+    try {
+        const data = await api(`/${campaignId}/adsets`, {
+            fields: 'id,name,status,daily_budget,lifetime_budget',
+            limit: 100,
+        });
+        adsetTabLoaded = true;
+        document.getElementById('adsetLoading').style.display = 'none';
+        document.getElementById('adsetContent').style.display = '';
+        const adsets = (data && data.data) ? data.data : [];
+        if (!adsets.length) {
+            document.getElementById('adsetNoData').style.display = '';
+            return;
+        }
+        const statusBadge = s => {
+            const active = /active/i.test(s);
+            const paused = /paused/i.test(s);
+            return active ? '<span class="s-badge s-active">활성</span>'
+                 : paused ? '<span class="s-badge s-paused">일시중지</span>'
+                 : `<span class="s-badge">${s||'–'}</span>`;
+        };
+        let totDaily = 0, totLife = 0;
+        document.getElementById('adsetTableBody').innerHTML = adsets.map(a => {
+            const daily = a.daily_budget ? parseFloat(a.daily_budget) : 0;
+            const life  = a.lifetime_budget ? parseFloat(a.lifetime_budget) : 0;
+            totDaily += daily; totLife += life;
+            const budgetStr = daily ? `일 ${fCur(daily)}` : life ? `총 ${fCur(life)}` : '–';
+            return `<tr>
+                <td>${esc(a.name)}</td>
+                <td>${statusBadge(a.status)}</td>
+                <td class="text-end fw-semibold">${budgetStr}</td>
+            </tr>`;
+        }).join('');
+        const totBudget = totDaily ? `일 합계 ${fCur(totDaily)}` : totLife ? `총 합계 ${fCur(totLife)}` : '–';
+        document.getElementById('adsetTableFoot').innerHTML = `
+            <tr class="total-row">
+                <td>합계 (${adsets.length}개 광고 세트)</td>
+                <td></td>
+                <td class="text-end">${totBudget}</td>
+            </tr>`;
+    } catch(e) {
+        document.getElementById('adsetLoading').style.display = 'none';
+        document.getElementById('adsetContent').style.display = '';
+        document.getElementById('adsetNoData').style.display = '';
+        document.getElementById('adsetNoData').innerHTML = `<i class="bi bi-exclamation-triangle"></i> 오류: ${e.message}`;
+    }
+}
+
 // ── 소재별 성과 로드 ──
 async function loadCreativeTab(campaignId) {
     document.querySelectorAll('.ad-daily-expanded').forEach(el => el.remove());

@@ -2491,6 +2491,9 @@ function renderAdDailyTable(daily, adName) {
                         <th class="text-end">결과당 비용</th>
                         <th class="text-end">구매 ROAS</th>
                         <th class="text-end" style="color:#16a34a;" title="카페24 CSV 업로드 시 표시">실제 ROAS</th>
+                        <th class="text-end">결제시작당비용</th>
+                        <th class="text-end">장바구니당비용</th>
+                        <th class="text-end">장바구니전환값</th>
                         <th class="text-end">CTR</th>
                         <th class="text-end">CPC</th>
                         <th class="text-end">CPM</th>
@@ -2506,6 +2509,9 @@ function renderAdDailyTable(daily, adName) {
                         <td class="text-end">${totResults ? fCur(totSpend/totResults) : '–'}</td>
                         <td class="text-end">${totRoas}</td>
                         <td class="text-end" style="color:${totRealRoas !== '–' ? '#16a34a' : 'inherit'};font-weight:${totRealRoas !== '–' ? '600' : 'normal'};">${totRealRoas}</td>
+                        <td class="text-end">${totIc  ? fCur(totSpend/totIc)  : '–'}</td>
+                        <td class="text-end">${totAtc ? fCur(totSpend/totAtc) : '–'}</td>
+                        <td class="text-end">${totAtcVal ? fCur(totAtcVal) : '–'}</td>
                         <td class="text-end">${totCtr}</td>
                         <td class="text-end">${totClicks ? fCur(totSpend/totClicks) : '–'}</td>
                         <td class="text-end">${totImpr ? fCur(totSpend/totImpr*1000) : '–'}</td>

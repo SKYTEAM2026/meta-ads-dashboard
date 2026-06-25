@@ -2432,7 +2432,7 @@ function renderAdDailyTable(daily, adName) {
     const _strip = n => n.replace(/\s*\(.*?\)\s*$/, '').trim();
     const _mLookup = n => cafe24MetaByTerm[n] || cafe24MetaByTerm[n.toLowerCase()] || cafe24MetaByTerm[_strip(n)] || cafe24MetaByTerm[_strip(n).toLowerCase()];
     const termData = adName ? _mLookup(adName) : null;
-    let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0, totCafe24Rev = 0;
+    let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0, totCafe24Rev = 0, totIc = 0, totAtc = 0, totAtcVal = 0;
 
     const rows = daily.map(d => {
         const spend   = parseFloat(d.spend || 0);

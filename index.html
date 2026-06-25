@@ -2576,7 +2576,8 @@ function renderDailyTable(daily) {
     const PTYPES = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
     let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0, totCafe24Rev = 0;
 
-    const metaLookup = n => cafe24MetaByTerm[n] || cafe24MetaByTerm[n.toLowerCase()];
+    const strip = n => n.replace(/\s*\(.*?\)\s*$/, '').trim();
+    const metaLookup = n => cafe24MetaByTerm[n] || cafe24MetaByTerm[n.toLowerCase()] || cafe24MetaByTerm[strip(n)] || cafe24MetaByTerm[strip(n).toLowerCase()];
     const termData = currentCampaignName ? metaLookup(currentCampaignName) : null;
 
     const rows = daily.map(d => {

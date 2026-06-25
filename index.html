@@ -2617,8 +2617,10 @@ function renderCampaignDailyChart(daily) {
 }
 
 function renderDailyTable(daily) {
-    const PTYPES = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
-    let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0, totCafe24Rev = 0;
+    const PTYPES   = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
+    const IC_TYPES = ['offsite_conversion.fb_pixel_initiate_checkout', 'initiate_checkout'];
+    const ATC_TYPES= ['offsite_conversion.fb_pixel_add_to_cart', 'add_to_cart'];
+    let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0, totCafe24Rev = 0, totIc = 0, totAtc = 0, totAtcVal = 0;
 
     const strip = n => n.replace(/\s*\(.*?\)\s*$/, '').trim();
     const metaLookup = n => cafe24MetaByTerm[n] || cafe24MetaByTerm[n.toLowerCase()] || cafe24MetaByTerm[strip(n)] || cafe24MetaByTerm[strip(n).toLowerCase()];
@@ -2633,6 +2635,11 @@ function renderDailyTable(daily) {
         const roasItem = (d.purchase_roas || []).find(a => PTYPES.includes(a.action_type));
         const roas    = roasItem ? (parseFloat(roasItem.value) * 100).toFixed(1) + '%' : '–';
         const cpr     = results > 0 ? fCur(spend / results) : '–';
+        const ic      = findAction(d.actions, IC_TYPES);
+        const atc     = findAction(d.actions, ATC_TYPES);
+        const atcVal  = findAction(d.action_values, ATC_TYPES);
+        const cpic    = ic  > 0 ? fCur(spend / ic)  : '–';
+        const cpatc   = atc > 0 ? fCur(spend / atc) : '–';
         const ctr     = d.ctr ? parseFloat(d.ctr).toFixed(2) + '%' : (impr > 0 ? (clicks/impr*100).toFixed(2)+'%' : '–');
         const cpc     = d.cpc ? fCur(parseFloat(d.cpc)) : (clicks ? fCur(spend/clicks) : '–');
         const cpm     = d.cpm ? fCur(parseFloat(d.cpm)) : (impr ? fCur(spend/impr*1000) : '–');
@@ -2640,6 +2647,7 @@ function renderDailyTable(daily) {
         const realRoas  = spend > 0 && cafe24Rev > 0 ? (cafe24Rev / spend * 100).toFixed(1) + '%' : '–';
         totSpend += spend; totConvVal += convVal; totResults += results;
         totImpr += impr; totClicks += clicks; totCafe24Rev += cafe24Rev;
+        totIc += ic; totAtc += atc; totAtcVal += atcVal;
         return `
             <tr>
                 <td style="white-space:nowrap;">${formatDate(d.date_start)}</td>
@@ -2649,6 +2657,9 @@ function renderDailyTable(daily) {
                 <td class="text-end">${cpr}</td>
                 <td class="text-end">${roas}</td>
                 <td class="text-end" style="color:${realRoas !== '–' ? '#16a34a' : 'inherit'};font-weight:${realRoas !== '–' ? '600' : 'normal'};">${realRoas}</td>
+                <td class="text-end">${cpic}</td>
+                <td class="text-end">${cpatc}</td>
+                <td class="text-end">${atcVal ? fCur(atcVal) : '–'}</td>
                 <td class="text-end">${ctr}</td>
                 <td class="text-end">${cpc}</td>
                 <td class="text-end">${cpm}</td>
@@ -2670,6 +2681,9 @@ function renderDailyTable(daily) {
             <td class="text-end">${totResults ? fCur(totSpend/totResults) : '–'}</td>
             <td class="text-end">${totRoas}</td>
             <td class="text-end" style="color:${totRealRoas !== '–' ? '#16a34a' : 'inherit'};font-weight:${totRealRoas !== '–' ? '600' : 'normal'};">${totRealRoas}</td>
+            <td class="text-end">${totIc  ? fCur(totSpend/totIc)  : '–'}</td>
+            <td class="text-end">${totAtc ? fCur(totSpend/totAtc) : '–'}</td>
+            <td class="text-end">${totAtcVal ? fCur(totAtcVal) : '–'}</td>
             <td class="text-end">${totCtr}</td>
             <td class="text-end">${totClicks ? fCur(totSpend/totClicks) : '–'}</td>
             <td class="text-end">${totImpr ? fCur(totSpend/totImpr*1000) : '–'}</td>

@@ -2432,8 +2432,7 @@ function renderAdDailyTable(daily, adName) {
 
     const totCtr      = totImpr > 0 ? (totClicks/totImpr*100).toFixed(2) + '%' : '–';
     const totRoas     = totConvVal > 0 ? (totConvVal/totSpend*100).toFixed(1) + '%' : '–';
-    const totRealRoas = hasCafe24 && totCafe24Rev > 0 ? (totCafe24Rev/totSpend*100).toFixed(1) + '%' : '–';
-    const colCount    = hasCafe24 ? 10 : 9;
+    const totRealRoas = totCafe24Rev > 0 && totSpend > 0 ? (totCafe24Rev/totSpend*100).toFixed(1) + '%' : '–';
 
     return `
         <div class="table-responsive">
@@ -2446,7 +2445,7 @@ function renderAdDailyTable(daily, adName) {
                         <th class="text-end">결과</th>
                         <th class="text-end">결과당 비용</th>
                         <th class="text-end">구매 ROAS</th>
-                        ${hasCafe24 ? '<th class="text-end" style="color:#16a34a;">실제 ROAS</th>' : ''}
+                        <th class="text-end" style="color:#16a34a;" title="카페24 CSV 업로드 시 표시">실제 ROAS</th>
                         <th class="text-end">CTR</th>
                         <th class="text-end">CPC</th>
                         <th class="text-end">CPM</th>
@@ -2461,7 +2460,7 @@ function renderAdDailyTable(daily, adName) {
                         <td class="text-end">${totResults ? fNum(totResults) : '–'}</td>
                         <td class="text-end">${totResults ? fCur(totSpend/totResults) : '–'}</td>
                         <td class="text-end">${totRoas}</td>
-                        ${hasCafe24 ? `<td class="text-end" style="color:#16a34a;font-weight:600;">${totRealRoas}</td>` : ''}
+                        <td class="text-end" style="color:${totRealRoas !== '–' ? '#16a34a' : 'inherit'};font-weight:${totRealRoas !== '–' ? '600' : 'normal'};">${totRealRoas}</td>
                         <td class="text-end">${totCtr}</td>
                         <td class="text-end">${totClicks ? fCur(totSpend/totClicks) : '–'}</td>
                         <td class="text-end">${totImpr ? fCur(totSpend/totImpr*1000) : '–'}</td>

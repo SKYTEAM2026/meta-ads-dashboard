@@ -3828,6 +3828,7 @@ function renderTiktokDashboard(data) {
     document.getElementById('tiktokTfoot').innerHTML = `
         <tr class="total-row">
             <td>합계 (${sorted.length}개 캠페인)</td>
+            <td class="text-end">–</td>
             <td class="text-end">${fCur(totCost)}</td><td class="text-end">${totPVal?fCur(totPVal):'–'}</td>
             <td class="text-end">${totPurch?fNum(totPurch):'–'}</td><td class="text-end">${totPurch?fCur(totCost/totPurch):'–'}</td>
             <td class="text-end">${totRoas}</td>

@@ -4007,7 +4007,8 @@ function parseGoogleCSV(text) {
         const cpmDirect = iCpm !== -1 ? parseNum(cols[iCpm]) : 0;
         if (cost === 0 && impr === 0) continue;
         if (status) statusSet.add(status);
-        if (!campaignMap[campaign]) campaignMap[campaign] = { name:campaign, cost:0, impr:0, clicks:0, conv:0, convVal:0, status };
+        const budget  = iBudget !== -1 ? parseNum(cols[iBudget]) : 0;
+        if (!campaignMap[campaign]) campaignMap[campaign] = { name:campaign, cost:0, impr:0, clicks:0, conv:0, convVal:0, status, budget };
         campaignMap[campaign].cost += cost; campaignMap[campaign].impr += impr; campaignMap[campaign].clicks += clicks;
         campaignMap[campaign].conv += conv; campaignMap[campaign].convVal += convVal;
         rawRows.push({ date, campaign, adGroup, adName, status, cost, impr, clicks, conv, convVal, ctrDirect, cpcDirect, cpmDirect });

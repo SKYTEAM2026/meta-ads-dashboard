@@ -4071,6 +4071,7 @@ function renderGoogleDashboard(data) {
                 ${canDrill ? '<div class="campaign-meta" style="color:var(--google-blue)"><i class="bi bi-chevron-down" style="font-size:10px;"></i> 클릭하여 상세보기</div>' : ''}
             </td>
             <td>${c.status ? `<span class="s-badge ${scGg}">${esc(c.status)}</span>` : '–'}</td>
+            <td style="font-size:12px;">${c.budget ? `일 ${fCur(c.budget)}` : '–'}</td>
             <td class="text-end fw-semibold"><div class="spend-bar-wrap">${fCur(c.cost)}<div class="spend-bar"><div class="spend-bar-fill" style="width:${(c.cost/maxCost*100).toFixed(1)}%;background:#4285F4;"></div></div></div></td>
             <td class="text-end">${c.convVal?fCur(c.convVal):'–'}</td>
             <td class="text-end">${c.conv?fNum(c.conv):'–'}</td>

@@ -2592,7 +2592,7 @@ function renderDailyTable(daily) {
         const ctr     = d.ctr ? parseFloat(d.ctr).toFixed(2) + '%' : (impr > 0 ? (clicks/impr*100).toFixed(2)+'%' : '–');
         const cpc     = d.cpc ? fCur(parseFloat(d.cpc)) : (clicks ? fCur(spend/clicks) : '–');
         const cpm     = d.cpm ? fCur(parseFloat(d.cpm)) : (impr ? fCur(spend/impr*1000) : '–');
-        const cafe24Rev = termData ? (termData[d.date_start] || 0) : 0;
+        const cafe24Rev = sumTermRevenue(termData, d.date_start, d.date_start);
         const realRoas  = spend > 0 && cafe24Rev > 0 ? (cafe24Rev / spend * 100).toFixed(1) + '%' : '–';
         totSpend += spend; totConvVal += convVal; totResults += results;
         totImpr += impr; totClicks += clicks; totCafe24Rev += cafe24Rev;

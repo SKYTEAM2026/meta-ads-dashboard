@@ -1896,8 +1896,10 @@ function renderCampaignTable(campaigns, insightsMap) {
     const sf = state.statusFilter;
     const filtered = sf ? campaigns.filter(c => c.status === sf) : campaigns;
 
-    const PTYPES = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
-    let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0;
+    const PTYPES   = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
+    const IC_TYPES = ['offsite_conversion.fb_pixel_initiate_checkout', 'initiate_checkout'];
+    const ATC_TYPES= ['offsite_conversion.fb_pixel_add_to_cart', 'add_to_cart'];
+    let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0, totIc = 0, totAtc = 0, totAtcVal = 0;
 
     const rows = filtered.map(c => {
         const ins = insightsMap[c.id] || {};
@@ -1909,6 +1911,11 @@ function renderCampaignTable(campaigns, insightsMap) {
         const roasItem = (ins.purchase_roas || []).find(a => PTYPES.includes(a.action_type));
         const roas     = roasItem ? (parseFloat(roasItem.value) * 100).toFixed(1) + '%' : '–';
         const cpr      = results > 0 ? fCur(spend / results) : '–';
+        const ic       = findAction(ins.actions, IC_TYPES);
+        const atc      = findAction(ins.actions, ATC_TYPES);
+        const atcVal   = findAction(ins.action_values, ATC_TYPES);
+        const cpic     = ic  > 0 ? fCur(spend / ic)  : '–';
+        const cpatc    = atc > 0 ? fCur(spend / atc) : '–';
         const budget   = c.daily_budget
             ? `일 ${fCur(parseFloat(c.daily_budget))}`
             : c.lifetime_budget
@@ -1916,7 +1923,7 @@ function renderCampaignTable(campaigns, insightsMap) {
             : '–';
 
         totSpend += spend; totConvVal += convVal; totResults += results;
-        totImpr += impr; totClicks += clicks;
+        totImpr += impr; totClicks += clicks; totIc += ic; totAtc += atc; totAtcVal += atcVal;
 
         const { since: rSince, until: rUntil } = getActiveDateRange();
         const metaLookup = n => cafe24MetaByTerm[n] || cafe24MetaByTerm[n.toLowerCase()];
@@ -1937,6 +1944,9 @@ function renderCampaignTable(campaigns, insightsMap) {
                 <td class="text-end">${cpr}</td>
                 <td class="text-end">${roas}</td>
                 <td class="text-end" style="color:#16a34a;font-weight:${realRoas!=='–'?'600':'400'}">${realRoas}</td>
+                <td class="text-end">${cpic}</td>
+                <td class="text-end">${cpatc}</td>
+                <td class="text-end">${atcVal ? fCur(atcVal) : '–'}</td>
                 <td class="text-end">${ins.ctr ? parseFloat(ins.ctr).toFixed(2) + '%' : '–'}</td>
                 <td class="text-end">${ins.cpc ? fCur(parseFloat(ins.cpc)) : '–'}</td>
                 <td class="text-end">${ins.cpm ? fCur(parseFloat(ins.cpm)) : '–'}</td>
@@ -1960,6 +1970,9 @@ function renderCampaignTable(campaigns, insightsMap) {
                 <td class="text-end">${totResults ? fCur(totSpend / totResults) : '–'}</td>
                 <td class="text-end">${totRoas}</td>
                 <td></td>
+                <td class="text-end">${totIc  ? fCur(totSpend / totIc)  : '–'}</td>
+                <td class="text-end">${totAtc ? fCur(totSpend / totAtc) : '–'}</td>
+                <td class="text-end">${totAtcVal ? fCur(totAtcVal) : '–'}</td>
                 <td class="text-end">${totCtr}</td>
                 <td class="text-end">${totClicks ? fCur(totSpend / totClicks) : '–'}</td>
                 <td class="text-end">${totImpr ? fCur(totSpend / totImpr * 1000) : '–'}</td>

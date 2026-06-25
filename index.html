@@ -1294,29 +1294,32 @@ function sumTermRevenue(termData, since, until) {
 }
 
 function loadCafe24FromStorage() {
+    const acct = state.accountName || '써마드2';
+    cafe24MetaByDate = {};
+    cafe24MetaByTerm = {};
     try {
-        // 계정별 키로 저장된 데이터가 있으면 단일 키로 통합
-        for (const acct of ['써마드2', '아치핀2', '포디온']) {
-            const pd = localStorage.getItem(`cafe24Meta_${acct}_byDate`);
-            const pt = localStorage.getItem(`cafe24Meta_${acct}_byTerm`);
-            if (pd && pt) {
-                localStorage.setItem('cafe24MetaByDate', pd);
-                localStorage.setItem('cafe24MetaByTerm', pt);
-                localStorage.removeItem(`cafe24Meta_${acct}_byDate`);
-                localStorage.removeItem(`cafe24Meta_${acct}_byTerm`);
-                break;
+        let byDate = localStorage.getItem(`cafe24Meta_${acct}_byDate`);
+        let byTerm = localStorage.getItem(`cafe24Meta_${acct}_byTerm`);
+        // 써마드2: 기존 단일 키 데이터 자동 마이그레이션
+        if ((!byDate || !byTerm) && acct === '써마드2') {
+            const old = localStorage.getItem('cafe24MetaByDate');
+            const oldT = localStorage.getItem('cafe24MetaByTerm');
+            if (old && oldT) {
+                byDate = old; byTerm = oldT;
+                localStorage.setItem('cafe24Meta_써마드2_byDate', old);
+                localStorage.setItem('cafe24Meta_써마드2_byTerm', oldT);
             }
         }
-        const byDate = localStorage.getItem('cafe24MetaByDate');
-        const byTerm = localStorage.getItem('cafe24MetaByTerm');
-        if (!byDate || !byTerm) return;
+        const statusEl = document.getElementById('cafe24UploadStatus');
+        if (!byDate || !byTerm) { statusEl.style.display = 'none'; return; }
         cafe24MetaByDate = JSON.parse(byDate);
         cafe24MetaByTerm = JSON.parse(byTerm);
         const dateKeys = Object.keys(cafe24MetaByDate).sort();
         if (dateKeys.length > 0) {
-            const statusEl = document.getElementById('cafe24UploadStatus');
-            statusEl.textContent = `✓ ${dateKeys[0]}~${dateKeys[dateKeys.length-1]} (Meta 매출 로드됨)`;
+            statusEl.textContent = `✓ [${acct}] ${dateKeys[0]}~${dateKeys[dateKeys.length-1]} (Meta 매출 로드됨)`;
             statusEl.style.display = '';
+        } else {
+            statusEl.style.display = 'none';
         }
     } catch(e) {}
 }

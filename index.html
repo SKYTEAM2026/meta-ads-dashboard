@@ -2246,6 +2246,175 @@ async function loadAdsetTab(campaignId) {
     }
 }
 
+// ── 광고 세트 클릭 → 소재 인라인 확장 ──
+async function toggleAdsetCreatives(row) {
+    const adsetId   = row.dataset.adsetId;
+    const adsetName = row.dataset.adsetName;
+    const expandId  = `adset-creative-${adsetId}`;
+    const existing  = document.getElementById(expandId);
+
+    if (existing) {
+        existing.remove();
+        row.classList.remove('row-selected');
+        const icon = row.querySelector('.bi-chevron-up');
+        if (icon) icon.className = 'bi bi-chevron-down';
+        return;
+    }
+
+    // 다른 열린 행 닫기
+    document.querySelectorAll('.adset-creative-expanded').forEach(el => el.remove());
+    document.querySelectorAll('#adsetTableBody tr[data-adset-id]').forEach(tr => {
+        tr.classList.remove('row-selected');
+        const icon = tr.querySelector('.bi-chevron-up');
+        if (icon) icon.className = 'bi bi-chevron-down';
+    });
+
+    row.classList.add('row-selected');
+    const chevron = row.querySelector('.bi-chevron-down');
+    if (chevron) chevron.className = 'bi bi-chevron-up';
+
+    const loadingRow = document.createElement('tr');
+    loadingRow.id = expandId;
+    loadingRow.className = 'adset-creative-expanded';
+    loadingRow.innerHTML = `
+        <td colspan="3" class="ad-daily-cell" style="text-align:center;padding:24px!important;">
+            <div class="panel-spinner mx-auto mb-2"></div>
+            <div style="font-size:12px;color:var(--text-secondary);">소재 데이터 불러오는 중...</div>
+        </td>`;
+    row.after(loadingRow);
+
+    try {
+        const [insData, adsData] = await Promise.all([
+            api(`/${adsetId}/insights`, {
+                fields: 'ad_id,ad_name,impressions,clicks,spend,ctr,cpc,cpm,actions,action_values,purchase_roas',
+                ...getDateParams(),
+                level: 'ad',
+                limit: 200,
+            }),
+            api(`/${adsetId}/ads`, {
+                fields: 'id,name,status,creative{thumbnail_url}',
+                limit: 200,
+            }),
+        ]);
+
+        const expanded = document.getElementById(expandId);
+        if (!expanded) return;
+
+        const insights = insData.data || [];
+        const adsArr   = adsData.data || [];
+        const adMap = {};
+        adsArr.forEach(a => { adMap[a.id] = { status: a.status, thumb: a.creative?.thumbnail_url || null }; });
+
+        if (!insights.length) {
+            expanded.innerHTML = `<td colspan="3" class="ad-daily-cell"><div class="no-data" style="padding:16px 0;"><i class="bi bi-inbox"></i>해당 기간에 소재 데이터가 없습니다</div></td>`;
+            return;
+        }
+
+        const PTYPES   = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
+        const IC_TYPES = ['offsite_conversion.fb_pixel_initiate_checkout', 'initiate_checkout'];
+        const ATC_TYPES= ['offsite_conversion.fb_pixel_add_to_cart', 'add_to_cart'];
+        const sorted   = [...insights].sort((a, b) => parseFloat(b.spend||0) - parseFloat(a.spend||0));
+        const maxSpend = Math.max(...sorted.map(i => parseFloat(i.spend||0)), 1);
+        const _strip   = n => n.replace(/\s*\(.*?\)\s*$/, '').trim();
+        const _mLookup = n => cafe24MetaByTerm[n] || cafe24MetaByTerm[n.toLowerCase()] || cafe24MetaByTerm[_strip(n)] || cafe24MetaByTerm[_strip(n).toLowerCase()];
+        const { since: rSince, until: rUntil } = getActiveDateRange();
+
+        let totSpend=0, totConvVal=0, totResults=0, totIc=0, totAtc=0, totAtcVal=0;
+
+        const rows = sorted.map(ins => {
+            const spend   = parseFloat(ins.spend||0);
+            const convVal = findAction(ins.action_values, PTYPES);
+            const results = findAction(ins.actions, PTYPES);
+            const ic      = findAction(ins.actions, IC_TYPES);
+            const atc     = findAction(ins.actions, ATC_TYPES);
+            const atcVal  = findAction(ins.action_values, ATC_TYPES);
+            const roasItem= (ins.purchase_roas||[]).find(a => PTYPES.includes(a.action_type));
+            const roas    = roasItem ? (parseFloat(roasItem.value)*100).toFixed(1)+'%' : '–';
+            const cpr     = results>0 ? fCur(spend/results) : '–';
+            const ctr     = ins.ctr ? parseFloat(ins.ctr).toFixed(2)+'%' : '–';
+            const cpc     = ins.cpc ? fCur(parseFloat(ins.cpc)) : '–';
+            const cpm     = ins.cpm ? fCur(parseFloat(ins.cpm)) : '–';
+            const cpic    = ic>0 ? fCur(spend/ic) : '–';
+            const cpatc   = atc>0 ? fCur(spend/atc) : '–';
+            const ad      = adMap[ins.ad_id] || {};
+            const termData= ins.ad_name ? _mLookup(ins.ad_name) : null;
+            const termRev = sumTermRevenue(termData, rSince, rUntil);
+            const realRoas= spend>0 && termRev>0 ? (termRev/spend*100).toFixed(1)+'%' : '–';
+            const pct     = (spend/maxSpend*100).toFixed(1);
+            const thumb   = ad.thumb
+                ? `<img src="${ad.thumb}" class="creative-thumb" onerror="this.parentNode.innerHTML='<div class=creative-thumb-placeholder><i class=bi bi-image></i></div>'">`
+                : `<div class="creative-thumb-placeholder"><i class="bi bi-image"></i></div>`;
+            const statusStr = ad.status || '';
+            totSpend+=spend; totConvVal+=convVal; totResults+=results; totIc+=ic; totAtc+=atc; totAtcVal+=atcVal;
+            return `<tr data-ad-id="${ins.ad_id}" data-ad-name="${esc(ins.ad_name)}" style="cursor:pointer;" onclick="toggleAdDaily(this)">
+                <td style="padding:8px 12px;">${thumb}</td>
+                <td class="ad-name-cell">
+                    <div class="ad-name">${esc(ins.ad_name)} <i class="bi bi-chevron-down" style="font-size:10px;color:var(--text-secondary);margin-left:4px;"></i></div>
+                </td>
+                <td><span class="s-badge s-${statusStr.toLowerCase()}">${statusLabel(statusStr)||'–'}</span></td>
+                <td class="text-end"><div class="spend-bar-wrap"><span class="fw-semibold">${spend?fCur(spend):'–'}</span><div class="spend-bar"><div class="spend-bar-fill" style="width:${pct}%"></div></div></div></td>
+                <td class="text-end">${convVal?fCur(convVal):'–'}</td>
+                <td class="text-end">${results?fNum(results):'–'}</td>
+                <td class="text-end">${cpr}</td>
+                <td class="text-end">${roas}</td>
+                <td class="text-end" style="color:${realRoas!=='–'?'#16a34a':'inherit'};font-weight:${realRoas!=='–'?'600':'normal'};">${realRoas}</td>
+                <td class="text-end">${cpic}</td>
+                <td class="text-end">${cpatc}</td>
+                <td class="text-end">${atcVal?fCur(atcVal):'–'}</td>
+                <td class="text-end">${ctr}</td>
+                <td class="text-end">${cpc}</td>
+                <td class="text-end">${cpm}</td>
+            </tr>`;
+        }).join('');
+
+        const totRoas = totConvVal>0 ? (totConvVal/totSpend*100).toFixed(1)+'%' : '–';
+        const foot = `<tr class="total-row">
+            <td colspan="3">합계 (${sorted.length}개 소재)</td>
+            <td class="text-end">${fCur(totSpend)}</td>
+            <td class="text-end">${totConvVal?fCur(totConvVal):'–'}</td>
+            <td class="text-end">${totResults?fNum(totResults):'–'}</td>
+            <td class="text-end">${totResults?fCur(totSpend/totResults):'–'}</td>
+            <td class="text-end">${totRoas}</td>
+            <td class="text-end">–</td>
+            <td class="text-end">${totIc?fCur(totSpend/totIc):'–'}</td>
+            <td class="text-end">${totAtc?fCur(totSpend/totAtc):'–'}</td>
+            <td class="text-end">${totAtcVal?fCur(totAtcVal):'–'}</td>
+            <td class="text-end">–</td><td class="text-end">–</td><td class="text-end">–</td>
+        </tr>`;
+
+        expanded.innerHTML = `<td colspan="3" class="ad-daily-cell" style="padding:0!important;">
+            <div class="ad-daily-header" style="padding:10px 16px;">
+                <i class="bi bi-collection"></i> ${esc(adsetName)} · 소재별 성과
+                <span style="font-size:11px;font-weight:400;color:var(--text-secondary);margin-left:6px;">${periodLabel()}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0" id="adset-creative-table-${adsetId}">
+                    <thead><tr>
+                        <th style="width:64px;">썸네일</th>
+                        <th>소재명</th><th>상태</th>
+                        <th class="text-end">지출금액</th><th class="text-end">구매전환값</th>
+                        <th class="text-end">결과</th><th class="text-end">결과당비용</th>
+                        <th class="text-end">구매ROAS</th><th class="text-end" style="color:#16a34a;">실제ROAS</th>
+                        <th class="text-end">결제시작당비용</th><th class="text-end">장바구니당비용</th><th class="text-end">장바구니전환값</th>
+                        <th class="text-end">CTR</th><th class="text-end">CPC</th><th class="text-end">CPM</th>
+                    </tr></thead>
+                    <tbody id="adset-creative-body-${adsetId}">${rows}</tbody>
+                    <tfoot>${foot}</tfoot>
+                </table>
+            </div>
+        </td>`;
+
+        // 소재 클릭 → 일별 확장 바인딩
+        document.querySelectorAll(`#adset-creative-body-${adsetId} tr[data-ad-id]`).forEach(tr => {
+            tr.addEventListener('click', () => toggleAdDaily(tr));
+        });
+
+    } catch(e) {
+        const expanded = document.getElementById(expandId);
+        if (expanded) expanded.innerHTML = `<td colspan="3" class="ad-daily-cell"><div class="error-box" style="display:block;"><i class="bi bi-exclamation-triangle-fill me-2"></i>오류: ${e.message}</div></td>`;
+    }
+}
+
 // ── 소재별 성과 로드 ──
 async function loadCreativeTab(campaignId) {
     document.querySelectorAll('.ad-daily-expanded').forEach(el => el.remove());

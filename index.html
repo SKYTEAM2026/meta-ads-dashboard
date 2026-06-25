@@ -2410,8 +2410,8 @@ function renderAdDailyTable(daily, adName) {
         const ctr     = d.ctr ? parseFloat(d.ctr).toFixed(2) + '%' : (impr > 0 ? (clicks/impr*100).toFixed(2)+'%' : '–');
         const cpc     = d.cpc ? fCur(parseFloat(d.cpc)) : (clicks ? fCur(spend/clicks) : '–');
         const cpm     = d.cpm ? fCur(parseFloat(d.cpm)) : (impr ? fCur(spend/impr*1000) : '–');
-        const cafe24Rev = termData ? (termData[d.date_start] || sumTermRevenue(termData, d.date_start, d.date_start)) : 0;
-        const realRoas = hasCafe24 && spend > 0 && cafe24Rev > 0 ? (cafe24Rev / spend * 100).toFixed(1) + '%' : '–';
+        const cafe24Rev = sumTermRevenue(termData, d.date_start, d.date_start);
+        const realRoas  = spend > 0 && cafe24Rev > 0 ? (cafe24Rev / spend * 100).toFixed(1) + '%' : '–';
         totSpend += spend; totConvVal += convVal; totResults += results;
         totImpr += impr; totClicks += clicks; totCafe24Rev += cafe24Rev;
         return `
@@ -2422,7 +2422,7 @@ function renderAdDailyTable(daily, adName) {
                 <td class="text-end">${results ? fNum(results) : '–'}</td>
                 <td class="text-end">${cpr}</td>
                 <td class="text-end">${roas}</td>
-                ${hasCafe24 ? `<td class="text-end" style="color:${realRoas !== '–' ? '#16a34a' : 'inherit'};font-weight:${realRoas !== '–' ? '600' : 'normal'};">${realRoas}</td>` : ''}
+                <td class="text-end" style="color:${realRoas !== '–' ? '#16a34a' : 'inherit'};font-weight:${realRoas !== '–' ? '600' : 'normal'};">${realRoas}</td>
                 <td class="text-end">${ctr}</td>
                 <td class="text-end">${cpc}</td>
                 <td class="text-end">${cpm}</td>

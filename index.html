@@ -2280,9 +2280,14 @@ function renderCreativeTable(insights, adMap) {
         const thumb   = ad.thumb
             ? `<img src="${ad.thumb}" class="creative-thumb" onerror="this.parentNode.innerHTML='<div class=creative-thumb-placeholder><i class=bi bi-image></i></div>'">`
             : `<div class="creative-thumb-placeholder"><i class="bi bi-image"></i></div>`;
+        const ic      = findAction(ins.actions, IC_TYPES);
+        const atc     = findAction(ins.actions, ATC_TYPES);
+        const atcVal  = findAction(ins.action_values, ATC_TYPES);
+        const cpic    = ic  > 0 ? fCur(spend / ic)  : '–';
+        const cpatc   = atc > 0 ? fCur(spend / atc) : '–';
         const statusStr = ad.status || '';
         totSpend += spend; totConvVal += convVal; totResults += results;
-        totImpr += impr; totClicks += clicks;
+        totImpr += impr; totClicks += clicks; totIc += ic; totAtc += atc; totAtcVal += atcVal;
 
         return `
             <tr data-ad-id="${ins.ad_id}" data-ad-name="${esc(ins.ad_name)}">
@@ -2304,6 +2309,9 @@ function renderCreativeTable(insights, adMap) {
                 <td class="text-end">${cpr}</td>
                 <td class="text-end">${roas}</td>
                 <td class="text-end" style="color:${realRoas !== '–' ? '#16a34a' : 'inherit'};font-weight:${realRoas !== '–' ? '600' : 'normal'};">${realRoas}</td>
+                <td class="text-end">${cpic}</td>
+                <td class="text-end">${cpatc}</td>
+                <td class="text-end">${atcVal ? fCur(atcVal) : '–'}</td>
                 <td class="text-end">${ctr}</td>
                 <td class="text-end">${cpc}</td>
                 <td class="text-end">${cpm}</td>
@@ -2332,6 +2340,9 @@ function renderCreativeTable(insights, adMap) {
             <td class="text-end">${totResults ? fCur(totSpend/totResults) : '–'}</td>
             <td class="text-end">${totRoas}</td>
             <td class="text-end" style="color:${totRealRoas !== '–' ? '#16a34a' : 'inherit'};font-weight:${totRealRoas !== '–' ? '600' : 'normal'};">${totRealRoas}</td>
+            <td class="text-end">${totIc  ? fCur(totSpend/totIc)  : '–'}</td>
+            <td class="text-end">${totAtc ? fCur(totSpend/totAtc) : '–'}</td>
+            <td class="text-end">${totAtcVal ? fCur(totAtcVal) : '–'}</td>
             <td class="text-end">${totCtr}</td>
             <td class="text-end">${totClicks ? fCur(totSpend/totClicks) : '–'}</td>
             <td class="text-end">${totImpr ? fCur(totSpend/totImpr*1000) : '–'}</td>

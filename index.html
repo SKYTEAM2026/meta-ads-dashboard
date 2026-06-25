@@ -778,6 +778,30 @@
                     </div>
                 </div>
 
+                <!-- ── TAB: 광고 세트 ── -->
+                <div id="tabAdset" style="display:none;">
+                    <div id="adsetLoading" class="text-center py-5">
+                        <div class="panel-spinner mx-auto mb-2"></div>
+                        <div style="font-size:13px;color:var(--text-secondary);">광고 세트 불러오는 중...</div>
+                    </div>
+                    <div id="adsetContent" style="display:none;">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>광고 세트명</th>
+                                        <th>상태</th>
+                                        <th class="text-end">예산</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adsetTableBody"></tbody>
+                                <tfoot id="adsetTableFoot"></tfoot>
+                            </table>
+                        </div>
+                        <div id="adsetNoData" class="no-data" style="display:none;"><i class="bi bi-inbox"></i>광고 세트 데이터가 없습니다</div>
+                    </div>
+                </div>
+
             </div>
         </div>
 

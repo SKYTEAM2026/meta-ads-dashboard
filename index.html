@@ -2131,15 +2131,10 @@ function closeCampaignDaily() {
 // ── Tab switcher ──
 function switchTab(tab, skipLoad) {
     document.getElementById('tab-btn-daily').classList.toggle('active', tab === 'daily');
-    document.getElementById('tab-btn-creative').classList.toggle('active', tab === 'creative');
     document.getElementById('tab-btn-adset').classList.toggle('active', tab === 'adset');
-    document.getElementById('tabDaily').style.display    = tab === 'daily'    ? '' : 'none';
-    document.getElementById('tabCreative').style.display = tab === 'creative' ? '' : 'none';
-    document.getElementById('tabAdset').style.display    = tab === 'adset'    ? '' : 'none';
+    document.getElementById('tabDaily').style.display = tab === 'daily' ? '' : 'none';
+    document.getElementById('tabAdset').style.display = tab === 'adset' ? '' : 'none';
 
-    if (tab === 'creative' && !skipLoad && !creativeTabLoaded && currentCampaignId) {
-        loadCreativeTab(currentCampaignId);
-    }
     if (tab === 'adset' && !skipLoad && !adsetTabLoaded && currentCampaignId) {
         loadAdsetTab(currentCampaignId);
     }

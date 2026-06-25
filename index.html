@@ -1294,17 +1294,35 @@ function sumTermRevenue(termData, since, until) {
 }
 
 function loadCafe24FromStorage() {
+    const acct = state.accountName || '써마드2';
+    cafe24MetaByDate = {};
+    cafe24MetaByTerm = {};
     try {
-        const byDate = localStorage.getItem('cafe24MetaByDate');
-        const byTerm = localStorage.getItem('cafe24MetaByTerm');
-        if (!byDate || !byTerm) return;
+        let byDate = localStorage.getItem(`cafe24Meta_${acct}_byDate`);
+        let byTerm = localStorage.getItem(`cafe24Meta_${acct}_byTerm`);
+        // 써마드2: 기존 단일 키 데이터 자동 마이그레이션
+        if ((!byDate || !byTerm) && acct === '써마드2') {
+            const oldDate = localStorage.getItem('cafe24MetaByDate');
+            const oldTerm = localStorage.getItem('cafe24MetaByTerm');
+            if (oldDate && oldTerm) {
+                byDate = oldDate; byTerm = oldTerm;
+                localStorage.setItem('cafe24Meta_써마드2_byDate', oldDate);
+                localStorage.setItem('cafe24Meta_써마드2_byTerm', oldTerm);
+            }
+        }
+        if (!byDate || !byTerm) {
+            document.getElementById('cafe24UploadStatus').style.display = 'none';
+            return;
+        }
         cafe24MetaByDate = JSON.parse(byDate);
         cafe24MetaByTerm = JSON.parse(byTerm);
         const dateKeys = Object.keys(cafe24MetaByDate).sort();
+        const statusEl = document.getElementById('cafe24UploadStatus');
         if (dateKeys.length > 0) {
-            const statusEl = document.getElementById('cafe24UploadStatus');
-            statusEl.textContent = `✓ ${dateKeys[0]}~${dateKeys[dateKeys.length-1]} (Meta 매출 로드됨)`;
+            statusEl.textContent = `✓ [${acct}] ${dateKeys[0]}~${dateKeys[dateKeys.length-1]} (Meta 매출 로드됨)`;
             statusEl.style.display = '';
+        } else {
+            statusEl.style.display = 'none';
         }
     } catch(e) {}
 }

@@ -3653,7 +3653,8 @@ function applyTiktokFilters() {
 
     const campaignMap = {};
     for (const r of rows) {
-        if (!campaignMap[r.campaign]) campaignMap[r.campaign] = { name:r.campaign, cost:0, impr:0, clicks:0, purch:0, purchVal:0, ctrW:0, cpcW:0, cpmW:0, cprW:0, roasW:0, status:r.status||'' };
+        if (!campaignMap[r.campaign]) campaignMap[r.campaign] = { name:r.campaign, cost:0, impr:0, clicks:0, purch:0, purchVal:0, ctrW:0, cpcW:0, cpmW:0, cprW:0, roasW:0, budget:0, status:r.status||'' };
+        if (r.budget && !campaignMap[r.campaign].budget) campaignMap[r.campaign].budget = r.budget;
         const c = campaignMap[r.campaign];
         c.cost += r.cost; c.impr += r.impr; c.clicks += r.clicks;
         c.purch += r.purch; c.purchVal += r.purchVal;

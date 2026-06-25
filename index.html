@@ -2346,7 +2346,7 @@ async function toggleAdsetCreatives(row) {
                 : `<div class="creative-thumb-placeholder"><i class="bi bi-image"></i></div>`;
             const statusStr = ad.status || '';
             totSpend+=spend; totConvVal+=convVal; totResults+=results; totIc+=ic; totAtc+=atc; totAtcVal+=atcVal;
-            return `<tr data-ad-id="${ins.ad_id}" data-ad-name="${esc(ins.ad_name)}" style="cursor:pointer;" onclick="toggleAdDaily(this)">
+            return `<tr data-ad-id="${ins.ad_id}" data-ad-name="${esc(ins.ad_name)}" style="cursor:pointer;">
                 <td style="padding:8px 12px;">${thumb}</td>
                 <td class="ad-name-cell">
                     <div class="ad-name">${esc(ins.ad_name)} <i class="bi bi-chevron-down" style="font-size:10px;color:var(--text-secondary);margin-left:4px;"></i></div>

@@ -1951,7 +1951,8 @@ function renderCampaignTable(campaigns, insightsMap) {
 async function onAccountChange(id) {
     const sel = document.getElementById('adAccountSelect');
     const opt = sel.options[sel.selectedIndex];
-    state.accountId = id;
+    state.accountId   = id;
+    state.accountName = opt.text;
     state.currency = opt.dataset.currency || 'KRW';
     setBadge(opt.text);
     await loadAll();

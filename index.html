@@ -3703,6 +3703,7 @@ function parseTiktokCSV(text) {
     const iCpc      = findColIdx(headers, 'CPC(목적지)', 'CPC', 'Cost per click');
     const iCpm      = findColIdx(headers, 'CPM');
     const iStatus   = findColIdx(headers, '상태', '캠페인 상태', 'Campaign Status', 'Status');
+    const iBudget   = findColIdx(headers, '캠페인 예산', 'Campaign budget', 'Budget', '예산');
     if (iName === -1 || iCost === -1) return null;
     const campaignMap = {};
     const rawRows = [];

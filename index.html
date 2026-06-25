@@ -2248,8 +2248,10 @@ function renderCreativeTable(insights, adMap) {
     document.getElementById('creativeTable').style.display  = '';
 
     const PTYPES   = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
+    const IC_TYPES = ['offsite_conversion.fb_pixel_initiate_checkout', 'initiate_checkout'];
+    const ATC_TYPES= ['offsite_conversion.fb_pixel_add_to_cart', 'add_to_cart'];
     const maxSpend = Math.max(...insights.map(i => parseFloat(i.spend || 0)), 1);
-    let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0;
+    let totSpend = 0, totConvVal = 0, totResults = 0, totImpr = 0, totClicks = 0, totIc = 0, totAtc = 0, totAtcVal = 0;
 
     // 지출 내림차순 정렬
     const sorted = [...insights].sort((a, b) => parseFloat(b.spend || 0) - parseFloat(a.spend || 0));

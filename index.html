@@ -3955,7 +3955,7 @@ function parseGoogleCSV(text) {
     const iCost    = findColIdx(headers, '비용', 'Cost');
     const iImpr    = findColIdx(headers, '노출수', 'Impressions', 'Impr.');
     const iClicks  = findColIdx(headers, '클릭수', 'Clicks');
-    const iConv    = findColIdx(headers, '전환수', 'Conversions', 'Conv.');
+    const iConv    = findColIdx(headers, '전환수', 'Conversions', 'Conv.', '전환');
     const iConvVal = findColIdx(headers, '전환 가치', 'Conv. value', 'Conversion value', '전환가치');
     const iDate    = findColIdx(headers, '날짜', 'Date', '일');
     const iAdGroup = findColIdx(headers, '광고그룹', 'Ad group', 'Adgroup');

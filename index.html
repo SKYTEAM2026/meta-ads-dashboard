@@ -3742,7 +3742,7 @@ function parseTiktokCSV(text) {
         campaignMap[campaign].cpmW  += cpm * cost;
         campaignMap[campaign].cprW  += cprDirect * cost;
         campaignMap[campaign].roasW += roasDirect * cost;
-        rawRows.push({ date, campaign, adGroup, adName, cost, impr, clicks, purch, purchVal, cprDirect, roasDirect, ctr, cpc, cpm, status });
+        rawRows.push({ date, campaign, adGroup, adName, cost, impr, clicks, purch, purchVal, cprDirect, roasDirect, ctr, cpc, cpm, status, budget });
     }
     const campaigns = Object.values(campaignMap);
     if (campaigns.length === 0) return null;

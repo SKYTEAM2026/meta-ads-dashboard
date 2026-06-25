@@ -2035,6 +2035,7 @@ async function saveToken() {
 // ═══════════════════════════════════════
 let campaignDailyChartInst = null;
 let currentCampaignId = null;
+let currentCampaignName = null;
 let creativeTabLoaded   = false;
 
 async function showCampaignDaily(row) {
@@ -2044,7 +2045,8 @@ async function showCampaignDaily(row) {
         return; // 같은 캠페인 재클릭 시 무시
     }
 
-    currentCampaignId  = id;
+    currentCampaignId   = id;
+    currentCampaignName = name;
     creativeTabLoaded  = false;
 
     document.querySelectorAll('#campaignTbody tr').forEach(tr => {

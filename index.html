@@ -2372,7 +2372,7 @@ async function toggleAdsetCreatives(row) {
                 <td class="ad-name-cell">
                     <div class="ad-name">${esc(ins.ad_name)} <i class="bi bi-chevron-down" style="font-size:10px;color:var(--text-secondary);margin-left:4px;"></i></div>
                 </td>
-                <td><span class="s-badge s-${statusStr.toLowerCase()}">${statusLabel(statusStr)||'–'}</span></td>
+                <td>${statusStr ? `<span class="s-badge s-${statusStr.toLowerCase()} status-toggle" data-status="${statusStr}" title="${statusStr==='ACTIVE'?'클릭하여 끄기':'클릭하여 켜기'}" onclick="toggleEntityStatus(event, '${ins.ad_id}', this)">${statusLabel(statusStr)}</span>` : '–'}</td>
                 <td class="text-end"><div class="spend-bar-wrap"><span class="fw-semibold">${spend?fCur(spend):'–'}</span><div class="spend-bar"><div class="spend-bar-fill" style="width:${pct}%"></div></div></div></td>
                 <td class="text-end">${convVal?fCur(convVal):'–'}</td>
                 <td class="text-end">${results?fNum(results):'–'}</td>

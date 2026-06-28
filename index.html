@@ -1966,11 +1966,12 @@ function renderCampaignTable(campaigns, insightsMap) {
         const atcVal   = findAction(ins.action_values, ATC_TYPES);
         const cpic     = ic  > 0 ? fCur(spend / ic)  : '–';
         const cpatc    = atc > 0 ? fCur(spend / atc) : '–';
-        const budget   = c.daily_budget
-            ? `일 ${fCur(parseFloat(c.daily_budget))}`
-            : c.lifetime_budget
-            ? `총 ${fCur(parseFloat(c.lifetime_budget))}`
-            : '–';
+        const bType    = c.daily_budget ? 'daily' : c.lifetime_budget ? 'lifetime' : '';
+        const bVal     = c.daily_budget ? parseFloat(c.daily_budget) : c.lifetime_budget ? parseFloat(c.lifetime_budget) : 0;
+        const budget   = bType === 'daily' ? `일 ${fCur(bVal)}` : bType === 'lifetime' ? `총 ${fCur(bVal)}` : '';
+        const budgetCell = bType
+            ? `${budget} <button class="budget-edit-btn" data-budget="${bVal}" data-btype="${bType}" onclick="editBudget(event, '${c.id}', 'campaign')" title="예산 수정"><i class="bi bi-pencil-square"></i></button>`
+            : `<span style="color:var(--text-secondary);font-size:11px;">광고세트 예산</span>`;
 
         totSpend += spend; totConvVal += convVal; totResults += results;
         totImpr += impr; totClicks += clicks; totIc += ic; totAtc += atc; totAtcVal += atcVal;

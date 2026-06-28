@@ -1477,6 +1477,71 @@ async function api(path, params = {}) {
     return json;
 }
 
+// 쓰기 요청 (상태 변경·예산 수정) — 토큰에 ads_management 권한 필요
+async function apiPost(path, params = {}) {
+    const url = new URL(API_BASE + path);
+    const body = new URLSearchParams();
+    body.set('access_token', ACCESS_TOKEN);
+    Object.entries(params).forEach(([k, v]) => body.set(k, v));
+    const res = await fetch(url.toString(), { method: 'POST', body });
+    const json = await res.json();
+    if (json.error) throw new Error(`${json.error.message} (code ${json.error.code})`);
+    return json;
+}
+
+// ── 상태 토글 (광고/광고세트 공용) ──
+async function toggleEntityStatus(ev, id, btn) {
+    ev.stopPropagation();
+    const cur  = (btn.dataset.status || '').toUpperCase();
+    const next = /ACTIVE/.test(cur) ? 'PAUSED' : 'ACTIVE';
+    const verb = next === 'PAUSED' ? '끄기(일시중지)' : '켜기(활성화)';
+    if (!confirm(`이 항목을 ${verb} 하시겠습니까?`)) return;
+    const orig = btn.innerHTML;
+    btn.style.pointerEvents = 'none';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" style="width:10px;height:10px;"></span>';
+    try {
+        await apiPost(`/${id}`, { status: next });
+        btn.dataset.status = next;
+        btn.className = `s-badge s-${next.toLowerCase()} status-toggle`;
+        btn.title = next === 'ACTIVE' ? '클릭하여 끄기' : '클릭하여 켜기';
+        btn.innerHTML = statusLabel(next);
+    } catch(e) {
+        alert('상태 변경 실패: ' + e.message);
+        btn.innerHTML = orig;
+    } finally {
+        btn.style.pointerEvents = '';
+    }
+}
+
+// ── 예산 수정 (캠페인/광고세트 공용) ──
+async function editBudget(ev, id, reload) {
+    ev.stopPropagation();
+    const btn      = ev.currentTarget;
+    const curMinor = parseFloat(btn.dataset.budget || 0);
+    const type     = btn.dataset.btype; // 'daily' | 'lifetime' | ''
+    const isLife   = type === 'lifetime';
+    const label    = isLife ? '총 예산' : '일 예산';
+    const field    = isLife ? 'lifetime_budget' : 'daily_budget';
+    // KRW는 최소단위가 원이라 minor=원. (USD 등은 minor=센트지만 본 계정은 KRW)
+    const curWon   = curMinor ? Math.round(curMinor) : '';
+    const input = prompt(`${label}을 입력하세요 (원 단위 숫자):`, curWon);
+    if (input === null) return;
+    const won = parseInt(String(input).replace(/[^0-9]/g, ''), 10);
+    if (!won || won <= 0) { alert('유효한 금액을 입력하세요.'); return; }
+    try {
+        await apiPost(`/${id}`, { [field]: won });
+        alert(`${label}이 ${fCur(won)}(으)로 변경되었습니다.`);
+        if (reload === 'campaign') {
+            loadCampaigns();
+        } else if (reload === 'adset' && currentCampaignId) {
+            adsetTabLoaded = false;
+            loadAdsetTab(currentCampaignId);
+        }
+    } catch(e) {
+        alert('예산 변경 실패: ' + e.message);
+    }
+}
+
 // ═══════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════

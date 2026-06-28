@@ -173,6 +173,14 @@
         .s-paused   { background: #fff8e1; color: #e65100; }
         .s-archived { background: #f5f5f5; color: #616161; }
         .s-deleted  { background: #fce4ec; color: #c62828; }
+        .status-toggle { cursor: pointer; user-select: none; transition: filter .12s, box-shadow .12s; }
+        .status-toggle:hover { filter: brightness(0.94); box-shadow: 0 0 0 2px rgba(0,0,0,0.06); }
+        .budget-edit-btn {
+            border: none; background: transparent; cursor: pointer;
+            color: var(--text-secondary); padding: 1px 4px; margin-left: 4px;
+            border-radius: 5px; font-size: 12px; line-height: 1; vertical-align: middle;
+        }
+        .budget-edit-btn:hover { background: #eef2ff; color: #1877F2; }
 
         /* ── CHART ── */
         .chart-wrap { position: relative; height: 290px; }

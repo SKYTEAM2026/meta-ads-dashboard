@@ -2230,23 +2230,26 @@ async function loadAdsetTab(campaignId) {
             document.getElementById('adsetNoData').style.display = '';
             return;
         }
-        const statusBadge = s => {
-            const active = /active/i.test(s);
-            const paused = /paused/i.test(s);
-            return active ? '<span class="s-badge s-active">활성</span>'
-                 : paused ? '<span class="s-badge s-paused">일시중지</span>'
-                 : `<span class="s-badge">${s||'–'}</span>`;
+        const statusBadge = (s, id) => {
+            const st = (s || '').toUpperCase();
+            const cls = /ACTIVE/.test(st) ? 's-active' : /PAUSED/.test(st) ? 's-paused' : '';
+            const title = st === 'ACTIVE' ? '클릭하여 끄기' : '클릭하여 켜기';
+            return `<span class="s-badge ${cls} status-toggle" data-status="${st}" title="${title}" onclick="toggleEntityStatus(event, '${id}', this)">${statusLabel(st)}</span>`;
         };
         let totDaily = 0, totLife = 0;
         document.getElementById('adsetTableBody').innerHTML = adsets.map(a => {
             const daily = a.daily_budget ? parseFloat(a.daily_budget) : 0;
             const life  = a.lifetime_budget ? parseFloat(a.lifetime_budget) : 0;
             totDaily += daily; totLife += life;
-            const budgetStr = daily ? `일 ${fCur(daily)}` : life ? `총 ${fCur(life)}` : '–';
+            const bType = daily ? 'daily' : life ? 'lifetime' : '';
+            const bVal  = daily || life;
+            const budgetStr = bType
+                ? `${daily ? `일 ${fCur(daily)}` : `총 ${fCur(life)}`} <button class="budget-edit-btn" data-budget="${bVal}" data-btype="${bType}" onclick="editBudget(event, '${a.id}', 'adset')" title="예산 수정"><i class="bi bi-pencil-square"></i></button>`
+                : `<span style="color:var(--text-secondary);font-size:11px;">캠페인 예산(CBO)</span>`;
             return `<tr style="cursor:pointer;" data-adset-id="${esc(a.id)}" data-adset-name="${esc(a.name)}" onclick="toggleAdsetCreatives(this)">
                 <td><span class="campaign-name">${esc(a.name)}</span> <i class="bi bi-chevron-down" style="font-size:10px;color:var(--text-secondary);margin-left:4px;"></i></td>
-                <td>${statusBadge(a.status)}</td>
-                <td class="text-end fw-semibold">${budgetStr}</td>
+                <td>${statusBadge(a.status, a.id)}</td>
+                <td class="text-end fw-semibold" style="white-space:nowrap;">${budgetStr}</td>
             </tr>`;
         }).join('');
         const totBudget = totDaily ? `일 합계 ${fCur(totDaily)}` : totLife ? `총 합계 ${fCur(totLife)}` : '–';

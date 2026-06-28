@@ -1532,7 +1532,12 @@ async function editBudget(ev, id, reload) {
         await apiPost(`/${id}`, { [field]: won });
         alert(`${label}이 ${fCur(won)}(으)로 변경되었습니다.`);
         if (reload === 'campaign') {
-            loadCampaigns();
+            const c = (state.campaigns || []).find(x => x.id === id);
+            if (c) {
+                if (isLife) { c.lifetime_budget = won; c.daily_budget = null; }
+                else        { c.daily_budget = won; c.lifetime_budget = null; }
+            }
+            renderCampaignTable(state.campaigns, state.campaignInsights);
         } else if (reload === 'adset' && currentCampaignId) {
             adsetTabLoaded = false;
             loadAdsetTab(currentCampaignId);

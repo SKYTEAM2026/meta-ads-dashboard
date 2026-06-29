@@ -1122,7 +1122,7 @@ window.onerror = function(msg, src, line) {
 //  CONFIG
 // ═══════════════════════════════════════
 const TOKEN_KEY = 'meta_dashboard_token';
-const TOKEN_DEFAULT = 'REMOVED_LEAKED_TOKEN';
+const TOKEN_DEFAULT = '';  // 보안: 토큰 하드코딩 금지. 토큰은 우측 상단 'Access Token 변경' 모달에서 입력 (localStorage 저장)
 let ACCESS_TOKEN = localStorage.getItem(TOKEN_KEY) || TOKEN_DEFAULT;
 const API_BASE = 'https://graph.facebook.com/v21.0';
 

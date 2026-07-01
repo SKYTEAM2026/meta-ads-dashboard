@@ -3695,16 +3695,10 @@ function renderGoogleDailyChart(rows) {
 }
 
 function closeGoogleDetail() {
-    document.getElementById('googleDetailPanel').style.display = 'none';
+    document.querySelectorAll('.gg-campaign-expanded').forEach(el => el.remove());
     document.querySelectorAll('#googleTbody tr').forEach(tr => tr.classList.remove('row-selected'));
-    document.querySelectorAll('#ggCreativeTbody .csv-ad-daily-expanded').forEach(el => el.remove());
-}
-
-function switchGoogleTab(tab) {
-    document.getElementById('gg-tab-btn-daily').classList.toggle('active', tab === 'daily');
-    document.getElementById('gg-tab-btn-creative').classList.toggle('active', tab === 'creative');
-    document.getElementById('ggTabDaily').style.display = tab === 'daily' ? '' : 'none';
-    document.getElementById('ggTabCreative').style.display = tab === 'creative' ? '' : 'none';
+    document.querySelectorAll('#googleTbody .gg-chevron').forEach(ic => { ic.className = 'bi bi-chevron-down gg-chevron'; });
+    if (googleDailyChartInst) { googleDailyChartInst.destroy(); googleDailyChartInst = null; }
 }
 
 // ═══════════════════════════════════════

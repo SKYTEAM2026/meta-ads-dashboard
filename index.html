@@ -3775,8 +3775,7 @@ function switchPlatform(platform) {
     document.getElementById('errorBox').style.display     = 'none';
     document.getElementById('loadingBox').style.display   = (isMeta && !metaReady) ? '' : 'none';
     document.getElementById('dashboard').style.display    = (isMeta && metaReady) ? '' : 'none';
-    const panel = document.getElementById('campaignDailyPanel');
-    if (panel && !isMeta) panel.style.display = 'none';
+    if (!isMeta) closeCampaignDaily();
     if (platform !== 'tiktok') closeTiktokDetail();
     if (platform !== 'google') closeGoogleDetail();
     document.getElementById('tiktokDashboard').style.display = platform === 'tiktok' ? '' : 'none';

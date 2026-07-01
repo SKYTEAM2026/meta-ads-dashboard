@@ -2482,11 +2482,13 @@ function renderAdsetCreatives(adsetId) {
         document.querySelectorAll(`#adset-creative-body-${adsetId} tr[data-ad-id]`).forEach(tr => {
             tr.addEventListener('click', () => toggleAdDaily(tr));
         });
-
-    } catch(e) {
-        const expanded = document.getElementById(expandId);
-        if (expanded) expanded.innerHTML = `<td colspan="3" class="ad-daily-cell"><div class="error-box" style="display:block;"><i class="bi bi-exclamation-triangle-fill me-2"></i>오류: ${e.message}</div></td>`;
     }
+}
+
+// ── 소재별 성과 상태 필터 ──
+function onCreativeStatusFilter(adsetId, val) {
+    state.creativeStatusFilter = val;
+    renderAdsetCreatives(adsetId);
 }
 
 // ── 소재별 성과 로드 ──

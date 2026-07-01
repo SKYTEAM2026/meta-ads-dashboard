@@ -2276,6 +2276,9 @@ async function loadAdsetTab(campaignId) {
     }
 }
 
+// 광고세트별 소재 데이터 캐시 (상태 필터 재렌더용)
+const adsetCreativeCache = {};
+
 // ── 광고 세트 클릭 → 소재 인라인 확장 ──
 async function toggleAdsetCreatives(row) {
     const adsetId   = row.dataset.adsetId;

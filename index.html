@@ -3264,7 +3264,7 @@ function toggleCsvAdDaily(tr) {
     const expandRow = document.createElement('tr');
     expandRow.className = 'csv-ad-daily-expanded';
     expandRow.innerHTML = `
-        <td colspan="11" style="background:#f8faff;padding:16px 20px!important;border-top:2px solid ${color}33!important;border-bottom:2px solid ${color}33!important;">
+        <td colspan="12" style="background:#f8faff;padding:16px 20px!important;border-top:2px solid ${color}33!important;border-bottom:2px solid ${color}33!important;">
             <div style="font-size:13px;color:${color};font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
                 <i class="bi bi-calendar3"></i>${esc(adName)} · 일별 성과
             </div>
@@ -3277,6 +3277,7 @@ function toggleCsvAdDaily(tr) {
                         <th class="text-end">${convLabel} 수</th>
                         <th class="text-end">${convLabel}당 비용</th>
                         <th class="text-end">ROAS</th>
+                        <th class="text-end" style="color:#16a34a;" title="카페24 CSV 업로드 시 표시">실제 ROAS</th>
                         <th class="text-end">노출수</th>
                         <th class="text-end">클릭수</th>
                         <th class="text-end">CTR</th>
@@ -3291,6 +3292,7 @@ function toggleCsvAdDaily(tr) {
                         <td class="text-end">${tConv?fNum(tConv):'–'}</td>
                         <td class="text-end">${tConv?fCur(tCost/tConv):'–'}</td>
                         <td class="text-end">${totRoas}</td>
+                        <td class="text-end" style="color:${totRealRoas!=='–'?'#16a34a':'inherit'};font-weight:${totRealRoas!=='–'?'600':'normal'};">${totRealRoas}</td>
                         <td class="text-end">${fNum(tImpr)}</td>
                         <td class="text-end">${fNum(tClk)}</td>
                         <td class="text-end">${totCtr}</td>

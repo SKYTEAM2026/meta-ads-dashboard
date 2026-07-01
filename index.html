@@ -3093,7 +3093,7 @@ function renderCsvDailyTable(rows, tbodyId, tfootId, noDataId, cafe24) {
 
 let _csvDetailRows = {};
 
-function renderCsvCreativeTable(rows, tbodyId, tfootId, noDataId, barColor) {
+function renderCsvCreativeTable(rows, tbodyId, tfootId, noDataId, barColor, cafe24) {
     if (!rows || rows.length === 0) {
         document.getElementById(tbodyId).innerHTML = '';
         document.getElementById(tfootId).innerHTML = '';
@@ -3118,12 +3118,17 @@ function renderCsvCreativeTable(rows, tbodyId, tfootId, noDataId, barColor) {
     });
     const sorted = Object.values(map).sort((a,b) => b.cost - a.cost);
     const maxCost = Math.max(...sorted.map(c=>c.cost),1);
+    // 실제 ROAS: 행별=광고명 term, 기간=활성 날짜 범위
+    const cSince = cafe24 ? cafe24.since : '0000-01-01';
+    const cUntil = cafe24 ? cafe24.until : '9999-12-31';
     document.getElementById(tbodyId).innerHTML = sorted.map(c => {
         const ctr  = c.impr>0 ? (c.clicks/c.impr*100).toFixed(2)+'%' : (c.cost>0&&c.ctrW>0 ? (c.ctrW/c.cost).toFixed(2)+'%' : '–');
         const cpc  = c.clicks>0 ? fCur(c.cost/c.clicks) : (c.cost>0&&c.cpcW>0 ? fCur(c.cpcW/c.cost) : '–');
         const cpm  = c.impr>0 ? fCur(c.cost/c.impr*1000) : (c.cost>0&&c.cpmW>0 ? fCur(c.cpmW/c.cost) : '–');
         const cpr  = c.conv>0 ? fCur(c.cost/c.conv) : '–';
         const roas = c.cost>0&&c.convVal>0 ? (c.convVal/c.cost*100).toFixed(1)+'%' : '–';
+        const realRev  = cafe24 ? sumTermRevenue(cafe24.lookup(c.adName), cSince, cUntil) : 0;
+        const realRoas = c.cost>0 && realRev>0 ? (realRev/c.cost*100).toFixed(1)+'%' : '–';
         const clickAttr = hasDate
             ? `style="cursor:pointer;" data-ad-name="${esc(c.adName)}" data-ad-group="${esc(c.adGroup)}" data-tbody="${tbodyId}" data-color="${barColor}" onclick="toggleCsvAdDaily(this)"`
             : '';
@@ -3140,6 +3145,7 @@ function renderCsvCreativeTable(rows, tbodyId, tfootId, noDataId, barColor) {
             <td class="text-end">${c.conv?fNum(c.conv):'–'}</td>
             <td class="text-end">${cpr}</td>
             <td class="text-end">${roas}</td>
+            <td class="text-end" style="color:${realRoas!=='–'?'#16a34a':'inherit'};font-weight:${realRoas!=='–'?'600':'normal'};">${realRoas}</td>
             <td class="text-end">${c.impr?fNum(c.impr):'–'}</td>
             <td class="text-end">${c.clicks?fNum(c.clicks):'–'}</td>
             <td class="text-end">${ctr}</td>
@@ -3152,6 +3158,9 @@ function renderCsvCreativeTable(rows, tbodyId, tfootId, noDataId, barColor) {
     const tClk  = sorted.reduce((s,c)=>s+c.clicks,0);
     const tConv = sorted.reduce((s,c)=>s+c.conv,0);
     const tCVal = sorted.reduce((s,c)=>s+c.convVal,0);
+    // 합계 실제 ROAS: 캠페인명 term (기간 매출) / 총비용
+    const tRealRev  = cafe24 ? sumTermRevenue(cafe24.lookup(cafe24.campaignName), cSince, cUntil) : 0;
+    const tRealRoas = tCost>0 && tRealRev>0 ? (tRealRev/tCost*100).toFixed(1)+'%' : '–';
     document.getElementById(tfootId).innerHTML = `<tr class="total-row">
         <td>합계 (${sorted.length}개 소재)</td>
         <td class="text-end">${fCur(tCost)}</td>
@@ -3159,6 +3168,7 @@ function renderCsvCreativeTable(rows, tbodyId, tfootId, noDataId, barColor) {
         <td class="text-end">${tConv?fNum(tConv):'–'}</td>
         <td class="text-end">${tConv?fCur(tCost/tConv):'–'}</td>
         <td class="text-end">${tCost>0&&tCVal>0?(tCVal/tCost*100).toFixed(1)+'%':'–'}</td>
+        <td class="text-end" style="color:${tRealRoas!=='–'?'#16a34a':'inherit'};font-weight:${tRealRoas!=='–'?'600':'normal'};">${tRealRoas}</td>
         <td class="text-end">${fNum(tImpr)}</td>
         <td class="text-end">${fNum(tClk)}</td>
         <td class="text-end">${tImpr>0?(tClk/tImpr*100).toFixed(2)+'%':'–'}</td>

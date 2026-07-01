@@ -3535,6 +3535,9 @@ function toggleGoogleCampaignRow(row) {
 
     const rows = googleFilteredRawRows.filter(r => r.campaign === campaignName);
     const dateRows = rows.filter(r => r.date);
+    const ggCafe24 = { lookup: ggTermData, campaignName,
+        since: document.getElementById('ggDateFrom').value || '0000-01-01',
+        until: document.getElementById('ggDateTo').value || '9999-12-31' };
 
     const tr = document.createElement('tr');
     tr.className = 'gg-campaign-expanded';

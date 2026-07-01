@@ -4222,10 +4222,10 @@ function renderGoogleDashboard(data) {
         const realRoas = c.cost>0 && termRev>0 ? (termRev/c.cost*100).toFixed(1)+'%' : '–';
         const scGg = c.status === '활성' ? 's-active' : c.status === '일시중지' ? 's-paused' : '';
         return `
-        <tr ${canDrill ? `style="cursor:pointer;" data-campaign="${esc(c.name)}" onclick="showGoogleCampaignDetail(this.dataset.campaign)"` : ''}>
+        <tr ${canDrill ? `style="cursor:pointer;" data-campaign="${esc(c.name)}" onclick="toggleGoogleCampaignRow(this)"` : ''}>
             <td>
                 <div class="campaign-name">${esc(c.name)}</div>
-                ${canDrill ? '<div class="campaign-meta" style="color:var(--google-blue)"><i class="bi bi-chevron-down" style="font-size:10px;"></i> 클릭하여 상세보기</div>' : ''}
+                ${canDrill ? '<div class="campaign-meta" style="color:var(--google-blue)"><i class="bi bi-chevron-down gg-chevron" style="font-size:10px;"></i> 클릭하여 상세보기</div>' : ''}
             </td>
             <td>${c.status ? `<span class="s-badge ${scGg}">${esc(c.status)}</span>` : '–'}</td>
             <td style="font-size:12px;">${c.budget ? `일 ${fCur(c.budget)}` : '–'}</td>

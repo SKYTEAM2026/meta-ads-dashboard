@@ -2047,33 +2047,109 @@ let currentCampaignName = null;
 let creativeTabLoaded   = false;
 let adsetTabLoaded      = false;
 
-async function showCampaignDaily(row) {
+// ── 캠페인 목록 행 클릭 → 상세(일별 성과 + 광고 세트) 인라인 확장 ──
+async function toggleCampaignRow(row) {
     const id   = row.dataset.id;
     const name = row.dataset.name;
-    if (currentCampaignId === id && document.getElementById('campaignDailyPanel').style.display !== 'none') {
-        return; // 같은 캠페인 재클릭 시 무시
+    const expandId = `campaign-detail-${id}`;
+
+    // 이미 열려 있으면 닫기
+    if (document.getElementById(expandId)) {
+        closeCampaignDaily();
+        return;
     }
+
+    // 다른 열린 캠페인 닫기 + 상태 초기화
+    closeCampaignDaily();
 
     currentCampaignId   = id;
     currentCampaignName = name;
     creativeTabLoaded  = false;
     adsetTabLoaded     = false;
 
-    document.querySelectorAll('#campaignTbody tr').forEach(tr => {
-        tr.classList.toggle('row-selected', tr === row);
-    });
+    row.classList.add('row-selected');
+    const chevron = row.querySelector('.campaign-chevron');
+    if (chevron) chevron.className = 'bi bi-chevron-up campaign-chevron';
 
-    document.getElementById('dailyPanelTitle').textContent = name;
-    document.getElementById('dailyPanelMeta').textContent  = periodLabel();
-    switchTab('daily', /*skipLoad=*/true);
+    const tr = document.createElement('tr');
+    tr.id = expandId;
+    tr.className = 'campaign-expanded';
+    tr.innerHTML = `<td colspan="15" class="ad-daily-cell" style="padding:0!important;">
+        <div style="padding:16px 18px;">
+            <!-- 일별 성과 -->
+            <div class="ad-daily-header" style="padding:0 0 10px 0;">
+                <i class="bi bi-calendar3"></i> 일별 성과
+                <span id="dailyPanelMeta" style="font-size:11px;font-weight:400;color:var(--text-secondary);margin-left:6px;">${periodLabel()}</span>
+            </div>
+            <div id="dailyPanelLoading" class="text-center py-4">
+                <div class="panel-spinner mx-auto mb-2"></div>
+                <div style="font-size:13px;color:var(--text-secondary);">데이터 불러오는 중...</div>
+            </div>
+            <div id="dailyPanelContent" style="display:none;">
+                <div class="row g-2 mb-4" id="dailyKpiRow"></div>
+                <div class="chart-wrap mb-4"><canvas id="campaignDailyChart"></canvas></div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead><tr>
+                            <th>날짜</th>
+                            <th class="text-end">지출금액</th>
+                            <th class="text-end">구매전환값</th>
+                            <th class="text-end">결과</th>
+                            <th class="text-end">결과당 비용</th>
+                            <th class="text-end">구매 ROAS</th>
+                            <th class="text-end" style="color:#16a34a;" title="카페24 CSV 업로드 시 표시">실제 ROAS</th>
+                            <th class="text-end">결제시작당비용</th>
+                            <th class="text-end">장바구니당비용</th>
+                            <th class="text-end">장바구니전환값</th>
+                            <th class="text-end">CTR</th>
+                            <th class="text-end">CPC</th>
+                            <th class="text-end">CPM</th>
+                        </tr></thead>
+                        <tbody id="dailyTableBody"></tbody>
+                        <tfoot id="dailyTableFoot"></tfoot>
+                    </table>
+                </div>
+                <div id="dailyNoData" class="no-data" style="display:none;"><i class="bi bi-inbox"></i>해당 기간에 성과 데이터가 없습니다</div>
+            </div>
 
-    const panel = document.getElementById('campaignDailyPanel');
-    panel.style.display = '';
-    setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+            <!-- 광고 세트 -->
+            <div class="ad-daily-header" style="padding:16px 0 10px 0;margin-top:16px;border-top:1px solid var(--border);">
+                <i class="bi bi-collection"></i> 광고 세트
+            </div>
+            <div id="adsetLoading" class="text-center py-4">
+                <div class="panel-spinner mx-auto mb-2"></div>
+                <div style="font-size:13px;color:var(--text-secondary);">광고 세트 불러오는 중...</div>
+            </div>
+            <div id="adsetContent" style="display:none;">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead><tr>
+                            <th>광고 세트명</th>
+                            <th>상태</th>
+                            <th class="text-end">예산</th>
+                        </tr></thead>
+                        <tbody id="adsetTableBody"></tbody>
+                        <tfoot id="adsetTableFoot"></tfoot>
+                    </table>
+                </div>
+                <div id="adsetNoData" class="no-data" style="display:none;"><i class="bi bi-inbox"></i>광고 세트 데이터가 없습니다</div>
+            </div>
+        </div>
+    </td>`;
+    row.after(tr);
+
+    // 일별 성과 + 광고 세트 병렬 로드
+    loadCampaignDailyData(id);
+    loadAdsetTab(id);
+}
+
+// ── 일별 성과 데이터 로드 (인라인 확장 내부) ──
+async function loadCampaignDailyData(id) {
+    const loadingEl = document.getElementById('dailyPanelLoading');
+    const contentEl = document.getElementById('dailyPanelContent');
+    if (!loadingEl || !contentEl) return;
 
     if (campaignDailyChartInst) { campaignDailyChartInst.destroy(); campaignDailyChartInst = null; }
-    document.getElementById('dailyPanelLoading').style.display = '';
-    document.getElementById('dailyPanelContent').style.display = 'none';
 
     try {
         const data = await api(`/${id}/insights`, {
@@ -2083,49 +2159,37 @@ async function showCampaignDaily(row) {
         });
         const daily = (data.data || []).sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
 
-        document.getElementById('dailyPanelMeta').textContent = `${periodLabel()} · ${daily.length}일`;
-        document.getElementById('dailyPanelLoading').style.display = 'none';
+        const metaEl = document.getElementById('dailyPanelMeta');
+        if (metaEl) metaEl.textContent = `${periodLabel()} · ${daily.length}일`;
+        loadingEl.style.display = 'none';
 
         if (daily.length === 0) {
             document.getElementById('dailyKpiRow').innerHTML = '';
             document.getElementById('dailyTableBody').innerHTML = '';
             document.getElementById('dailyTableFoot').innerHTML = '';
             document.getElementById('dailyNoData').style.display = '';
-            document.getElementById('dailyPanelContent').style.display = '';
+            contentEl.style.display = '';
             return;
         }
         document.getElementById('dailyNoData').style.display = 'none';
         renderDailyKPI(daily);
         renderCampaignDailyChart(daily);
         renderDailyTable(daily);
-        document.getElementById('dailyPanelContent').style.display = '';
+        contentEl.style.display = '';
     } catch(e) {
-        document.getElementById('dailyPanelLoading').style.display = 'none';
-        document.getElementById('dailyPanelMeta').textContent = `오류: ${e.message}`;
+        loadingEl.innerHTML = `<div class="error-box" style="display:block;"><i class="bi bi-exclamation-triangle-fill me-2"></i>오류: ${e.message}</div>`;
     }
 }
 
 function closeCampaignDaily() {
-    const panel = document.getElementById('campaignDailyPanel');
-    if (panel) panel.style.display = 'none';
+    document.querySelectorAll('.campaign-expanded').forEach(el => el.remove());
     document.querySelectorAll('#campaignTbody tr').forEach(tr => tr.classList.remove('row-selected'));
+    document.querySelectorAll('#campaignTbody .campaign-chevron').forEach(ic => { ic.className = 'bi bi-chevron-down campaign-chevron'; });
     if (campaignDailyChartInst) { campaignDailyChartInst.destroy(); campaignDailyChartInst = null; }
     currentCampaignId   = null;
     currentCampaignName = null;
     creativeTabLoaded = false;
     adsetTabLoaded    = false;
-}
-
-// ── Tab switcher ──
-function switchTab(tab, skipLoad) {
-    document.getElementById('tab-btn-daily').classList.toggle('active', tab === 'daily');
-    document.getElementById('tab-btn-adset').classList.toggle('active', tab === 'adset');
-    document.getElementById('tabDaily').style.display = tab === 'daily' ? '' : 'none';
-    document.getElementById('tabAdset').style.display = tab === 'adset' ? '' : 'none';
-
-    if (tab === 'adset' && !skipLoad && !adsetTabLoaded && currentCampaignId) {
-        loadAdsetTab(currentCampaignId);
-    }
 }
 
 // ── 광고 세트 로드 ──

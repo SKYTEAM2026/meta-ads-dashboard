@@ -2335,11 +2335,58 @@ async function toggleAdsetCreatives(row) {
         const adMap = {};
         adsArr.forEach(a => { adMap[a.id] = { status: a.status, thumb: a.creative?.thumbnail_url || null }; });
 
-        if (!insights.length) {
-            expanded.innerHTML = `<td colspan="3" class="ad-daily-cell"><div class="no-data" style="padding:16px 0;"><i class="bi bi-inbox"></i>해당 기간에 소재 데이터가 없습니다</div></td>`;
-            return;
-        }
+        // 캐시에 저장 후 렌더 (상태 필터 변경 시 재요청 없이 재렌더)
+        adsetCreativeCache[adsetId] = { insights, adMap, adsetName };
+        renderAdsetCreatives(adsetId);
 
+    } catch(e) {
+        const expanded = document.getElementById(expandId);
+        if (expanded) expanded.innerHTML = `<td colspan="3" class="ad-daily-cell"><div class="error-box" style="display:block;"><i class="bi bi-exclamation-triangle-fill me-2"></i>오류: ${e.message}</div></td>`;
+    }
+}
+
+// ── 광고세트 소재 렌더 (상태 필터 적용) ──
+function renderAdsetCreatives(adsetId) {
+    const cache    = adsetCreativeCache[adsetId];
+    const expanded = document.getElementById(`adset-creative-${adsetId}`);
+    if (!cache || !expanded) return;
+
+    const { adMap, adsetName } = cache;
+    const allInsights = cache.insights || [];
+
+    if (!allInsights.length) {
+        expanded.innerHTML = `<td colspan="3" class="ad-daily-cell"><div class="no-data" style="padding:16px 0;"><i class="bi bi-inbox"></i>해당 기간에 소재 데이터가 없습니다</div></td>`;
+        return;
+    }
+
+    const sf = state.creativeStatusFilter || '';
+    const insights = sf ? allInsights.filter(ins => ((adMap[ins.ad_id] || {}).status || '') === sf) : allInsights;
+
+    const headerHtml = `
+        <div class="ad-daily-header" style="padding:10px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span><i class="bi bi-collection"></i> ${esc(adsetName)} · 소재별 성과
+                <span style="font-size:11px;font-weight:400;color:var(--text-secondary);margin-left:6px;">${periodLabel()}</span>
+            </span>
+            <span style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;">
+                <span class="filter-label" style="font-size:11px;">상태</span>
+                <select class="form-select form-select-sm" style="width:auto;font-size:12px;padding:2px 24px 2px 8px;" onchange="onCreativeStatusFilter('${adsetId}', this.value)">
+                    <option value=""         ${sf === ''         ? 'selected' : ''}>전체</option>
+                    <option value="ACTIVE"   ${sf === 'ACTIVE'   ? 'selected' : ''}>활성</option>
+                    <option value="PAUSED"   ${sf === 'PAUSED'   ? 'selected' : ''}>일시중지</option>
+                    <option value="ARCHIVED" ${sf === 'ARCHIVED' ? 'selected' : ''}>보관됨</option>
+                </select>
+            </span>
+        </div>`;
+
+    if (!insights.length) {
+        expanded.innerHTML = `<td colspan="3" class="ad-daily-cell" style="padding:0!important;">
+            ${headerHtml}
+            <div class="no-data" style="padding:20px 0;"><i class="bi bi-inbox"></i>해당 상태의 소재가 없습니다</div>
+        </td>`;
+        return;
+    }
+
+    {
         const PTYPES   = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
         const IC_TYPES = ['offsite_conversion.fb_pixel_initiate_checkout', 'initiate_checkout'];
         const ATC_TYPES= ['offsite_conversion.fb_pixel_add_to_cart', 'add_to_cart'];

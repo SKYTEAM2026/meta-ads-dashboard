@@ -853,75 +853,7 @@
             </div>
         </div>
 
-        <!-- Google Campaign Detail Panel -->
-        <div id="googleDetailPanel" class="card mb-4" style="display:none;">
-            <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--google-blue);margin-bottom:4px;">
-                            <i class="bi bi-google me-1"></i>Google 캠페인 성과 분석
-                        </div>
-                        <h6 class="section-title" id="googleDetailTitle" style="font-size:17px;"></h6>
-                        <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;" id="googleDetailMeta"></div>
-                    </div>
-                    <button onclick="closeGoogleDetail()" class="btn-outline-meta" style="padding:5px 14px;flex-shrink:0;border-color:var(--google-blue);color:var(--google-blue);">
-                        <i class="bi bi-x-lg"></i> 닫기
-                    </button>
-                </div>
-                <div class="panel-tabs mb-4">
-                    <button class="panel-tab active" id="gg-tab-btn-daily" onclick="switchGoogleTab('daily')">
-                        <i class="bi bi-calendar3 me-1"></i>일별 성과
-                    </button>
-                    <button class="panel-tab" id="gg-tab-btn-creative" onclick="switchGoogleTab('creative')">
-                        <i class="bi bi-images me-1"></i>소재별 성과
-                    </button>
-                </div>
-                <div id="ggTabDaily">
-                    <div class="row g-2 mb-4" id="ggDailyKpiRow"></div>
-                    <div class="chart-wrap mb-4" id="ggDailyChartWrap" style="display:none;">
-                        <canvas id="googleDailyChart"></canvas>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead><tr>
-                                <th>날짜</th><th class="text-end">비용</th><th class="text-end">전환 가치</th>
-                                <th class="text-end">전환수</th><th class="text-end">전환당 비용</th><th class="text-end">ROAS</th>
-                                <th class="text-end">노출수</th><th class="text-end">클릭수</th>
-                                <th class="text-end">CTR</th><th class="text-end">CPC</th><th class="text-end">CPM</th>
-                            </tr></thead>
-                            <tbody id="ggDailyTbody"></tbody>
-                            <tfoot id="ggDailyTfoot"></tfoot>
-                        </table>
-                    </div>
-                    <div id="ggDailyNoData" class="no-data" style="display:none;padding:24px 0;">
-                        <i class="bi bi-calendar-x"></i>날짜별 데이터가 없습니다<br>
-                        <span style="font-size:12px;">날짜(Date) 컬럼이 포함된 CSV를 업로드해 주세요</span>
-                    </div>
-                </div>
-                <div id="ggTabCreative" style="display:none;">
-                    <div class="row g-2 mb-4" id="ggCreativeKpiRow"></div>
-                    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
-                        <i class="bi bi-hand-index-thumb me-1"></i>소재 행을 클릭하면 해당 소재의 일별 성과를 확인할 수 있습니다
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead><tr>
-                                <th>광고명 / 광고그룹</th><th class="text-end" style="min-width:120px;">비용</th><th class="text-end">전환 가치</th>
-                                <th class="text-end">전환수</th><th class="text-end">전환당 비용</th><th class="text-end">ROAS</th>
-                                <th class="text-end">노출수</th><th class="text-end">클릭수</th>
-                                <th class="text-end">CTR</th><th class="text-end">CPC</th><th class="text-end">CPM</th>
-                            </tr></thead>
-                            <tbody id="ggCreativeTbody"></tbody>
-                            <tfoot id="ggCreativeTfoot"></tfoot>
-                        </table>
-                    </div>
-                    <div id="ggCreativeNoData" class="no-data" style="display:none;padding:24px 0;">
-                        <i class="bi bi-images"></i>소재별 데이터가 없습니다<br>
-                        <span style="font-size:12px;">광고명(Ad) 컬럼이 포함된 CSV를 업로드해 주세요</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Google 캠페인 상세(일별+소재별 성과)는 캠페인 목록 행 클릭 시 인라인으로 펼쳐짐 (toggleGoogleCampaignRow) -->
     </div>
 
 </div>

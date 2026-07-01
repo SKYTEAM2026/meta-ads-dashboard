@@ -2460,10 +2460,7 @@ function renderAdsetCreatives(adsetId) {
         </tr>`;
 
         expanded.innerHTML = `<td colspan="3" class="ad-daily-cell" style="padding:0!important;">
-            <div class="ad-daily-header" style="padding:10px 16px;">
-                <i class="bi bi-collection"></i> ${esc(adsetName)} · 소재별 성과
-                <span style="font-size:11px;font-weight:400;color:var(--text-secondary);margin-left:6px;">${periodLabel()}</span>
-            </div>
+            ${headerHtml}
             <div class="table-responsive">
                 <table class="table table-hover table-sm mb-0" id="adset-creative-table-${adsetId}">
                     <thead><tr>

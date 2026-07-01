@@ -3487,10 +3487,13 @@ function toggleTiktokCampaignRow(row) {
     row.after(tr);
 
     const rows = tiktokFilteredRawRows.filter(r => r.campaign === campaignName);
+    const ttCafe24 = { lookup: ttTermData, campaignName,
+        since: document.getElementById('ttDateFrom').value || '0000-01-01',
+        until: document.getElementById('ttDateTo').value || '9999-12-31' };
     renderTiktokDetailKpis(rows, 'ttDailyKpiRow', 'daily');
     renderTiktokDailyChart(rows);
     if (tiktokHasDate) {
-        renderCsvDailyTable(rows, 'ttDailyTbody', 'ttDailyTfoot', 'ttDailyNoData');
+        renderCsvDailyTable(rows, 'ttDailyTbody', 'ttDailyTfoot', 'ttDailyNoData', ttCafe24);
     } else {
         document.getElementById('ttDailyTbody').innerHTML = '';
         document.getElementById('ttDailyTfoot').innerHTML = '';
@@ -3499,7 +3502,7 @@ function toggleTiktokCampaignRow(row) {
 
     renderTiktokDetailKpis(rows, 'ttCreativeKpiRow', 'creative');
     if (tiktokHasAdName) {
-        renderCsvCreativeTable(rows, 'ttCreativeTbody', 'ttCreativeTfoot', 'ttCreativeNoData', '#FE2C55');
+        renderCsvCreativeTable(rows, 'ttCreativeTbody', 'ttCreativeTfoot', 'ttCreativeNoData', '#FE2C55', ttCafe24);
     } else {
         document.getElementById('ttCreativeTbody').innerHTML = '';
         document.getElementById('ttCreativeTfoot').innerHTML = '';

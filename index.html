@@ -3390,15 +3390,69 @@ function renderTiktokDailyChart(rows) {
     });
 }
 
-function showTiktokCampaignDetail(campaignName) {
-    document.querySelectorAll('#tiktokTbody tr').forEach(tr => {
-        tr.classList.toggle('row-selected', tr.dataset.campaign === campaignName);
-    });
-    document.getElementById('tiktokDetailTitle').textContent = campaignName;
-    document.getElementById('tiktokDetailPanel').style.display = '';
-    setTimeout(() => document.getElementById('tiktokDetailPanel').scrollIntoView({ behavior:'smooth', block:'start' }), 60);
-    const rows = tiktokFilteredRawRows.filter(r => r.campaign === campaignName);
+// ── TikTok 캠페인 목록 행 클릭 → 상세(일별+소재별 성과) 인라인 확장 ──
+function toggleTiktokCampaignRow(row) {
+    const campaignName = row.dataset.campaign;
+    const wasOpen = row.classList.contains('row-selected')
+        && row.nextElementSibling && row.nextElementSibling.classList.contains('tt-campaign-expanded');
 
+    closeTiktokDetail();
+    if (wasOpen) return;
+
+    row.classList.add('row-selected');
+    const chev = row.querySelector('.tt-chevron');
+    if (chev) chev.className = 'bi bi-chevron-up tt-chevron';
+
+    const tr = document.createElement('tr');
+    tr.className = 'tt-campaign-expanded';
+    tr.innerHTML = `<td colspan="13" class="ad-daily-cell" style="padding:0!important;">
+        <div style="padding:16px 18px;">
+            <!-- 일별 성과 -->
+            <div class="ad-daily-header" style="padding:0 0 10px 0;"><i class="bi bi-calendar3"></i> 일별 성과</div>
+            <div class="row g-2 mb-4" id="ttDailyKpiRow"></div>
+            <div class="chart-wrap mb-4" id="ttDailyChartWrap" style="display:none;"><canvas id="tiktokDailyChart"></canvas></div>
+            <div class="table-responsive mb-4">
+                <table class="table table-sm table-hover mb-0">
+                    <thead><tr>
+                        <th>날짜</th><th class="text-end">지출금액</th><th class="text-end">구매전환값</th>
+                        <th class="text-end">구매 수</th><th class="text-end">구매당 비용</th><th class="text-end">ROAS</th>
+                        <th class="text-end">노출수</th><th class="text-end">클릭수</th>
+                        <th class="text-end">CTR</th><th class="text-end">CPC</th><th class="text-end">CPM</th>
+                    </tr></thead>
+                    <tbody id="ttDailyTbody"></tbody><tfoot id="ttDailyTfoot"></tfoot>
+                </table>
+            </div>
+            <div id="ttDailyNoData" class="no-data" style="display:none;padding:24px 0;">
+                <i class="bi bi-calendar-x"></i>날짜별 데이터가 없습니다<br>
+                <span style="font-size:12px;">날짜(Date) 컬럼이 포함된 CSV를 업로드해 주세요</span>
+            </div>
+
+            <!-- 소재별 성과 -->
+            <div class="ad-daily-header" style="padding:16px 0 10px 0;margin-top:16px;border-top:1px solid var(--border);"><i class="bi bi-images"></i> 소재별 성과</div>
+            <div class="row g-2 mb-4" id="ttCreativeKpiRow"></div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
+                <i class="bi bi-hand-index-thumb me-1"></i>소재 행을 클릭하면 해당 소재의 일별 성과를 확인할 수 있습니다
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead><tr>
+                        <th>소재명 / 광고 그룹</th><th class="text-end" style="min-width:120px;">지출금액</th><th class="text-end">구매전환값</th>
+                        <th class="text-end">구매 수</th><th class="text-end">구매당 비용</th><th class="text-end">ROAS</th>
+                        <th class="text-end">노출수</th><th class="text-end">클릭수</th>
+                        <th class="text-end">CTR</th><th class="text-end">CPC</th><th class="text-end">CPM</th>
+                    </tr></thead>
+                    <tbody id="ttCreativeTbody"></tbody><tfoot id="ttCreativeTfoot"></tfoot>
+                </table>
+            </div>
+            <div id="ttCreativeNoData" class="no-data" style="display:none;padding:24px 0;">
+                <i class="bi bi-images"></i>소재별 데이터가 없습니다<br>
+                <span style="font-size:12px;">광고 이름(Ad name) 컬럼이 포함된 CSV를 업로드해 주세요</span>
+            </div>
+        </div>
+    </td>`;
+    row.after(tr);
+
+    const rows = tiktokFilteredRawRows.filter(r => r.campaign === campaignName);
     renderTiktokDetailKpis(rows, 'ttDailyKpiRow', 'daily');
     renderTiktokDailyChart(rows);
     if (tiktokHasDate) {
@@ -3417,20 +3471,13 @@ function showTiktokCampaignDetail(campaignName) {
         document.getElementById('ttCreativeTfoot').innerHTML = '';
         document.getElementById('ttCreativeNoData').style.display = '';
     }
-    switchTiktokTab('daily');
-}
-
-function switchTiktokTab(tab) {
-    document.getElementById('tt-tab-btn-daily').classList.toggle('active', tab === 'daily');
-    document.getElementById('tt-tab-btn-creative').classList.toggle('active', tab === 'creative');
-    document.getElementById('ttTabDaily').style.display = tab === 'daily' ? '' : 'none';
-    document.getElementById('ttTabCreative').style.display = tab === 'creative' ? '' : 'none';
 }
 
 function closeTiktokDetail() {
-    document.getElementById('tiktokDetailPanel').style.display = 'none';
+    document.querySelectorAll('.tt-campaign-expanded').forEach(el => el.remove());
     document.querySelectorAll('#tiktokTbody tr').forEach(tr => tr.classList.remove('row-selected'));
-    document.querySelectorAll('#ttCreativeTbody .csv-ad-daily-expanded').forEach(el => el.remove());
+    document.querySelectorAll('#tiktokTbody .tt-chevron').forEach(ic => { ic.className = 'bi bi-chevron-down tt-chevron'; });
+    if (tiktokDailyChartInst) { tiktokDailyChartInst.destroy(); tiktokDailyChartInst = null; }
 }
 
 // ═══════════════════════════════════════

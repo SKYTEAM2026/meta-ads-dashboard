@@ -3593,7 +3593,7 @@ function toggleGoogleCampaignRow(row) {
     renderGoogleDetailKpis(rows, 'ggDailyKpiRow', 'daily');
     renderGoogleDailyChart(rows);
     if (googleHasDate) {
-        renderCsvDailyTable(rows, 'ggDailyTbody', 'ggDailyTfoot', 'ggDailyNoData');
+        renderCsvDailyTable(rows, 'ggDailyTbody', 'ggDailyTfoot', 'ggDailyNoData', ggCafe24);
     } else {
         document.getElementById('ggDailyTbody').innerHTML = '';
         document.getElementById('ggDailyTfoot').innerHTML = '';

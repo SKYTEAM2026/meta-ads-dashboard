@@ -3004,7 +3004,22 @@ function setBadge(name) {
 // ═══════════════════════════════════════
 //  CSV DETAIL PANEL HELPERS (shared)
 // ═══════════════════════════════════════
-function renderCsvDailyTable(rows, tbodyId, tfootId, noDataId, convLabel) {
+// 플랫폼별 카페24 term 조회 (캠페인명/광고명 → 날짜별 매출 맵)
+function ttTermData(name) {
+    if (!name) return undefined;
+    const s = name.replace(/\s*\(.*?\)\s*$/, '').trim();
+    const a = TIKTOK_CAMPAIGN_ALIAS[name] || TIKTOK_CAMPAIGN_ALIAS[s];
+    return cafe24TiktokByTerm[name] || cafe24TiktokByTerm[s] || (a ? cafe24TiktokByTerm[a] : undefined)
+        || cafe24TiktokByTerm[name.toLowerCase()] || cafe24TiktokByTerm[s.toLowerCase()];
+}
+function ggTermData(name) {
+    if (!name) return undefined;
+    const s = name.replace(/\s*\(.*?\)\s*$/, '').trim();
+    return cafe24GoogleByTerm[name] || cafe24GoogleByTerm[s]
+        || cafe24GoogleByTerm[name.toLowerCase()] || cafe24GoogleByTerm[s.toLowerCase()];
+}
+
+function renderCsvDailyTable(rows, tbodyId, tfootId, noDataId, cafe24) {
     if (!rows || rows.length === 0) {
         document.getElementById(tbodyId).innerHTML = '';
         document.getElementById(tfootId).innerHTML = '';
@@ -3015,6 +3030,8 @@ function renderCsvDailyTable(rows, tbodyId, tfootId, noDataId, convLabel) {
     const usePurch = 'purch' in (rows[0] || {});
     const convKey = usePurch ? 'purch' : 'conv';
     const convValKey = usePurch ? 'purchVal' : 'convVal';
+    // 실제 ROAS용 카페24 매출 (캠페인명 term, 날짜별)
+    const termData = cafe24 ? cafe24.lookup(cafe24.campaignName) : null;
     // 날짜별 집계 (같은 날짜 여러 행 → 1행으로 합산)
     const dayMap = {};
     rows.forEach(r => {
@@ -3027,12 +3044,16 @@ function renderCsvDailyTable(rows, tbodyId, tfootId, noDataId, convLabel) {
         dayMap[dk].convVal += r[convValKey]|| 0;
     });
     const sorted = Object.values(dayMap).sort((a,b) => a.date.localeCompare(b.date));
+    let tRealRev = 0;
     document.getElementById(tbodyId).innerHTML = sorted.map(r => {
         const ctr  = r.impr  > 0 ? (r.clicks/r.impr*100).toFixed(2)+'%' : '–';
         const cpc  = r.clicks > 0 ? fCur(r.cost/r.clicks) : '–';
         const cpm  = r.impr  > 0 ? fCur(r.cost/r.impr*1000) : '–';
         const cpr  = r.conv  > 0 ? fCur(r.cost/r.conv) : '–';
         const roas = r.cost  > 0 && r.convVal > 0 ? (r.convVal/r.cost*100).toFixed(1)+'%' : '–';
+        const realRev  = termData ? sumTermRevenue(termData, r.date, r.date) : 0;
+        const realRoas = r.cost > 0 && realRev > 0 ? (realRev/r.cost*100).toFixed(1)+'%' : '–';
+        tRealRev += realRev;
         return `<tr>
             <td>${esc(r.date||'–')}</td>
             <td class="text-end">${fCur(r.cost)}</td>
@@ -3040,6 +3061,7 @@ function renderCsvDailyTable(rows, tbodyId, tfootId, noDataId, convLabel) {
             <td class="text-end">${r.conv?fNum(r.conv):'–'}</td>
             <td class="text-end">${cpr}</td>
             <td class="text-end">${roas}</td>
+            <td class="text-end" style="color:${realRoas!=='–'?'#16a34a':'inherit'};font-weight:${realRoas!=='–'?'600':'normal'};">${realRoas}</td>
             <td class="text-end">${r.impr?fNum(r.impr):'–'}</td>
             <td class="text-end">${r.clicks?fNum(r.clicks):'–'}</td>
             <td class="text-end">${ctr}</td>
@@ -3052,6 +3074,7 @@ function renderCsvDailyTable(rows, tbodyId, tfootId, noDataId, convLabel) {
     const tClk  = sorted.reduce((s,r)=>s+r.clicks,0);
     const tConv = sorted.reduce((s,r)=>s+r.conv,0);
     const tCVal = sorted.reduce((s,r)=>s+r.convVal,0);
+    const tRealRoas = tCost>0 && tRealRev>0 ? (tRealRev/tCost*100).toFixed(1)+'%' : '–';
     document.getElementById(tfootId).innerHTML = `<tr class="total-row">
         <td>합계 (${sorted.length}일)</td>
         <td class="text-end">${fCur(tCost)}</td>
@@ -3059,6 +3082,7 @@ function renderCsvDailyTable(rows, tbodyId, tfootId, noDataId, convLabel) {
         <td class="text-end">${tConv?fNum(tConv):'–'}</td>
         <td class="text-end">${tConv?fCur(tCost/tConv):'–'}</td>
         <td class="text-end">${tCost>0&&tCVal>0?(tCVal/tCost*100).toFixed(1)+'%':'–'}</td>
+        <td class="text-end" style="color:${tRealRoas!=='–'?'#16a34a':'inherit'};font-weight:${tRealRoas!=='–'?'600':'normal'};">${tRealRoas}</td>
         <td class="text-end">${fNum(tImpr)}</td>
         <td class="text-end">${fNum(tClk)}</td>
         <td class="text-end">${tImpr>0?(tClk/tImpr*100).toFixed(2)+'%':'–'}</td>

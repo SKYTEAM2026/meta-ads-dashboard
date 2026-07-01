@@ -1835,9 +1835,9 @@ function renderCampaignTableSkeleton(campaigns) {
             ? `총 ${fCur(parseFloat(c.lifetime_budget))}`
             : '–';
         return `
-        <tr data-id="${c.id}" data-name="${esc(c.name)}" onclick="showCampaignDaily(this)">
+        <tr style="cursor:pointer;" data-id="${c.id}" data-name="${esc(c.name)}" onclick="toggleCampaignRow(this)">
             <td>
-                <div class="campaign-name">${esc(c.name)}</div>
+                <div class="campaign-name">${esc(c.name)} <i class="bi bi-chevron-down campaign-chevron" style="font-size:10px;color:var(--text-secondary);margin-left:4px;"></i></div>
                 <div class="campaign-meta">${c.id}</div>
             </td>
             <td><span class="s-badge s-${(c.status||'').toLowerCase()}">${statusLabel(c.status)}</span></td>

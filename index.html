@@ -3228,14 +3228,19 @@ function toggleCsvAdDaily(tr) {
     });
     const days = Object.values(dayMap).sort((a,b) => a.date.localeCompare(b.date));
 
-    let tCost=0, tImpr=0, tClk=0, tConv=0, tCVal=0;
+    // 실제 ROAS: 플랫폼별 광고명 term, 날짜별 매출
+    const adTermData = (tbodyId.startsWith('gg') ? ggTermData : ttTermData)(adName);
+
+    let tCost=0, tImpr=0, tClk=0, tConv=0, tCVal=0, tRealRev=0;
     const rowsHtml = days.map(d => {
         const ctr  = d.impr>0  ? (d.clicks/d.impr*100).toFixed(2)+'%' : '–';
         const cpc  = d.clicks>0 ? fCur(d.cost/d.clicks) : '–';
         const cpm  = d.impr>0  ? fCur(d.cost/d.impr*1000) : '–';
         const cpr  = d.conv>0  ? fCur(d.cost/d.conv) : '–';
         const roas = d.cost>0 && d.convVal>0 ? (d.convVal/d.cost*100).toFixed(1)+'%' : '–';
-        tCost+=d.cost; tImpr+=d.impr; tClk+=d.clicks; tConv+=d.conv; tCVal+=d.convVal;
+        const realRev  = adTermData ? sumTermRevenue(adTermData, d.date, d.date) : 0;
+        const realRoas = d.cost>0 && realRev>0 ? (realRev/d.cost*100).toFixed(1)+'%' : '–';
+        tCost+=d.cost; tImpr+=d.impr; tClk+=d.clicks; tConv+=d.conv; tCVal+=d.convVal; tRealRev+=realRev;
         return `<tr>
             <td style="white-space:nowrap;">${esc(d.date)}</td>
             <td class="text-end">${fCur(d.cost)}</td>
@@ -3243,6 +3248,7 @@ function toggleCsvAdDaily(tr) {
             <td class="text-end">${d.conv?fNum(d.conv):'–'}</td>
             <td class="text-end">${cpr}</td>
             <td class="text-end">${roas}</td>
+            <td class="text-end" style="color:${realRoas!=='–'?'#16a34a':'inherit'};font-weight:${realRoas!=='–'?'600':'normal'};">${realRoas}</td>
             <td class="text-end">${d.impr?fNum(d.impr):'–'}</td>
             <td class="text-end">${d.clicks?fNum(d.clicks):'–'}</td>
             <td class="text-end">${ctr}</td>
@@ -3253,6 +3259,7 @@ function toggleCsvAdDaily(tr) {
 
     const totCtr  = tImpr>0 ? (tClk/tImpr*100).toFixed(2)+'%' : '–';
     const totRoas = tCost>0&&tCVal>0 ? (tCVal/tCost*100).toFixed(1)+'%' : '–';
+    const totRealRoas = tCost>0&&tRealRev>0 ? (tRealRev/tCost*100).toFixed(1)+'%' : '–';
 
     const expandRow = document.createElement('tr');
     expandRow.className = 'csv-ad-daily-expanded';

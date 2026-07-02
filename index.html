@@ -793,6 +793,17 @@
 
     <!-- ── GOOGLE DASHBOARD ── -->
     <div id="googleDashboard" style="display:none;">
+        <!-- Account Selector -->
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="filter-label">브랜드</span>
+            <div class="tt-acct-tabs">
+                <button class="gg-acct-btn active" data-account="아치핀" onclick="switchGoogleAccount('아치핀')">아치핀</button>
+                <button class="gg-acct-btn" data-account="써마드" onclick="switchGoogleAccount('써마드')">써마드</button>
+                <button class="gg-acct-btn" data-account="포디온" onclick="switchGoogleAccount('포디온')">포디온</button>
+            </div>
+            <span id="googleAcctBadge" style="font-size:12px;color:var(--text-secondary);"></span>
+        </div>
+
         <div class="filter-bar mb-4" id="googleFilterBar" style="display:none;">
             <span class="filter-label">기간</span>
             <input type="date" id="ggDateFrom" class="form-control form-control-sm" style="width:auto;" oninput="onGoogleDateInput()">

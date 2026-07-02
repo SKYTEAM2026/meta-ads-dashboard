@@ -3670,7 +3670,7 @@ function toggleGoogleCampaignRow(row) {
 function renderGoogleCreative(campaignName) {
     let rows = googleFilteredRawRows.filter(r => r.campaign === campaignName);
     const sf = googleCreativeStatusFilter;
-    if (sf) rows = rows.filter(r => (r.status || '') === sf);
+    if (sf) rows = rows.filter(r => ((r.adStatus || r.status) || '') === sf);
     const ggCafe24 = { lookup: ggTermData, campaignName,
         since: document.getElementById('ggDateFrom').value || '0000-01-01',
         until: document.getElementById('ggDateTo').value || '9999-12-31' };

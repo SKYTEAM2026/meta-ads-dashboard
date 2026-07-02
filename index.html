@@ -4385,6 +4385,7 @@ function parseGoogleCSV(text) {
         });
     })();
     const iStatus  = findColIdx(headers, '캠페인 상태', '상태', 'Campaign status', 'Status');
+    const iAdStatus = findColIdx(headers, '광고 상태', 'Ad status');
     const iBudget  = findColIdx(headers, '예산', 'Budget', 'Daily budget');
     const iCtr     = findColIdx(headers, 'CTR', '클릭률');
     const iCpc     = findColIdx(headers, '평균 CPC', 'Avg. CPC', 'CPC');

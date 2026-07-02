@@ -4298,6 +4298,8 @@ function applyGoogleFilters() {
     if (statusVal && googleRawRows.some(r => r.status)) {
         rows = rows.filter(r => r.status === statusVal);
     }
+    const searchVal = (document.getElementById('ggCampaignSearch').value || '').trim().toLowerCase();
+    if (searchVal) rows = rows.filter(r => (r.campaign || '').toLowerCase().includes(searchVal));
     googleFilteredRawRows = rows;
     const campaignMap = {};
     for (const r of rows) {

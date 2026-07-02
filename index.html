@@ -3821,14 +3821,20 @@ function switchPlatform(platform) {
     }
     if (platform === 'google') {
         loadGoogleCafe24FromStorage();
-        if (!googleData) {
-            try {
-                const s = localStorage.getItem('googleCsvData');
-                if (s) loadGoogleData(JSON.parse(s));
-            } catch(_) {}
-        } else {
-            renderGoogleDashboard(googleData);
+        // 구버전 단일 googleCsvData → 아치핀 브랜드로 마이그레이션
+        const oldGg = localStorage.getItem('googleCsvData');
+        if (oldGg && !localStorage.getItem('googleCsvData_아치핀')) {
+            try { localStorage.setItem('googleCsvData_아치핀', oldGg); } catch(_) {}
         }
+        for (const acct of ['아치핀', '써마드', '포디온']) {
+            if (!googleStore[acct]) {
+                try {
+                    const s = localStorage.getItem(`googleCsvData_${acct}`);
+                    if (s) googleStore[acct] = JSON.parse(s);
+                } catch(_) {}
+            }
+        }
+        switchGoogleAccount(googleActiveAccount);
     }
 }
 

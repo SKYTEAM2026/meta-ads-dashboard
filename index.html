@@ -1875,6 +1875,11 @@ function onStatusFilter(val) {
     renderCampaignTable(state.campaigns, state.campaignInsights);
 }
 
+function onCampaignSearch(val) {
+    state.searchQuery = val;
+    renderCampaignTable(state.campaigns, state.campaignInsights);
+}
+
 async function refreshData() { await loadAll(); }
 
 // ═══════════════════════════════════════

@@ -3908,6 +3908,14 @@ function findColIdx(headers, ...names) {
     return -1;
 }
 
+// 구글/카페24 상태 문자열 정규화 (사용중→활성, 일시중지됨→일시중지 등)
+function normGgStatus(s) {
+    if (!s) return '';
+    if (/pause|일시\s*중지|사용\s*안함|중지됨|disable|inactive|removed|삭제/i.test(s)) return '일시중지';
+    if (/active|활성|게재\s*중|사용\s*중|사용\s*설정|운영\s*가능|enable|eligible/i.test(s)) return '활성';
+    return s;
+}
+
 // ═══════════════════════════════════════
 //  TIKTOK CSV
 // ═══════════════════════════════════════

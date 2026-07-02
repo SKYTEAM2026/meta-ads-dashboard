@@ -4479,8 +4479,10 @@ function renderGoogleDashboard(data) {
     const canDrill = googleRawRows.length > 0;
     const ggSince = document.getElementById('ggDateFrom').value || '0000-01-01';
     const ggUntil = document.getElementById('ggDateTo').value || '9999-12-31';
+    let totGgRevenue = 0;
     document.getElementById('googleTbody').innerHTML = sorted.map(c=>{
         const termRev  = sumTermRevenue(ggTermData(c.name), ggSince, ggUntil);
+        totGgRevenue += termRev;
         const realRoas = c.cost>0 && termRev>0 ? (termRev/c.cost*100).toFixed(1)+'%' : '–';
         const scGg = c.status === '활성' ? 's-active' : c.status === '일시중지' ? 's-paused' : '';
         return `

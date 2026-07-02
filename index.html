@@ -3661,6 +3661,19 @@ function toggleGoogleCampaignRow(row) {
         document.getElementById('ggDailyNoData').style.display = '';
     }
 
+    googleOpenCampaign = campaignName;
+    googleCreativeStatusFilter = '';
+    renderGoogleCreative(campaignName);
+}
+
+// ── Google 소재별 성과 렌더 (상태 필터 적용) ──
+function renderGoogleCreative(campaignName) {
+    let rows = googleFilteredRawRows.filter(r => r.campaign === campaignName);
+    const sf = googleCreativeStatusFilter;
+    if (sf) rows = rows.filter(r => (r.status || '') === sf);
+    const ggCafe24 = { lookup: ggTermData, campaignName,
+        since: document.getElementById('ggDateFrom').value || '0000-01-01',
+        until: document.getElementById('ggDateTo').value || '9999-12-31' };
     renderGoogleDetailKpis(rows, 'ggCreativeKpiRow', 'creative');
     if (googleHasAdName) {
         renderCsvCreativeTable(rows, 'ggCreativeTbody', 'ggCreativeTfoot', 'ggCreativeNoData', '#4285F4', ggCafe24);
@@ -3669,6 +3682,11 @@ function toggleGoogleCampaignRow(row) {
         document.getElementById('ggCreativeTfoot').innerHTML = '';
         document.getElementById('ggCreativeNoData').style.display = '';
     }
+}
+
+function onGoogleCreativeStatusFilter(val) {
+    googleCreativeStatusFilter = val;
+    if (googleOpenCampaign) renderGoogleCreative(googleOpenCampaign);
 }
 
 function renderGoogleDetailKpis(rows, kpiRowId, type) {

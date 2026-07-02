@@ -4508,7 +4508,6 @@ function renderGoogleDashboard(data) {
     }).join('');
     const totCtr  = totImpr>0 ? (totClicks/totImpr*100).toFixed(2)+'%' : '–';
     const totRoas = totCost>0&&totCVal>0 ? (totCVal/totCost*100).toFixed(1)+'%' : '–';
-    const totGgRevenue  = sumTermRevenue(cafe24GoogleByDate, ggSince, ggUntil);
     const totRealRoasGg = totCost>0 && totGgRevenue>0 ? (totGgRevenue/totCost*100).toFixed(1)+'%' : '–';
     document.getElementById('googleTfoot').innerHTML = `
         <tr class="total-row">

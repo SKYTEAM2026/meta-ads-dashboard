@@ -3617,7 +3617,17 @@ function toggleGoogleCampaignRow(row) {
             </div>
 
             <!-- 소재별 성과 -->
-            <div class="ad-daily-header" style="padding:16px 0 10px 0;margin-top:16px;border-top:1px solid var(--border);"><i class="bi bi-images"></i> 소재별 성과</div>
+            <div class="ad-daily-header" style="padding:16px 0 10px 0;margin-top:16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span><i class="bi bi-images"></i> 소재별 성과</span>
+                <span style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;">
+                    <span class="filter-label" style="font-size:11px;">상태</span>
+                    <select class="form-select form-select-sm" style="width:auto;font-size:12px;padding:2px 24px 2px 8px;" onchange="onGoogleCreativeStatusFilter(this.value)">
+                        <option value="">전체</option>
+                        <option value="활성">활성</option>
+                        <option value="일시중지">일시중지</option>
+                    </select>
+                </span>
+            </div>
             <div class="row g-2 mb-4" id="ggCreativeKpiRow"></div>
             <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
                 <i class="bi bi-hand-index-thumb me-1"></i>소재 행을 클릭하면 해당 소재의 일별 성과를 확인할 수 있습니다

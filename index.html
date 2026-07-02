@@ -1739,7 +1739,9 @@ function renderCampaignTableSkeleton(campaigns) {
 
 function renderCampaignTable(campaigns, insightsMap) {
     const sf = state.statusFilter;
-    const filtered = sf ? campaigns.filter(c => c.status === sf) : campaigns;
+    const sq = (state.searchQuery || '').trim().toLowerCase();
+    let filtered = sf ? campaigns.filter(c => c.status === sf) : campaigns;
+    if (sq) filtered = filtered.filter(c => (c.name || '').toLowerCase().includes(sq));
 
     const PTYPES   = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
     const IC_TYPES = ['offsite_conversion.fb_pixel_initiate_checkout', 'initiate_checkout'];

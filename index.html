@@ -3992,6 +3992,9 @@ function applyTiktokFilters() {
         });
     }
 
+    const searchVal = (document.getElementById('ttCampaignSearch').value || '').trim().toLowerCase();
+    if (searchVal) rows = rows.filter(r => (r.campaign || '').toLowerCase().includes(searchVal));
+
     tiktokFilteredRawRows = rows;
 
     const campaignMap = {};

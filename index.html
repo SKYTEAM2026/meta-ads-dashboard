@@ -4206,10 +4206,32 @@ function onGoogleCsvUpload(event) {
             return;
         }
         errEl.style.display = 'none';
-        try { localStorage.setItem('googleCsvData', JSON.stringify(result)); } catch(_) {}
+        googleStore[googleActiveAccount] = result;
+        try { localStorage.setItem(`googleCsvData_${googleActiveAccount}`, JSON.stringify(result)); } catch(_) {}
         loadGoogleData(result);
     };
     reader.readAsText(file, 'UTF-8');
+}
+
+function switchGoogleAccount(name) {
+    googleActiveAccount = name;
+    document.querySelectorAll('.gg-acct-btn').forEach(b => b.classList.toggle('active', b.dataset.account === name));
+    closeGoogleDetail();
+    const stored = googleStore[name];
+    if (stored) {
+        loadGoogleData(stored);
+    } else {
+        googleData = null;
+        googleRawRows = [];
+        googleFilteredRawRows = [];
+        googleHasDate = false;
+        googleHasAdName = false;
+        document.getElementById('googleFilterBar').style.display = 'none';
+        document.getElementById('googleUploadArea').style.display = '';
+        document.getElementById('googleUploadStatus').style.display = 'none';
+        document.getElementById('googleContent').style.display = 'none';
+        document.getElementById('googleAcctBadge').textContent = '';
+    }
 }
 
 function loadGoogleData(result) {

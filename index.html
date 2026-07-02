@@ -3818,6 +3818,7 @@ function closeGoogleDetail() {
     document.querySelectorAll('#googleTbody tr').forEach(tr => tr.classList.remove('row-selected'));
     document.querySelectorAll('#googleTbody .gg-chevron').forEach(ic => { ic.className = 'bi bi-chevron-down gg-chevron'; });
     if (googleDailyChartInst) { googleDailyChartInst.destroy(); googleDailyChartInst = null; }
+    googleOpenCampaign = null;
 }
 
 // ═══════════════════════════════════════

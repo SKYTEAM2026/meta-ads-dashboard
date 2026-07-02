@@ -4411,9 +4411,9 @@ function parseGoogleCSV(text) {
         const adGroup = iAdGroup !== -1 ? (cols[iAdGroup]?.trim() || '') : '';
         const adName  = iAdName !== -1 ? (cols[iAdName]?.trim() || '') : '';
         const rawSt   = iStatus !== -1 ? (cols[iStatus]?.trim() || '') : '';
-        const status  = /active|활성|게재.?중|enable/i.test(rawSt) ? '활성'
-                      : /pause|일시.?중지|disable|inactive/i.test(rawSt) ? '일시중지'
-                      : rawSt;
+        const rawAdSt = iAdStatus !== -1 ? (cols[iAdStatus]?.trim() || '') : '';
+        const status   = normGgStatus(rawSt);
+        const adStatus = iAdStatus !== -1 ? normGgStatus(rawAdSt) : status;
         const ctrDirect = iCtr !== -1 ? parseNum(cols[iCtr]) : 0;
         const cpcDirect = iCpc !== -1 ? parseNum(cols[iCpc]) : 0;
         const cpmDirect = iCpm !== -1 ? parseNum(cols[iCpm]) : 0;

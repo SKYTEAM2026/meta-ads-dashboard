@@ -4293,32 +4293,48 @@ let googleOpenCampaign = null;
 //  실시간 요약 (dusk-team-keys 프록시)
 // ═══════════════════════════════════════
 const LIVE_BASE = 'https://dusk-team-keys.vercel.app/api/';
-const LIVE_KEYS = {
+const LIVE_ACCT = {
     tiktok: {
-        '써마드': 'dtk_dHR8NzQ5NjgyNjUxMjg1MTY2NDkxMg.f69e7899b266c9d03ae54d8b03586d16',
-        '아치핀': 'dtk_dHR8NzU2OTE1MTE0MjY3NzE2ODE0Ng.73846a48092c1d6cd43f414d27679cf8',
+        '써마드': { key:'dtk_dHR8NzQ5NjgyNjUxMjg1MTY2NDkxMg.f69e7899b266c9d03ae54d8b03586d16', account:'7496826512851664912' },
+        '아치핀': { key:'dtk_dHR8NzU2OTE1MTE0MjY3NzE2ODE0Ng.73846a48092c1d6cd43f414d27679cf8', account:'7569151142677168146' },
     },
     google: {
-        '써마드': 'dgk_YXw1Nzc4MzkwNzYy.97a8b2f9b977348f5b4cba02a96907be',
-        '아치핀': 'dgk_YXw0OTg3ODcyMzAz.f55fe12344534ba669dd72ad8cb534f0',
-        '포디온': 'dgk_YXw1NDU3NTI0NzYw.256165ae752c537c36e9c2afef693c36',
+        '써마드': { key:'dgk_YXw1Nzc4MzkwNzYy.97a8b2f9b977348f5b4cba02a96907be', account:'5778390762' },
+        '아치핀': { key:'dgk_YXw0OTg3ODcyMzAz.f55fe12344534ba669dd72ad8cb534f0', account:'4987872303' },
+        '포디온': { key:'dgk_YXw1NDU3NTI0NzYw.256165ae752c537c36e9c2afef693c36', account:'5457524760' },
     },
 };
 const LIVE_RANGE_LABEL = { today:'오늘', yesterday:'어제', last_3d:'최근 3일', last_7d:'최근 7일', last_14d:'최근 14일', last_30d:'최근 30일' };
+// 제품 코드(캠페인명 2번째 구간) → 제품명
+const PRODUCT_NAMES = { th:'써마드', tw:'아큐스터', nb:'뉴베로', am:'아치핀 맥스', po:'포디온', ap:'아치핀' };
+function productCode(name) { const p = (name || '').split('_'); return p.length > 1 ? p[1].toLowerCase() : '기타'; }
 
-function liveKpiCards(row, accent) {
-    const roasPct = (row.roas != null ? row.roas : (row.spend>0 ? row.revenue/row.spend : 0)) * 100;
+// tiktok(spend/revenue/purchases) · google(cost/conv_value/conversions) 필드명 통일
+function normLiveMetrics(o) {
+    const spend = o.spend != null ? o.spend : (o.cost || 0);
+    const revenue = o.revenue != null ? o.revenue : (o.conv_value || 0);
+    const purchases = o.purchases != null ? o.purchases : (o.conversions || 0);
+    const impressions = o.impressions || 0, clicks = o.clicks || 0;
+    const roas = o.roas != null ? o.roas : (spend > 0 ? revenue / spend : 0);
+    const cpa = o.cpa != null ? o.cpa : (purchases > 0 ? spend / purchases : 0);
+    const cpc = o.cpc != null ? o.cpc : (clicks > 0 ? spend / clicks : 0);
+    const ctr = o.ctr != null ? o.ctr : (impressions > 0 ? clicks / impressions * 100 : 0);
+    const cvr = o.cvr != null ? o.cvr : (clicks > 0 ? purchases / clicks * 100 : 0);
+    return { spend, revenue, purchases, impressions, clicks, roas, cpa, cpc, ctr, cvr };
+}
+
+function liveKpiCards(t, accent) {
     const cards = [
-        { label:'지출',        value: fCur(row.spend||0),                    icon:'bi-cash-coin' },
-        { label:'매출',        value: fCur(row.revenue||0),                  icon:'bi-graph-up-arrow' },
-        { label:'ROAS',        value: roasPct ? roasPct.toFixed(1)+'%' : '–', icon:'bi-bullseye' },
-        { label:'구매',        value: fNum(row.purchases||0),                icon:'bi-bag-check' },
-        { label:'구매당 비용', value: row.cpa ? fCur(row.cpa) : '–',          icon:'bi-cash' },
-        { label:'노출수',      value: fNum(row.impressions||0),              icon:'bi-eye' },
-        { label:'클릭수',      value: fNum(row.clicks||0),                   icon:'bi-hand-index-thumb' },
-        { label:'CTR',         value: row.ctr!=null ? row.ctr+'%' : '–',      icon:'bi-cursor' },
-        { label:'CPC',         value: row.cpc ? fCur(row.cpc) : '–',          icon:'bi-coin' },
-        { label:'CVR',         value: row.cvr!=null ? row.cvr+'%' : '–',      icon:'bi-percent' },
+        { label:'지출',        value: fCur(t.spend||0),                          icon:'bi-cash-coin' },
+        { label:'매출',        value: t.revenue ? fCur(t.revenue) : '–',         icon:'bi-graph-up-arrow' },
+        { label:'ROAS',        value: t.roas ? (t.roas*100).toFixed(1)+'%' : '–', icon:'bi-bullseye' },
+        { label:'구매',        value: fNum(Math.round(t.purchases||0)),          icon:'bi-bag-check' },
+        { label:'구매당 비용', value: t.cpa ? fCur(t.cpa) : '–',                  icon:'bi-cash' },
+        { label:'노출수',      value: fNum(t.impressions||0),                    icon:'bi-eye' },
+        { label:'클릭수',      value: fNum(t.clicks||0),                         icon:'bi-hand-index-thumb' },
+        { label:'CTR',         value: t.ctr ? Number(t.ctr).toFixed(2)+'%' : '–', icon:'bi-cursor' },
+        { label:'CPC',         value: t.cpc ? fCur(t.cpc) : '–',                  icon:'bi-coin' },
+        { label:'CVR',         value: t.cvr ? Number(t.cvr).toFixed(2)+'%' : '–', icon:'bi-percent' },
     ];
     return cards.map(k => `
         <div class="col-xl-2 col-lg-3 col-md-4 col-6">
@@ -4329,32 +4345,71 @@ function liveKpiCards(row, accent) {
         </div>`).join('');
 }
 
-async function loadLiveSummary(platform, brand, range, kpiRowId, metaId, accent) {
-    const kpiEl = document.getElementById(kpiRowId), metaEl = document.getElementById(metaId);
+// 캠페인 배열을 제품 코드로 묶어 제품별 성과 테이블 생성
+function liveProductTable(campaigns, accent) {
+    if (!campaigns || !campaigns.length) return '';
+    const map = {};
+    campaigns.forEach(c => {
+        const code = productCode(c.name);
+        if (!map[code]) map[code] = { code, spend:0, revenue:0, purchases:0, impressions:0, clicks:0, n:0 };
+        const m = map[code], x = normLiveMetrics(c);
+        m.spend += x.spend; m.revenue += x.revenue; m.purchases += x.purchases;
+        m.impressions += x.impressions; m.clicks += x.clicks; m.n++;
+    });
+    const rows = Object.values(map).sort((a,b) => b.spend - a.spend);
+    const body = rows.map(m => {
+        const roas = m.spend>0 && m.revenue>0 ? (m.revenue/m.spend*100).toFixed(1)+'%' : '–';
+        const ctr  = m.impressions>0 ? (m.clicks/m.impressions*100).toFixed(2)+'%' : '–';
+        const cpc  = m.clicks>0 ? fCur(m.spend/m.clicks) : '–';
+        const cpa  = m.purchases>0 ? fCur(m.spend/m.purchases) : '–';
+        return `<tr>
+            <td><span class="campaign-name">${esc(PRODUCT_NAMES[m.code] || m.code)}</span> <span class="campaign-meta" style="display:inline;color:var(--text-secondary);">${m.code} · ${m.n}캠페인</span></td>
+            <td class="text-end fw-semibold">${fCur(m.spend)}</td>
+            <td class="text-end">${m.revenue?fCur(m.revenue):'–'}</td>
+            <td class="text-end" style="color:${accent};font-weight:600;">${roas}</td>
+            <td class="text-end">${m.purchases?fNum(Math.round(m.purchases)):'–'}</td>
+            <td class="text-end">${cpa}</td>
+            <td class="text-end">${m.impressions?fNum(m.impressions):'–'}</td>
+            <td class="text-end">${m.clicks?fNum(m.clicks):'–'}</td>
+            <td class="text-end">${ctr}</td>
+            <td class="text-end">${cpc}</td>
+        </tr>`;
+    }).join('');
+    return `<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin:16px 0 6px;"><i class="bi bi-box-seam me-1"></i>제품별 성과 (${rows.length}개 제품)</div>
+    <div class="table-responsive"><table class="table table-sm table-hover mb-0">
+        <thead><tr><th>제품</th><th class="text-end">지출</th><th class="text-end">매출</th><th class="text-end">ROAS</th><th class="text-end">구매</th><th class="text-end">구매당 비용</th><th class="text-end">노출수</th><th class="text-end">클릭수</th><th class="text-end">CTR</th><th class="text-end">CPC</th></tr></thead>
+        <tbody>${body}</tbody>
+    </table></div>`;
+}
+
+async function loadLiveSummary(platform, brand, range, kpiRowId, metaId, prodId, accent) {
+    const kpiEl = document.getElementById(kpiRowId), metaEl = document.getElementById(metaId), prodEl = document.getElementById(prodId);
     if (!kpiEl) return;
-    const key = (LIVE_KEYS[platform] || {})[brand];
-    if (!key) { kpiEl.innerHTML = ''; if (metaEl) metaEl.textContent = `${brand}: API 키 없음`; return; }
+    const cfg = (LIVE_ACCT[platform] || {})[brand];
+    const clear = () => { kpiEl.innerHTML = ''; if (prodEl) prodEl.innerHTML = ''; };
+    if (!cfg) { clear(); if (metaEl) metaEl.textContent = `${brand}: API 키 없음`; return; }
     if (metaEl) metaEl.textContent = '불러오는 중…';
     try {
-        const res = await fetch(`${LIVE_BASE}${platform}-daily?key=${encodeURIComponent(key)}&range=${encodeURIComponent(range)}`);
+        const res = await fetch(`${LIVE_BASE}${platform}-daily?key=${encodeURIComponent(cfg.key)}&range=${encodeURIComponent(range)}&account=${encodeURIComponent(cfg.account)}`);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
-        const row = (data.rows && data.rows[0]) || null;
-        if (!row) { kpiEl.innerHTML = ''; if (metaEl) metaEl.textContent = '데이터 없음'; return; }
-        kpiEl.innerHTML = liveKpiCards(row, accent);
+        const raw = data.totals || (data.rows && data.rows[0]);
+        if (!raw) { clear(); if (metaEl) metaEl.textContent = '데이터 없음'; return; }
+        kpiEl.innerHTML = liveKpiCards(normLiveMetrics(raw), accent);
+        if (prodEl) prodEl.innerHTML = liveProductTable(data.campaigns, accent);
         if (metaEl) metaEl.textContent = `${brand} · ${LIVE_RANGE_LABEL[range] || range} · ${new Date().toLocaleTimeString('ko-KR')} 조회`;
     } catch (e) {
-        kpiEl.innerHTML = ''; if (metaEl) metaEl.textContent = '조회 실패: ' + e.message;
+        clear(); if (metaEl) metaEl.textContent = '조회 실패: ' + e.message;
     }
 }
 
 function loadTiktokLive() {
     const rangeEl = document.getElementById('ttLiveRange');
-    loadLiveSummary('tiktok', tiktokActiveAccount, rangeEl ? rangeEl.value : 'last_7d', 'ttLiveKpiRow', 'ttLiveMeta', '#FE2C55');
+    loadLiveSummary('tiktok', tiktokActiveAccount, rangeEl ? rangeEl.value : 'last_7d', 'ttLiveKpiRow', 'ttLiveMeta', 'ttLiveProducts', '#FE2C55');
 }
 function loadGoogleLive() {
     const rangeEl = document.getElementById('ggLiveRange');
-    loadLiveSummary('google', googleActiveAccount, rangeEl ? rangeEl.value : 'last_7d', 'ggLiveKpiRow', 'ggLiveMeta', '#4285F4');
+    loadLiveSummary('google', googleActiveAccount, rangeEl ? rangeEl.value : 'last_7d', 'ggLiveKpiRow', 'ggLiveMeta', 'ggLiveProducts', '#4285F4');
 }
 let googleRawRows = [];
 let googleFilteredRawRows = [];

@@ -827,6 +827,29 @@
             <span id="googleAcctBadge" style="font-size:12px;color:var(--text-secondary);"></span>
         </div>
 
+        <!-- 실시간 요약 (API) -->
+        <div class="card mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <h6 class="section-title mb-0"><i class="bi bi-broadcast me-1" style="color:var(--google-blue);"></i>실시간 요약
+                        <span style="font-size:11px;font-weight:600;color:var(--google-blue);border:1px solid var(--google-blue);border-radius:6px;padding:1px 6px;margin-left:4px;">API</span></h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <select id="ggLiveRange" class="form-select form-select-sm" style="width:auto;" onchange="loadGoogleLive()">
+                            <option value="today">오늘</option>
+                            <option value="yesterday">어제</option>
+                            <option value="last_3d">최근 3일</option>
+                            <option value="last_7d" selected>최근 7일</option>
+                            <option value="last_14d">최근 14일</option>
+                            <option value="last_30d">최근 30일</option>
+                        </select>
+                        <button class="btn-outline-meta btn-sm" style="padding:4px 10px;border-color:var(--google-blue);color:var(--google-blue);" onclick="loadGoogleLive()" title="새로고침"><i class="bi bi-arrow-repeat"></i></button>
+                    </div>
+                </div>
+                <div id="ggLiveKpiRow" class="row g-3"></div>
+                <div id="ggLiveMeta" style="font-size:11px;color:var(--text-secondary);margin-top:8px;"></div>
+            </div>
+        </div>
+
         <div class="filter-bar mb-4" id="googleFilterBar" style="display:none;">
             <span class="filter-label">기간</span>
             <input type="date" id="ggDateFrom" class="form-control form-control-sm" style="width:auto;" oninput="onGoogleDateInput()">

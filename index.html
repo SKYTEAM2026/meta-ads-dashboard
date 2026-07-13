@@ -4287,6 +4287,74 @@ let googleActiveAccount = '아치핀';
 let googleStore = { '아치핀': null, '써마드': null, '포디온': null };
 let googleCreativeStatusFilter = '';
 let googleOpenCampaign = null;
+
+// ═══════════════════════════════════════
+//  실시간 요약 (dusk-team-keys 프록시)
+// ═══════════════════════════════════════
+const LIVE_BASE = 'https://dusk-team-keys.vercel.app/api/';
+const LIVE_KEYS = {
+    tiktok: {
+        '써마드': 'dtk_dHR8NzQ5NjgyNjUxMjg1MTY2NDkxMg.f69e7899b266c9d03ae54d8b03586d16',
+        '아치핀': 'dtk_dHR8NzU2OTE1MTE0MjY3NzE2ODE0Ng.73846a48092c1d6cd43f414d27679cf8',
+    },
+    google: {
+        '써마드': 'dgk_YXw1Nzc4MzkwNzYy.97a8b2f9b977348f5b4cba02a96907be',
+        '아치핀': 'dgk_YXw0OTg3ODcyMzAz.f55fe12344534ba669dd72ad8cb534f0',
+        '포디온': 'dgk_YXw1NDU3NTI0NzYw.256165ae752c537c36e9c2afef693c36',
+    },
+};
+const LIVE_RANGE_LABEL = { today:'오늘', yesterday:'어제', last_3d:'최근 3일', last_7d:'최근 7일', last_14d:'최근 14일', last_30d:'최근 30일' };
+
+function liveKpiCards(row, accent) {
+    const roasPct = (row.roas != null ? row.roas : (row.spend>0 ? row.revenue/row.spend : 0)) * 100;
+    const cards = [
+        { label:'지출',        value: fCur(row.spend||0),                    icon:'bi-cash-coin' },
+        { label:'매출',        value: fCur(row.revenue||0),                  icon:'bi-graph-up-arrow' },
+        { label:'ROAS',        value: roasPct ? roasPct.toFixed(1)+'%' : '–', icon:'bi-bullseye' },
+        { label:'구매',        value: fNum(row.purchases||0),                icon:'bi-bag-check' },
+        { label:'구매당 비용', value: row.cpa ? fCur(row.cpa) : '–',          icon:'bi-cash' },
+        { label:'노출수',      value: fNum(row.impressions||0),              icon:'bi-eye' },
+        { label:'클릭수',      value: fNum(row.clicks||0),                   icon:'bi-hand-index-thumb' },
+        { label:'CTR',         value: row.ctr!=null ? row.ctr+'%' : '–',      icon:'bi-cursor' },
+        { label:'CPC',         value: row.cpc ? fCur(row.cpc) : '–',          icon:'bi-coin' },
+        { label:'CVR',         value: row.cvr!=null ? row.cvr+'%' : '–',      icon:'bi-percent' },
+    ];
+    return cards.map(k => `
+        <div class="col-xl-2 col-lg-3 col-md-4 col-6">
+            <div class="daily-kpi-item">
+                <div class="daily-kpi-icon" style="background:${accent}1a;color:${accent};"><i class="bi ${k.icon}"></i></div>
+                <div><div class="daily-kpi-label">${k.label}</div><div class="daily-kpi-value">${k.value}</div></div>
+            </div>
+        </div>`).join('');
+}
+
+async function loadLiveSummary(platform, brand, range, kpiRowId, metaId, accent) {
+    const kpiEl = document.getElementById(kpiRowId), metaEl = document.getElementById(metaId);
+    if (!kpiEl) return;
+    const key = (LIVE_KEYS[platform] || {})[brand];
+    if (!key) { kpiEl.innerHTML = ''; if (metaEl) metaEl.textContent = `${brand}: API 키 없음`; return; }
+    if (metaEl) metaEl.textContent = '불러오는 중…';
+    try {
+        const res = await fetch(`${LIVE_BASE}${platform}-daily?key=${encodeURIComponent(key)}&range=${encodeURIComponent(range)}`);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const row = (data.rows && data.rows[0]) || null;
+        if (!row) { kpiEl.innerHTML = ''; if (metaEl) metaEl.textContent = '데이터 없음'; return; }
+        kpiEl.innerHTML = liveKpiCards(row, accent);
+        if (metaEl) metaEl.textContent = `${brand} · ${LIVE_RANGE_LABEL[range] || range} · ${new Date().toLocaleTimeString('ko-KR')} 조회`;
+    } catch (e) {
+        kpiEl.innerHTML = ''; if (metaEl) metaEl.textContent = '조회 실패: ' + e.message;
+    }
+}
+
+function loadTiktokLive() {
+    const rangeEl = document.getElementById('ttLiveRange');
+    loadLiveSummary('tiktok', tiktokActiveAccount, rangeEl ? rangeEl.value : 'last_7d', 'ttLiveKpiRow', 'ttLiveMeta', '#FE2C55');
+}
+function loadGoogleLive() {
+    const rangeEl = document.getElementById('ggLiveRange');
+    loadLiveSummary('google', googleActiveAccount, rangeEl ? rangeEl.value : 'last_7d', 'ggLiveKpiRow', 'ggLiveMeta', '#4285F4');
+}
 let googleRawRows = [];
 let googleFilteredRawRows = [];
 let googleHasDate = false;

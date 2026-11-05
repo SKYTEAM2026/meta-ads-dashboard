@@ -1,0 +1,154 @@
+{
+  "generated": "2026-11-05T11:45:37",
+  "period": {
+    "since": "2026-10-06",
+    "until": "2026-11-04"
+  },
+  "revenue_source": "cafe24 애널리틱스(광고유입 상세분석) 크롤",
+  "ad_factors": {
+    "AD_FACTOR": {
+      "meta": 1.0,
+      "google": 1.05,
+      "tiktok": 0.89,
+      "gfa": 1.0
+    },
+    "GFA_COEF": {
+      "tw": 1.0,
+      "am": 1.0,
+      "nb": 0.9090909090909091,
+      "th": 0.9090909090909091
+    }
+  },
+  "crawl_files": {
+    "archpin": {
+      "file": null,
+      "period": null,
+      "attributed": 0,
+      "unattributed": 0
+    },
+    "thermard": {
+      "file": null,
+      "period": null,
+      "attributed": 0,
+      "unattributed": 0
+    }
+  },
+  "products": {
+    "th": {
+      "name": "써마드",
+      "mall": "thermard",
+      "spend": {
+        "meta": 444085921,
+        "google": 411489368,
+        "tiktok": 165308547,
+        "gfa": 162723567
+      },
+      "revenue": {
+        "meta": 0,
+        "google": 0,
+        "tiktok": 0,
+        "gfa": 0
+      },
+      "real_roas": {
+        "meta": null,
+        "google": null,
+        "tiktok": null,
+        "gfa": null
+      },
+      "total": {
+        "spend": 1183607403,
+        "revenue": 0,
+        "roas": null
+      },
+      "creatives": {},
+      "revenue_ready": false
+    },
+    "nb": {
+      "name": "뉴베로",
+      "mall": "thermard",
+      "spend": {
+        "meta": 11162801,
+        "google": 0,
+        "tiktok": 0,
+        "gfa": 9365511
+      },
+      "revenue": {
+        "meta": 0,
+        "google": 0,
+        "tiktok": 0,
+        "gfa": 0
+      },
+      "real_roas": {
+        "meta": null,
+        "google": null,
+        "tiktok": null,
+        "gfa": null
+      },
+      "total": {
+        "spend": 20528312,
+        "revenue": 0,
+        "roas": null
+      },
+      "creatives": {},
+      "revenue_ready": false
+    },
+    "tw": {
+      "name": "아큐스터",
+      "mall": "archpin",
+      "spend": {
+        "meta": 214849328,
+        "google": 214823593,
+        "tiktok": 53772663,
+        "gfa": 113035040
+      },
+      "revenue": {
+        "meta": 0,
+        "google": 0,
+        "tiktok": 0,
+        "gfa": 0
+      },
+      "real_roas": {
+        "meta": null,
+        "google": null,
+        "tiktok": null,
+        "gfa": null
+      },
+      "total": {
+        "spend": 596480624,
+        "revenue": 0,
+        "roas": null
+      },
+      "creatives": {},
+      "revenue_ready": false
+    },
+    "am": {
+      "name": "아치핀 맥스",
+      "mall": "archpin",
+      "spend": {
+        "meta": 20838551,
+        "google": 6221334,
+        "tiktok": 0,
+        "gfa": 31304059
+      },
+      "revenue": {
+        "meta": 0,
+        "google": 0,
+        "tiktok": 0,
+        "gfa": 0
+      },
+      "real_roas": {
+        "meta": null,
+        "google": null,
+        "tiktok": null,
+        "gfa": null
+      },
+      "total": {
+        "spend": 58363944,
+        "revenue": 0,
+        "roas": null
+      },
+      "creatives": {},
+      "revenue_ready": false
+    }
+  }
+}

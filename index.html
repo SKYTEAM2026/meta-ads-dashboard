@@ -3982,24 +3982,39 @@ let REAL_ROAS = null;
 const REAL_CH = ['meta', 'google', 'tiktok', 'gfa'];
 const REAL_CH_KO = { meta: '메타', google: '구글', tiktok: '틱톡', gfa: 'GFA' };
 
+function applyRealPeriod() {
+    const pr = (REAL_ROAS && REAL_ROAS.period) || {};
+    const f = document.getElementById('realFrom'), t = document.getElementById('realTo');
+    if (!f.value) f.value = pr.since || '';
+    if (!t.value) t.value = pr.until || '';
+    f.min = t.min = pr.since || ''; f.max = t.max = pr.until || '';
+}
+
 async function loadRealRoas(force) {
     const L = document.getElementById('realLoading'), C = document.getElementById('realContent'), N = document.getElementById('realNoData');
-    if (REAL_ROAS && !force) { C.style.display = ''; L.style.display = 'none'; N.style.display = 'none'; renderRealRoas(); return; }
+    if (REAL_ROAS && !force) { C.style.display = ''; L.style.display = 'none'; N.style.display = 'none'; applyRealPeriod(); renderRealRoas(); return; }
     L.style.display = ''; C.style.display = 'none'; N.style.display = 'none';
     try {
-        const res = await fetch('./data/real_roas.json?cb=' + Date.now());
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        REAL_ROAS = await res.json();
-        const pr = REAL_ROAS.period || {};
-        const f = document.getElementById('realFrom'), t = document.getElementById('realTo');
-        if (!f.value || force) f.value = pr.since || '';
-        if (!t.value || force) t.value = pr.until || '';
-        f.min = t.min = pr.since || ''; f.max = t.max = pr.until || '';
+        let got = REAL_ROAS;
+        if (!got || force) {
+            got = null;
+            // 1) 로컬 평문(개발)
+            try { const r = await fetch('./data/real_roas.json?cb=' + Date.now()); if (r.ok) got = await r.json(); } catch (_) {}
+            // 2) 암호화본 + 비번(공개 배포)
+            if (!got) {
+                const pw = DATA_PW || sessionStorage.getItem('rr_pw');
+                const e = await fetch('./data/real_roas.enc?cb=' + Date.now());
+                if (e.ok && pw) got = JSON.parse(await decryptPayload(await e.json(), pw));
+            }
+            if (!got) throw new Error('no data');
+            REAL_ROAS = got;
+        }
+        applyRealPeriod();
         L.style.display = 'none'; C.style.display = '';
         renderRealRoas();
     } catch (e) {
         L.style.display = 'none'; N.style.display = '';
-        document.getElementById('realMeta').textContent = '불러오기 실패: ' + e.message;
+        document.getElementById('realMeta').textContent = '데이터를 불러올 수 없습니다 (암호화본 비번 불일치일 수 있음)';
     }
 }
 

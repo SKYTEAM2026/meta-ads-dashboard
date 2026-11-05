@@ -4924,20 +4924,36 @@ function renderGoogleDashboard(data) {
 document.getElementById('toggle-spend').style.background = 'var(--meta-blue)';
 document.getElementById('toggle-spend').style.color = '#fff';
 
-// ── PASSWORD ──
-const DASHBOARD_PW = 'sky240722@';
+// ── PASSWORD (복호화 기반 인증: 입력 비번으로 real_roas.enc 복호화 성공 = 인증) ──
+// 비번은 소스/깃에 없음. real_roas.enc(암호문)만 공개되고, 맞는 비번만 복호화 가능.
+const DASHBOARD_PW = 'sky240722@';   // 폴백: 암호화본(real_roas.enc)이 아직 없을 때만
+let DATA_PW = null;                  // 성공한 비번 — real_roas.enc 재복호화에 재사용
 
-function checkPassword() {
+function _b64buf(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+async function decryptPayload(p, password) {
+    const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt: _b64buf(p.salt), iterations: p.iter, hash: 'SHA-256' },
+        km, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: _b64buf(p.iv) }, key, _b64buf(p.ct));
+    return new TextDecoder().decode(pt);
+}
+
+async function checkPassword() {
     const input = document.getElementById('pwInput').value;
-    if (input === DASHBOARD_PW) {
-        sessionStorage.setItem('pw_ok', '1');
-        document.getElementById('passwordScreen').style.display = 'none';
-        init();
-    } else {
-        document.getElementById('pwError').style.display = 'block';
-        document.getElementById('pwInput').value = '';
-        document.getElementById('pwInput').focus();
+    const fail = () => { document.getElementById('pwError').style.display = 'block'; document.getElementById('pwInput').value = ''; document.getElementById('pwInput').focus(); };
+    let enc = null;
+    try { const r = await fetch('./data/real_roas.enc?cb=' + Date.now()); if (r.ok) enc = await r.json(); } catch (_) {}
+    if (enc) {
+        try { REAL_ROAS = JSON.parse(await decryptPayload(enc, input)); DATA_PW = input; }
+        catch (e) { return fail(); }                 // 복호화 실패 = 비번 틀림
+    } else if (input !== DASHBOARD_PW) {
+        return fail();                               // 암호화본 없을 때 폴백
     }
+    sessionStorage.setItem('pw_ok', '1');
+    try { sessionStorage.setItem('rr_pw', input); } catch (_) {}
+    document.getElementById('passwordScreen').style.display = 'none';
+    init();
 }
 
 // ── START ──

@@ -3976,6 +3976,156 @@ function switchPlatform(platform) {
 }
 
 // ═══════════════════════════════════════
+//  진짜 ROAS (data/real_roas.json)
+// ═══════════════════════════════════════
+let REAL_ROAS = null;
+const REAL_CH = ['meta', 'google', 'tiktok', 'gfa'];
+const REAL_CH_KO = { meta: '메타', google: '구글', tiktok: '틱톡', gfa: 'GFA' };
+
+async function loadRealRoas(force) {
+    const L = document.getElementById('realLoading'), C = document.getElementById('realContent'), N = document.getElementById('realNoData');
+    if (REAL_ROAS && !force) { C.style.display = ''; L.style.display = 'none'; N.style.display = 'none'; renderRealRoas(); return; }
+    L.style.display = ''; C.style.display = 'none'; N.style.display = 'none';
+    try {
+        const res = await fetch('./data/real_roas.json?cb=' + Date.now());
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        REAL_ROAS = await res.json();
+        const pr = REAL_ROAS.period || {};
+        const f = document.getElementById('realFrom'), t = document.getElementById('realTo');
+        if (!f.value || force) f.value = pr.since || '';
+        if (!t.value || force) t.value = pr.until || '';
+        f.min = t.min = pr.since || ''; f.max = t.max = pr.until || '';
+        L.style.display = 'none'; C.style.display = '';
+        renderRealRoas();
+    } catch (e) {
+        L.style.display = 'none'; N.style.display = '';
+        document.getElementById('realMeta').textContent = '불러오기 실패: ' + e.message;
+    }
+}
+
+function realAgg(p, from, to) {
+    const sp = {}, rv = {}; REAL_CH.forEach(c => { sp[c] = 0; rv[c] = 0; });
+    const daily = p.daily || {};
+    for (const ymd in daily) {
+        if (ymd < from || ymd > to) continue;
+        for (const ch of REAL_CH) { const c = daily[ymd][ch] || {}; sp[ch] += c.spend || 0; rv[ch] += c.revenue || 0; }
+    }
+    if (p.revenue_granularity !== 'daily') REAL_CH.forEach(c => rv[c] = (p.revenue_total || {})[c] || 0);
+    return { sp, rv };
+}
+
+function roasCell(rev, sp) {
+    if (!sp || sp <= 0 || !rev || rev <= 0) return '<span style="color:var(--text-secondary);">–</span>';
+    const r = rev / sp * 100;
+    const color = r >= 100 ? '#16a34a' : r >= 70 ? '#ca8a04' : '#dc2626';
+    return `<span style="color:${color};font-weight:700;">${r.toFixed(0)}%</span>`;
+}
+
+function renderRealRoas() {
+    if (!REAL_ROAS) return;
+    const from = document.getElementById('realFrom').value || REAL_ROAS.period.since;
+    const to   = document.getElementById('realTo').value   || REAL_ROAS.period.until;
+    const prods = REAL_ROAS.products || {};
+    let tS = 0, tR = 0, chTotS = {}, chTotR = {};
+    REAL_CH.forEach(c => { chTotS[c] = 0; chTotR[c] = 0; });
+
+    const rows = Object.entries(prods).map(([code, p]) => {
+        const { sp, rv } = realAgg(p, from, to);
+        const ps = REAL_CH.reduce((a, c) => a + sp[c], 0), pr = REAL_CH.reduce((a, c) => a + rv[c], 0);
+        tS += ps; tR += pr;
+        REAL_CH.forEach(c => { chTotS[c] += sp[c]; chTotR[c] += rv[c]; });
+        return `<tr style="cursor:pointer;" onclick="toggleRealProduct('${code}', this)">
+            <td><span class="campaign-name">${esc(p.name)} <i class="bi bi-chevron-down" style="font-size:10px;color:var(--text-secondary);"></i></span></td>
+            <td class="text-end">${fCur(ps)}</td>
+            <td class="text-end">${pr ? fCur(pr) : '–'}</td>
+            <td class="text-end">${roasCell(pr, ps)}</td>
+            ${REAL_CH.map(c => `<td class="text-end">${roasCell(rv[c], sp[c])}</td>`).join('')}
+        </tr>`;
+    }).join('');
+    document.getElementById('realTbody').innerHTML = rows;
+    document.getElementById('realTfoot').innerHTML = `<tr class="total-row">
+        <td>합계</td><td class="text-end">${fCur(tS)}</td><td class="text-end">${fCur(tR)}</td>
+        <td class="text-end">${roasCell(tR, tS)}</td>
+        ${REAL_CH.map(c => `<td class="text-end">${roasCell(chTotR[c], chTotS[c])}</td>`).join('')}
+    </tr>`;
+
+    // 전체 요약 카드
+    const kpis = [
+        { label: '총 광고비', value: fCur(tS), icon: 'bi-cash-coin', color: '#dc2626' },
+        { label: '실매출(cafe24)', value: fCur(tR), icon: 'bi-graph-up-arrow', color: '#16a34a' },
+        { label: '블렌디드 진짜 ROAS', value: tS > 0 && tR > 0 ? (tR / tS * 100).toFixed(1) + '%' : '–', icon: 'bi-gem', color: '#16a34a' },
+        { label: '최고효율 채널', value: (() => { let best = null, bv = -1; REAL_CH.forEach(c => { if (chTotS[c] > 0 && chTotR[c] > 0) { const r = chTotR[c] / chTotS[c]; if (r > bv) { bv = r; best = c; } } }); return best ? `${REAL_CH_KO[best]} ${(bv * 100).toFixed(0)}%` : '–'; })(), icon: 'bi-trophy', color: '#ca8a04' },
+    ];
+    document.getElementById('realKpiRow').innerHTML = kpis.map(k => `
+        <div class="col-xl-3 col-md-6"><div class="daily-kpi-item">
+            <div class="daily-kpi-icon" style="background:${k.color}1a;color:${k.color};"><i class="bi ${k.icon}"></i></div>
+            <div><div class="daily-kpi-label">${k.label}</div><div class="daily-kpi-value">${k.value}</div></div>
+        </div></div>`).join('');
+
+    const cr = REAL_ROAS.crawl || {};
+    const unattr = Object.values(cr).reduce((a, c) => a + (c.unattributed || 0), 0);
+    document.getElementById('realUnattr').innerHTML = `<i class="bi bi-info-circle me-1"></i>미귀인 매출(직접·자연유입 등, 유료채널 밖) 합계 ${fCur(unattr)} — 진짜 ROAS 분자에서 제외됨`;
+    const g = REAL_ROAS.generated || '';
+    document.getElementById('realMeta').textContent = `${from}~${to} · ${REAL_ROAS.revenue_source || ''} · 생성 ${g.replace('T', ' ').slice(0, 16)}`;
+}
+
+function _isoWeek(ymd) {
+    const d = new Date(ymd + 'T00:00:00'); const day = (d.getDay() + 6) % 7; d.setDate(d.getDate() - day);
+    return d.toISOString().slice(0, 10);  // 그 주 월요일
+}
+
+function toggleRealProduct(code, tr) {
+    const ex = document.getElementById('real-exp-' + code);
+    if (ex) { ex.remove(); const ic = tr.querySelector('.bi-chevron-up'); if (ic) ic.className = 'bi bi-chevron-down'; return; }
+    document.querySelectorAll('.real-expanded').forEach(e => e.remove());
+    document.querySelectorAll('#realTbody .bi-chevron-up').forEach(i => i.className = 'bi bi-chevron-down');
+    const chev = tr.querySelector('.bi-chevron-down'); if (chev) chev.className = 'bi bi-chevron-up';
+
+    const p = REAL_ROAS.products[code];
+    const from = document.getElementById('realFrom').value || REAL_ROAS.period.since;
+    const to   = document.getElementById('realTo').value   || REAL_ROAS.period.until;
+    const view = document.getElementById('realView').value;
+    const { sp, rv } = realAgg(p, from, to);
+
+    // 채널별 표
+    const chTable = `<div class="ad-daily-header" style="padding:10px 0 6px;"><i class="bi bi-broadcast"></i> 채널별</div>
+      <div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>채널</th><th class="text-end">광고비</th><th class="text-end">실매출</th><th class="text-end">진짜 ROAS</th></tr></thead><tbody>
+      ${REAL_CH.map(c => (sp[c] || rv[c]) ? `<tr><td>${REAL_CH_KO[c]}</td><td class="text-end">${fCur(sp[c])}</td><td class="text-end">${rv[c] ? fCur(rv[c]) : '–'}</td><td class="text-end">${roasCell(rv[c], sp[c])}</td></tr>` : '').join('')}
+      </tbody></table></div>`;
+
+    // 추이 (일별/주별) — 채널 합산
+    const daily = p.daily || {};
+    const buckets = {};
+    for (const ymd in daily) {
+        if (ymd < from || ymd > to) continue;
+        const key = view === 'weekly' ? _isoWeek(ymd) : ymd;
+        if (!buckets[key]) buckets[key] = { s: 0, r: 0 };
+        for (const c of REAL_CH) { buckets[key].s += daily[ymd][c].spend || 0; buckets[key].r += daily[ymd][c].revenue || 0; }
+    }
+    const bkeys = Object.keys(buckets).sort();
+    const trend = p.revenue_granularity === 'daily'
+        ? `<div class="ad-daily-header" style="padding:12px 0 6px;"><i class="bi bi-calendar3"></i> ${view === 'weekly' ? '주별' : '일별'} 추이</div>
+           <div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>${view === 'weekly' ? '주(월요일)' : '날짜'}</th><th class="text-end">광고비</th><th class="text-end">실매출</th><th class="text-end">진짜 ROAS</th></tr></thead><tbody>
+           ${bkeys.map(k => `<tr><td>${k}</td><td class="text-end">${fCur(buckets[k].s)}</td><td class="text-end">${buckets[k].r ? fCur(buckets[k].r) : '–'}</td><td class="text-end">${roasCell(buckets[k].r, buckets[k].s)}</td></tr>`).join('')}
+           </tbody></table></div>`
+        : `<div style="font-size:12px;color:var(--text-secondary);padding:10px 0;"><i class="bi bi-info-circle me-1"></i>이 제품은 매출 크롤이 기간합계라 일별/주별 추이가 없습니다</div>`;
+
+    // 소재별 TOP (전체 기간 기준)
+    const allCr = [];
+    for (const c in (p.creatives || {})) (p.creatives[c] || []).forEach(x => allCr.push({ ...x, ch: c }));
+    allCr.sort((a, b) => b.revenue - a.revenue);
+    const crTable = allCr.length ? `<div class="ad-daily-header" style="padding:12px 0 6px;"><i class="bi bi-images"></i> 소재별 실매출 TOP (전체기간) <span style="font-size:11px;font-weight:400;color:var(--text-secondary);">— 소재별 ROAS는 소재 광고비 연동 후(Phase 3)</span></div>
+      <div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>소재(term)</th><th>채널</th><th class="text-end">실매출</th><th class="text-end">주문</th></tr></thead><tbody>
+      ${allCr.slice(0, 15).map(x => `<tr><td style="font-size:12px;">${esc(x.term)}</td><td>${REAL_CH_KO[x.ch] || x.ch}</td><td class="text-end">${fCur(x.revenue)}</td><td class="text-end">${fNum(x.orders)}</td></tr>`).join('')}
+      </tbody></table></div>` : '';
+
+    const row = document.createElement('tr');
+    row.id = 'real-exp-' + code; row.className = 'real-expanded';
+    row.innerHTML = `<td colspan="8" class="ad-daily-cell" style="padding:12px 18px!important;background:#f8faf9;">${chTable}${trend}${crTable}</td>`;
+    tr.after(row);
+}
+
+// ═══════════════════════════════════════
 //  CSV HELPERS
 // ═══════════════════════════════════════
 function parseCSVRow(line) {

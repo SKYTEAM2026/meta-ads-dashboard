@@ -1,0 +1,4 @@
+# 민감 — 진짜 ROAS 평문(매출 포함). 공개 레포에 올리지 말 것.
+# 공개 배포는 암호화본(data/real_roas.enc 등)만. (Phase 4)
+data/real_roas.json
+data/real_roas_*.json

@@ -1314,35 +1314,13 @@ function toggleTiktokCampaignStatus(name) {
 }
 
 function loadTiktokCafe24FromStorage() {
-    try {
-        const byDate = localStorage.getItem('cafe24TiktokByDate');
-        const byTerm = localStorage.getItem('cafe24TiktokByTerm');
-        if (!byDate || !byTerm) return;
-        cafe24TiktokByDate = JSON.parse(byDate);
-        cafe24TiktokByTerm = JSON.parse(byTerm);
-        const dateKeys = Object.keys(cafe24TiktokByDate).sort();
-        if (dateKeys.length > 0) {
-            const statusEl = document.getElementById('ttCafe24UploadStatus');
-            statusEl.textContent = `✓ ${dateKeys[0]}~${dateKeys[dateKeys.length-1]} (TikTok 매출 로드됨)`;
-            statusEl.style.display = '';
-        }
-    } catch(_) {}
+    applyCrawlRevenue();
+    _setCrawlStatus('ttCafe24UploadStatus', 'TikTok');
 }
 
 function loadGoogleCafe24FromStorage() {
-    try {
-        const byDate = localStorage.getItem('cafe24GoogleByDate');
-        const byTerm = localStorage.getItem('cafe24GoogleByTerm');
-        if (!byDate || !byTerm) return;
-        cafe24GoogleByDate = JSON.parse(byDate);
-        cafe24GoogleByTerm = JSON.parse(byTerm);
-        const dateKeys = Object.keys(cafe24GoogleByDate).sort();
-        if (dateKeys.length > 0) {
-            const statusEl = document.getElementById('ggCafe24UploadStatus');
-            statusEl.textContent = `✓ ${dateKeys[0]}~${dateKeys[dateKeys.length-1]} (Google 매출 로드됨)`;
-            statusEl.style.display = '';
-        }
-    } catch(_) {}
+    applyCrawlRevenue();
+    _setCrawlStatus('ggCafe24UploadStatus', 'Google');
 }
 
 async function fetchCafe24Data() {

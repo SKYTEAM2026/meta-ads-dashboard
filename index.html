@@ -3916,8 +3916,6 @@ function switchPlatform(platform) {
     if (platform !== 'google') closeGoogleDetail();
     document.getElementById('tiktokDashboard').style.display = platform === 'tiktok' ? '' : 'none';
     document.getElementById('googleDashboard').style.display = platform === 'google' ? '' : 'none';
-    document.getElementById('realDashboard').style.display   = platform === 'real' ? '' : 'none';
-    if (platform === 'real') loadRealRoas();
     if (platform === 'tiktok') {
         loadTiktokCafe24FromStorage();
         loadTiktokManualStatus();

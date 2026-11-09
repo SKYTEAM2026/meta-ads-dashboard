@@ -4913,6 +4913,7 @@ async function checkPassword() {
     }
     sessionStorage.setItem('pw_ok', '1');
     try { sessionStorage.setItem('rr_pw', input); } catch (_) {}
+    applyCrawlRevenue();   // 실제 ROAS 열 데이터(소재/캠페인별 매출) 즉시 연동
     document.getElementById('passwordScreen').style.display = 'none';
     init();
 }

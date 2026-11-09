@@ -4930,6 +4930,15 @@ async function checkPassword() {
     } catch(_) {}
 })();
 
+// 수동 '카페24 실적 업로드' 폐지 → 저장돼 있던 옛 매출 데이터 초기화(크롤 자동연동으로 대체)
+(function resetManualCafe24() {
+    try {
+        Object.keys(localStorage)
+            .filter(k => /^cafe24(Meta|Tiktok|Google)/.test(k) || /^cafe24.*byTerm$/i.test(k) || /^cafe24.*byDate$/i.test(k))
+            .forEach(k => localStorage.removeItem(k));
+    } catch(_) {}
+})();
+
 (async function boot() {
     let enc = null;
     try { const r = await fetch('./data/real_roas.enc?cb=' + Date.now()); if (r.ok) enc = await r.json(); } catch (_) {}

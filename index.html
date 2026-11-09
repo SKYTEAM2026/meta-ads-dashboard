@@ -4968,13 +4968,26 @@ async function checkPassword() {
     } catch(_) {}
 })();
 
-if (sessionStorage.getItem('pw_ok') === '1') {
-    document.getElementById('passwordScreen').style.display = 'none';
-    init();
-} else {
-    showLoading(false);
-    document.getElementById('pwInput').focus();
-}
+(async function boot() {
+    let enc = null;
+    try { const r = await fetch('./data/real_roas.enc?cb=' + Date.now()); if (r.ok) enc = await r.json(); } catch (_) {}
+    if (sessionStorage.getItem('pw_ok') === '1') {
+        // 암호화본이 있으면 저장된 비번으로 재복호화 시도 — 실패하면(옛 세션/옛 비번) 비번창 다시 표시
+        if (enc) {
+            const sp = sessionStorage.getItem('rr_pw');
+            if (sp) { try { REAL_ROAS = JSON.parse(await decryptPayload(enc, sp)); DATA_PW = sp; } catch (_) { REAL_ROAS = null; } }
+            if (!REAL_ROAS) {
+                sessionStorage.removeItem('pw_ok'); sessionStorage.removeItem('rr_pw');
+                showLoading(false); document.getElementById('pwInput').focus(); return;
+            }
+        }
+        document.getElementById('passwordScreen').style.display = 'none';
+        init();
+    } else {
+        showLoading(false);
+        document.getElementById('pwInput').focus();
+    }
+})();
 </script>
 </body>
 </html>

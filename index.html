@@ -4281,22 +4281,7 @@ function switchTiktokAccount(name) {
     tiktokActiveAccount = name;
     document.querySelectorAll('.tt-acct-btn').forEach(b => b.classList.toggle('active', b.dataset.account === name));
     closeTiktokDetail();
-    const stored = tiktokStore[name];
-    if (stored) {
-        loadTiktokAccountData(stored);
-    } else {
-        tiktokData = null;
-        tiktokRawRows = [];
-        tiktokFilteredRawRows = [];
-        tiktokHasDate = false;
-        tiktokHasAdName = false;
-        document.getElementById('tiktokFilterBar').style.display = 'none';
-        document.getElementById('tiktokUploadArea').style.display = '';
-        document.getElementById('tiktokUploadStatus').style.display = 'none';
-        document.getElementById('tiktokContent').style.display = 'none';
-        document.getElementById('tiktokAcctBadge').textContent = '';
-    }
-    loadTiktokLive();
+    loadTiktokLive();   // 요약(카드) + 테이블(목록·일별·소재별) 전부 프록시 라이브
 }
 
 function onTiktokDateInput() {

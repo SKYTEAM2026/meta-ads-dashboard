@@ -4661,47 +4661,82 @@ let googleHasDate = false;
 let googleHasAdName = false;
 let googleDailyChartInst = null;
 
-function onGoogleCsvUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-        const result = parseGoogleCSV(e.target.result);
-        event.target.value = '';
-        const errEl = document.getElementById('googleUploadError');
-        if (!result) {
-            errEl.textContent = 'CSV 형식을 인식할 수 없습니다. Google Ads에서 캠페인 레벨 보고서를 내보내 주세요.';
-            errEl.style.display = '';
-            return;
+function _googleRowsFromDay(data, day) {
+    const out = [];
+    for (const c of (data.campaigns || [])) {
+        const cn = c.name;
+        const crs = c.creatives || [];
+        if (crs.length) {
+            for (const cr of crs) {
+                out.push({ date:day, campaign:cn, adGroup:cr.adgroup||'', adName:cr.name || '(소재)',
+                    status:'', adStatus:'', budget:0,
+                    cost:cr.cost||0, impr:cr.impressions||0, clicks:cr.clicks||0,
+                    conv:cr.conversions||0, convVal:(cr.conv_value!=null?cr.conv_value:cr.all_conv_value)||0,
+                    ctrDirect:0, cpcDirect:0, cpmDirect:0 });
+            }
+        } else {
+            out.push({ date:day, campaign:cn, adGroup:'', adName:'', status:'', adStatus:'', budget:0,
+                cost:c.cost||0, impr:c.impressions||0, clicks:c.clicks||0,
+                conv:c.conversions||0, convVal:(c.conv_value!=null?c.conv_value:c.all_conv_value)||0,
+                ctrDirect:0, cpcDirect:0, cpmDirect:0 });
         }
-        errEl.style.display = 'none';
-        googleStore[googleActiveAccount] = result;
-        try { localStorage.setItem(`googleCsvData_${googleActiveAccount}`, JSON.stringify(result)); } catch(_) {}
+    }
+    return out;
+}
+
+function _googleResultFromRows(rawRows) {
+    const cm = {};
+    for (const r of rawRows) {
+        if (!cm[r.campaign]) cm[r.campaign] = { name:r.campaign, cost:0, impr:0, clicks:0, conv:0, convVal:0, status:'', budget:0 };
+        const c = cm[r.campaign];
+        c.cost+=r.cost; c.impr+=r.impr; c.clicks+=r.clicks; c.conv+=r.conv; c.convVal+=r.convVal;
+    }
+    const campaigns = Object.values(cm).map(c => ({ ...c,
+        ctr:  c.impr>0 ? c.clicks/c.impr*100 : 0,
+        cpc:  c.clicks>0 ? c.cost/c.clicks : 0,
+        cpm:  c.impr>0 ? c.cost/c.impr*1000 : 0,
+        cpr:  c.conv>0 ? c.cost/c.conv : 0,
+        roas: c.cost>0&&c.convVal>0 ? c.convVal/c.cost*100 : 0,
+    }));
+    return { campaigns, rawRows, hasDate:true, hasAdName:rawRows.some(r=>r.adName), hasStatus:false, statuses:[] };
+}
+
+async function loadGoogleTables(range, force) {
+    const acct = googleActiveAccount;
+    const cfg = (LIVE_ACCT.google || {})[acct];
+    const area = document.getElementById('googleUploadArea');
+    const ckey = 'google|' + acct + '|' + range;
+    if (!cfg) { if (area) { area.style.display=''; area.innerHTML='<div style="padding:30px;text-align:center;color:var(--text-secondary);">API 키 없음</div>'; } return; }
+    if (!force && _liveTblCache[ckey]) { loadGoogleData(_liveTblCache[ckey]); return; }
+    document.getElementById('googleContent').style.display = 'none';
+    document.getElementById('googleUploadStatus').style.display = 'none';
+    document.getElementById('googleFilterBar').style.display = 'none';
+    area.style.display = '';
+    area.innerHTML = '<div style="padding:40px;text-align:center;color:var(--google-blue);"><div class="spinner-border" role="status" style="width:2rem;height:2rem;"></div><div style="margin-top:12px;font-weight:600;">라이브 데이터 불러오는 중… <span id="ggLiveProg"></span></div></div>';
+    try {
+        const days = await _liveDateList('google', cfg, range);
+        let done = 0;
+        const prog = () => { const e = document.getElementById('ggLiveProg'); if (e) e.textContent = `(${done}/${days.length}일)`; };
+        prog();
+        const results = await Promise.all(days.map(d =>
+            _fetchLiveDay('google', cfg, d).then(j => { done++; prog(); return { d, j }; })
+                                           .catch(() => { done++; prog(); return { d, j:null }; })));
+        let rows = [];
+        for (const { d, j } of results) if (j && j.campaigns) rows = rows.concat(_googleRowsFromDay(j, d));
+        if (!rows.length) { area.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">이 기간 데이터가 없습니다</div>'; return; }
+        const result = _googleResultFromRows(rows);
+        _liveTblCache[ckey] = result;
         loadGoogleData(result);
-    };
-    reader.readAsText(file, 'UTF-8');
+    } catch (e) {
+        area.innerHTML = '<div style="padding:40px;text-align:center;color:#dc2626;">라이브 조회 실패: ' + esc(String(e && e.message || e)) + '</div>';
+    }
 }
 
 function switchGoogleAccount(name) {
     googleActiveAccount = name;
     document.querySelectorAll('.gg-acct-btn').forEach(b => b.classList.toggle('active', b.dataset.account === name));
     closeGoogleDetail();
-    const stored = googleStore[name];
-    if (stored) {
-        loadGoogleData(stored);
-    } else {
-        googleData = null;
-        googleRawRows = [];
-        googleFilteredRawRows = [];
-        googleHasDate = false;
-        googleHasAdName = false;
-        document.getElementById('googleFilterBar').style.display = 'none';
-        document.getElementById('googleUploadArea').style.display = '';
-        document.getElementById('googleUploadStatus').style.display = 'none';
-        document.getElementById('googleContent').style.display = 'none';
-        document.getElementById('googleAcctBadge').textContent = '';
-    }
-    loadGoogleLive();
+    loadGoogleLive();   // 요약(카드) + 테이블(목록·일별·소재별) 전부 프록시 라이브
 }
 
 function loadGoogleData(result) {

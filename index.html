@@ -4155,25 +4155,99 @@ let tiktokFilteredRawRows = [];
 let tiktokHasDate = false;
 let tiktokHasAdName = false;
 
-function onTiktokCsvUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-        const result = parseTiktokCSV(e.target.result);
-        event.target.value = '';
-        const errEl = document.getElementById('tiktokUploadError');
-        if (!result) {
-            errEl.textContent = 'CSV 형식을 인식할 수 없습니다. TikTok Ads Manager에서 광고 레벨 보고서를 내보내 주세요.';
-            errEl.style.display = '';
-            return;
+// ═══════════════════════════════════════
+//  라이브 테이블 어댑터 (프록시 → rawRows: 소재×일자)
+//  캠페인목록·일별·소재별을 전부 프록시 실데이터로 생성
+//  날짜마다 since=D&until=D&level=ad 호출 → campaigns[].creatives[] 를
+//  {date, campaign, adName, metrics} 행으로 펼침 → 기존 렌더 그대로 작동
+// ═══════════════════════════════════════
+const _liveTblCache = {};   // 'platform|계정|range' → result 캐시
+
+async function _fetchLiveDay(platform, cfg, day) {
+    const url = `${LIVE_BASE}${platform}-daily?key=${encodeURIComponent(cfg.key)}&account=${encodeURIComponent(cfg.account)}&since=${day}&until=${day}&level=ad`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+}
+
+// range → 정확한 날짜 목록(프록시 period 기준). daily[] 의 date 를 그대로 사용.
+async function _liveDateList(platform, cfg, range) {
+    const res = await fetch(`${LIVE_BASE}${platform}-daily?key=${encodeURIComponent(cfg.key)}&account=${encodeURIComponent(cfg.account)}&range=${encodeURIComponent(range)}&daily=1`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    if (Array.isArray(d.daily) && d.daily.length) return d.daily.map(x => x.date).filter(Boolean).sort();
+    const p = d.period || {};
+    return p.start ? [p.start] : [];
+}
+
+function _tiktokRowsFromDay(data, day) {
+    const out = [];
+    for (const c of (data.campaigns || [])) {
+        const cn = c.name;
+        const crs = c.creatives || [];
+        if (crs.length) {
+            for (const cr of crs) {
+                out.push({ date:day, campaign:cn, adGroup:'', adName:cr.name || '(소재)',
+                    cost:cr.spend||0, impr:cr.impressions||0, clicks:cr.clicks||0,
+                    purch:cr.purchases||0, purchVal:(cr.revenueExact!=null?cr.revenueExact:cr.revenue)||0,
+                    cprDirect:0, roasDirect:0, ctr:0, cpc:0, cpm:0, status:'', budget:0 });
+            }
+        } else {
+            out.push({ date:day, campaign:cn, adGroup:'', adName:'',
+                cost:c.spend||0, impr:c.impressions||0, clicks:c.clicks||0,
+                purch:c.purchases||0, purchVal:(c.revenueExact!=null?c.revenueExact:c.revenue)||0,
+                cprDirect:0, roasDirect:0, ctr:0, cpc:0, cpm:0, status:'', budget:0 });
         }
-        errEl.style.display = 'none';
-        tiktokStore[tiktokActiveAccount] = result;
-        try { localStorage.setItem(`tiktokCsvData_${tiktokActiveAccount}`, JSON.stringify(result)); } catch(_) {}
+    }
+    return out;
+}
+
+function _tiktokResultFromRows(rawRows) {
+    const cm = {};
+    for (const r of rawRows) {
+        if (!cm[r.campaign]) cm[r.campaign] = { name:r.campaign, cost:0, impr:0, clicks:0, purch:0, purchVal:0, ctrW:0, cpcW:0, cpmW:0, cprW:0, roasW:0, budget:0, status:'' };
+        const c = cm[r.campaign];
+        c.cost+=r.cost; c.impr+=r.impr; c.clicks+=r.clicks; c.purch+=r.purch; c.purchVal+=r.purchVal;
+    }
+    const campaigns = Object.values(cm).map(c => ({ ...c,
+        ctr:  c.impr>0 ? c.clicks/c.impr*100 : 0,
+        cpc:  c.clicks>0 ? c.cost/c.clicks : 0,
+        cpm:  c.impr>0 ? c.cost/c.impr*1000 : 0,
+        cpr:  c.purch>0 ? c.cost/c.purch : 0,
+        roas: c.cost>0&&c.purchVal>0 ? c.purchVal/c.cost*100 : 0,
+    }));
+    return { campaigns, rawRows, hasDate:true, hasAdName:rawRows.some(r=>r.adName), hasStatus:false, statuses:[] };
+}
+
+async function loadTiktokTables(range, force) {
+    const acct = tiktokActiveAccount;
+    const cfg = (LIVE_ACCT.tiktok || {})[acct];
+    const area = document.getElementById('tiktokUploadArea');
+    const ckey = 'tiktok|' + acct + '|' + range;
+    if (!cfg) { if (area) { area.style.display=''; area.innerHTML='<div style="padding:30px;text-align:center;color:var(--text-secondary);">API 키 없음</div>'; } return; }
+    if (!force && _liveTblCache[ckey]) { loadTiktokAccountData(_liveTblCache[ckey]); return; }
+    document.getElementById('tiktokContent').style.display = 'none';
+    document.getElementById('tiktokUploadStatus').style.display = 'none';
+    document.getElementById('tiktokFilterBar').style.display = 'none';
+    area.style.display = '';
+    area.innerHTML = '<div style="padding:40px;text-align:center;color:var(--tiktok-pink);"><div class="spinner-border" role="status" style="width:2rem;height:2rem;"></div><div style="margin-top:12px;font-weight:600;">라이브 데이터 불러오는 중… <span id="ttLiveProg"></span></div></div>';
+    try {
+        const days = await _liveDateList('tiktok', cfg, range);
+        let done = 0;
+        const prog = () => { const e = document.getElementById('ttLiveProg'); if (e) e.textContent = `(${done}/${days.length}일)`; };
+        prog();
+        const results = await Promise.all(days.map(d =>
+            _fetchLiveDay('tiktok', cfg, d).then(j => { done++; prog(); return { d, j }; })
+                                           .catch(() => { done++; prog(); return { d, j:null }; })));
+        let rows = [];
+        for (const { d, j } of results) if (j && j.campaigns) rows = rows.concat(_tiktokRowsFromDay(j, d));
+        if (!rows.length) { area.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">이 기간 데이터가 없습니다</div>'; return; }
+        const result = _tiktokResultFromRows(rows);
+        _liveTblCache[ckey] = result;
         loadTiktokAccountData(result);
-    };
-    reader.readAsText(file, 'UTF-8');
+    } catch (e) {
+        area.innerHTML = '<div style="padding:40px;text-align:center;color:#dc2626;">라이브 조회 실패: ' + esc(String(e && e.message || e)) + '</div>';
+    }
 }
 
 function loadTiktokAccountData(result) {

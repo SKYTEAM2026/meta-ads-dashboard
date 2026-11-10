@@ -3905,34 +3905,13 @@ function switchPlatform(platform) {
     document.getElementById('tiktokDashboard').style.display = platform === 'tiktok' ? '' : 'none';
     document.getElementById('googleDashboard').style.display = platform === 'google' ? '' : 'none';
     if (platform === 'tiktok') {
-        loadTiktokCafe24FromStorage();
+        loadTiktokCafe24FromStorage();   // 크롤 매출(실제 ROAS 열) 연동
         loadTiktokManualStatus();
-        for (const acct of ['써마드', '아치핀']) {
-            if (!tiktokStore[acct]) {
-                try {
-                    const s = localStorage.getItem(`tiktokCsvData_${acct}`);
-                    if (s) tiktokStore[acct] = JSON.parse(s);
-                } catch(_) {}
-            }
-        }
-        switchTiktokAccount(tiktokActiveAccount);
+        switchTiktokAccount(tiktokActiveAccount);   // 프록시 라이브 로드
     }
     if (platform === 'google') {
-        loadGoogleCafe24FromStorage();
-        // 구버전 단일 googleCsvData → 아치핀 브랜드로 마이그레이션
-        const oldGg = localStorage.getItem('googleCsvData');
-        if (oldGg && !localStorage.getItem('googleCsvData_아치핀')) {
-            try { localStorage.setItem('googleCsvData_아치핀', oldGg); } catch(_) {}
-        }
-        for (const acct of ['아치핀', '써마드', '포디온']) {
-            if (!googleStore[acct]) {
-                try {
-                    const s = localStorage.getItem(`googleCsvData_${acct}`);
-                    if (s) googleStore[acct] = JSON.parse(s);
-                } catch(_) {}
-            }
-        }
-        switchGoogleAccount(googleActiveAccount);
+        loadGoogleCafe24FromStorage();   // 크롤 매출(실제 ROAS 열) 연동
+        switchGoogleAccount(googleActiveAccount);    // 프록시 라이브 로드
     }
 }
 

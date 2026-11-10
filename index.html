@@ -1153,6 +1153,71 @@ function applyCrawlRevenue() {
     cafe24GoogleByDate = bd.google || {};
     return true;
 }
+
+// ═══════════════════════════════════════
+//  실시간 매출 (cafe24 라이브 서버 ← 터널). 있으면 스냅샷 대신 실시간으로 실제 ROAS.
+//  응답은 비번 암호화 → DATA_PW로 복호화. 엔드포인트 없거나 꺼지면 스냅샷(enc) 폴백.
+// ═══════════════════════════════════════
+const LIVE_REV = { url: null, key: null, on: false, last: 0, tries: 0 };
+async function loadLiveEndpoint() {
+    try {
+        const r = await fetch('./data/live_endpoint.json?cb=' + Date.now(), { cache: 'no-store' });
+        if (r.ok) { const j = await r.json(); LIVE_REV.url = (j.url || '').replace(/\/+$/, ''); LIVE_REV.key = j.key || ''; }
+    } catch (_) {}
+    return !!LIVE_REV.url;
+}
+function _isoDay(d) { const z = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; }
+async function refreshLiveRevenue() {
+    if (!LIVE_REV.url || !DATA_PW) return false;
+    const today = new Date();
+    const until = _isoDay(today);
+    const since = _isoDay(new Date(today.getTime() - 29 * 86400000));   // 최근 30일(모든 기간선택 포함)
+    try {
+        const r = await fetch(`${LIVE_REV.url}/revenue?since=${since}&until=${until}&key=${encodeURIComponent(LIVE_REV.key)}`, { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const env = await r.json();
+        if (!env || !env.enc) throw new Error('bad payload');
+        const data = JSON.parse(await decryptPayload(env, DATA_PW));
+        if (!REAL_ROAS) REAL_ROAS = {};
+        REAL_ROAS.by_term = data.by_term;
+        REAL_ROAS.by_date = data.by_date;
+        REAL_ROAS.period  = { since: data.since, until: data.until };
+        applyCrawlRevenue();
+        LIVE_REV.on = true; LIVE_REV.last = Date.now();
+        _setLiveRevBadge();
+        if (activePlatform === 'tiktok' && typeof tiktokData !== 'undefined' && tiktokData) applyTiktokFilters();
+        if (activePlatform === 'google' && typeof googleData !== 'undefined' && googleData) applyGoogleFilters();
+        return true;
+    } catch (e) {
+        LIVE_REV.on = false; _setLiveRevBadge();
+        return false;
+    }
+}
+function _setLiveRevBadge() {
+    let el = document.getElementById('liveRevBadge');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'liveRevBadge';
+        el.style.cssText = 'position:fixed;right:14px;bottom:12px;z-index:9999;font-size:11px;font-weight:700;padding:5px 10px;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.15);';
+        document.body.appendChild(el);
+    }
+    if (LIVE_REV.on) {
+        const t = new Date(LIVE_REV.last).toLocaleTimeString('ko-KR');
+        el.style.background = '#16a34a'; el.style.color = '#fff';
+        el.innerHTML = `<i class="bi bi-broadcast"></i> 실시간 매출 · ${t}`;
+    } else if (LIVE_REV.url) {
+        el.style.background = '#64748b'; el.style.color = '#fff';
+        el.innerHTML = `<i class="bi bi-cloud-slash"></i> 매출 스냅샷(서버 off)`;
+    } else { el.style.display = 'none'; }
+}
+let _liveRevTimer = null;
+async function startLiveRevenue() {
+    if (!(await loadLiveEndpoint())) return;    // 엔드포인트 없으면 스냅샷 유지
+    await refreshLiveRevenue();
+    if (_liveRevTimer) clearInterval(_liveRevTimer);
+    _liveRevTimer = setInterval(refreshLiveRevenue, 90000);   // 90초마다 실시간 매출 갱신
+}
+
 function _crawlPeriodLabel() {
     const p = (REAL_ROAS && REAL_ROAS.period) || {};
     return (p.since && p.until) ? `${p.since}~${p.until}` : '';

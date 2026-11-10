@@ -5073,6 +5073,7 @@ async function checkPassword() {
         }
         document.getElementById('passwordScreen').style.display = 'none';
         init();
+        startLiveRevenue();    // 재방문(세션 유지) 시에도 실시간 매출 연동
     } else {
         showLoading(false);
         document.getElementById('pwInput').focus();

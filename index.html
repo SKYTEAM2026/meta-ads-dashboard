@@ -4643,13 +4643,17 @@ async function loadLiveSummary(platform, brand, range, kpiRowId, metaId, prodId,
     }
 }
 
-function loadTiktokLive() {
+function loadTiktokLive(force) {
     const rangeEl = document.getElementById('ttLiveRange');
-    loadLiveSummary('tiktok', tiktokActiveAccount, rangeEl ? rangeEl.value : 'last_7d', 'ttLiveKpiRow', 'ttLiveMeta', 'ttLiveProducts', '#FE2C55');
+    const range = rangeEl ? rangeEl.value : 'last_7d';
+    loadLiveSummary('tiktok', tiktokActiveAccount, range, 'ttLiveKpiRow', 'ttLiveMeta', 'ttLiveProducts', '#FE2C55');
+    loadTiktokTables(range, force);
 }
-function loadGoogleLive() {
+function loadGoogleLive(force) {
     const rangeEl = document.getElementById('ggLiveRange');
-    loadLiveSummary('google', googleActiveAccount, rangeEl ? rangeEl.value : 'last_7d', 'ggLiveKpiRow', 'ggLiveMeta', 'ggLiveProducts', '#4285F4');
+    const range = rangeEl ? rangeEl.value : 'last_7d';
+    loadLiveSummary('google', googleActiveAccount, range, 'ggLiveKpiRow', 'ggLiveMeta', 'ggLiveProducts', '#4285F4');
+    loadGoogleTables(range, force);
 }
 let googleRawRows = [];
 let googleFilteredRawRows = [];

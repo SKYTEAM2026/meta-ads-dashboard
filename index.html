@@ -4320,6 +4320,40 @@ function onTiktokDateInput() {
     document.getElementById('ttApplyBtn').disabled = !(from || to);
 }
 
+// 프록시엔 캠페인 ON/OFF 상태가 없음 → '최근 집행일(지출>0인 가장 최근 날짜)에 지출했는가'로 집행중/미집행 판정
+let tiktokDelivery = { camp:new Set(), ad:new Set(), refDay:null };
+let googleDelivery = { camp:new Set(), ad:new Set(), refDay:null };
+function _deliveryStatus(rows, costKey) {
+    const dayTot = {};
+    for (const r of rows) { if (!r.date) continue; dayTot[r.date] = (dayTot[r.date] || 0) + (r[costKey] || 0); }
+    const days = Object.keys(dayTot).filter(d => dayTot[d] > 0).sort();
+    const refDay = days.length ? days[days.length - 1] : null;
+    const camp = new Set(), ad = new Set();
+    if (refDay) for (const r of rows) {
+        if (r.date === refDay && (r[costKey] || 0) > 0) {
+            camp.add(r.campaign);
+            if (r.adName) ad.add(r.campaign + '||' + r.adName);
+        }
+    }
+    return { camp, ad, refDay };
+}
+// 소재 테이블(틱톡/구글 공용)용 — 한 캠페인의 rows로 소재별 집행중 판정
+function _creativeDeliverySet(rows) {
+    const dayTot = {};
+    rows.forEach(r => { if (r.date) dayTot[r.date] = (dayTot[r.date] || 0) + (r.cost || 0); });
+    const days = Object.keys(dayTot).filter(d => dayTot[d] > 0).sort();
+    const refDay = days.length ? days[days.length - 1] : null;
+    const on = new Set();
+    if (refDay) rows.forEach(r => { if (r.date === refDay && (r.cost || 0) > 0) on.add((r.adName || '(미분류)') + '||' + (r.adGroup || '')); });
+    return on;
+}
+// 집행중/미집행 배지 HTML
+function _statusBadge(on) {
+    return on
+        ? '<span class="s-badge" style="background:#dcfce7;color:#16a34a;">집행중</span>'
+        : '<span class="s-badge" style="background:#f1f5f9;color:#64748b;">미집행</span>';
+}
+
 function applyTiktokFilters() {
     if (!tiktokData) return;
     const fromVal  = document.getElementById('ttDateFrom').value;

@@ -4772,17 +4772,19 @@ function _googleRowsFromDay(data, day) {
     const out = [];
     for (const c of (data.campaigns || [])) {
         const cn = c.name;
+        const cSt = _normStatus(c.status ?? c.operation_status ?? '');   // 프록시가 status 주면 진짜 토글
         const crs = c.creatives || [];
         if (crs.length) {
             for (const cr of crs) {
+                const aSt = _normStatus(cr.status ?? cr.operation_status ?? '') || cSt;
                 out.push({ date:day, campaign:cn, adGroup:cr.adgroup||'', adName:cr.name || '(소재)',
-                    status:'', adStatus:'', budget:0,
+                    status:cSt, adStatus:aSt, budget:0,
                     cost:cr.cost||0, impr:cr.impressions||0, clicks:cr.clicks||0,
                     conv:cr.conversions||0, convVal:(cr.conv_value!=null?cr.conv_value:cr.all_conv_value)||0,
                     ctrDirect:0, cpcDirect:0, cpmDirect:0 });
             }
         } else {
-            out.push({ date:day, campaign:cn, adGroup:'', adName:'', status:'', adStatus:'', budget:0,
+            out.push({ date:day, campaign:cn, adGroup:'', adName:'', status:cSt, adStatus:cSt, budget:0,
                 cost:c.cost||0, impr:c.impressions||0, clicks:c.clicks||0,
                 conv:c.conversions||0, convVal:(c.conv_value!=null?c.conv_value:c.all_conv_value)||0,
                 ctrDirect:0, cpcDirect:0, cpmDirect:0 });

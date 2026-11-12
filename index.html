@@ -2846,14 +2846,16 @@ function renderDailyKPI(daily) {
     const cpr  = totResults > 0 ? fCur(totSpend / totResults) : '–';
     const roas = totConvVal > 0 ? (totConvVal / totSpend * 100).toFixed(1) + '%' : '–';
     const ctr  = totImpr > 0 ? (totClicks / totImpr * 100).toFixed(2) + '%' : '–';
+    const cpc  = totClicks > 0 ? fCur(totSpend / totClicks) : '–';
+    const cpm  = totImpr > 0 ? fCur(totSpend / totImpr * 1000) : '–';
 
     const kpis = [
-        { label: '총 지출',      value: fCur(totSpend),   icon: 'bi-cash-coin',        bg: '#e8f4fd', color: '#1877F2' },
-        { label: '구매전환값',   value: totConvVal ? fCur(totConvVal) : '–', icon: 'bi-bag-check', bg: '#f0fdf4', color: '#16a34a' },
-        { label: '결과',         value: totResults ? fNum(totResults) : '–', icon: 'bi-check-circle', bg: '#fefce8', color: '#ca8a04' },
-        { label: '결과당 비용',  value: cpr,              icon: 'bi-cursor-fill',       bg: '#fdf4ff', color: '#9333ea' },
-        { label: '구매 ROAS',    value: roas,             icon: 'bi-graph-up-arrow',    bg: '#fff7ed', color: '#ea580c' },
-        { label: 'CTR',          value: ctr,              icon: 'bi-bar-chart-fill',    bg: '#fef2f2', color: '#dc2626' },
+        { label: '총 지출',           value: fCur(totSpend), icon: 'bi-cash-coin',       bg: '#e8f4fd', color: '#1877F2' },
+        { label: 'ROAS',              value: roas,           icon: 'bi-bullseye',        bg: '#eff6ff', color: '#2563eb' },
+        { label: 'CPA (결과당 비용)', value: cpr,            icon: 'bi-cash',            bg: '#f0fdf4', color: '#16a34a' },
+        { label: 'CTR',               value: ctr,            icon: 'bi-graph-up-arrow',  bg: '#fdf4ff', color: '#9333ea' },
+        { label: 'CPC',               value: cpc,            icon: 'bi-cursor-fill',     bg: '#fff7ed', color: '#ea580c' },
+        { label: 'CPM',               value: cpm,            icon: 'bi-bar-chart-fill',  bg: '#fef2f2', color: '#dc2626' },
     ];
 
     document.getElementById('dailyKpiRow').innerHTML = kpis.map(k => `

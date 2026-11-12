@@ -4360,11 +4360,23 @@ function _creativeDeliverySet(rows) {
     if (refDay) rows.forEach(r => { if (r.date === refDay && (r.cost || 0) > 0) on.add((r.adName || '(미분류)') + '||' + (r.adGroup || '')); });
     return on;
 }
-// 집행중/미집행 배지 HTML
-function _statusBadge(on) {
-    return on
-        ? '<span class="s-badge" style="background:#dcfce7;color:#16a34a;">집행중</span>'
-        : '<span class="s-badge" style="background:#f1f5f9;color:#64748b;">미집행</span>';
+// 플랫폼 상태값 정규화 (프록시가 status를 주면 진짜 토글로 사용) → 활성/일시중지/삭제, 모르면 원문
+function _normStatus(s) {
+    if (!s) return '';
+    const u = String(s).toUpperCase();
+    if (u.includes('DELETE') || u.includes('REMOV')) return '삭제';
+    if (u === '활성' || u === 'ENABLE' || u === 'ENABLED' || u.includes('ACTIVE') || u.includes('DELIVERY_OK') || (u.includes('ENABLE') && !u.includes('DISABLE'))) return '활성';
+    if (u === '일시중지' || u === 'DISABLE' || u === 'PAUSED' || u.includes('PAUSE') || u.includes('DISABLE') || u.includes('SUSPEND') || u.includes('NOT_DELIVER')) return '일시중지';
+    return s;
+}
+// 상태 배지 HTML (활성/집행중=초록, 삭제=빨강, 그 외=회색)
+function _statusBadge(status) {
+    if (!status) return '';
+    const on = status === '활성' || status === '집행중';
+    const del = status === '삭제';
+    const bg = on ? '#dcfce7' : del ? '#fee2e2' : '#f1f5f9';
+    const fg = on ? '#16a34a' : del ? '#dc2626' : '#64748b';
+    return `<span class="s-badge" style="background:${bg};color:${fg};">${esc(status)}</span>`;
 }
 
 function applyTiktokFilters() {

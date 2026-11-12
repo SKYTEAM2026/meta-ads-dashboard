@@ -4587,16 +4587,13 @@ function normLiveMetrics(o) {
 
 function liveKpiCards(t, accent) {
     const cards = [
-        { label:'지출',        value: fCur(t.spend||0),                          icon:'bi-cash-coin' },
-        { label:'매출',        value: t.revenue ? fCur(t.revenue) : '–',         icon:'bi-graph-up-arrow' },
-        { label:'ROAS',        value: t.roas ? (t.roas*100).toFixed(1)+'%' : '–', icon:'bi-bullseye' },
-        { label:'구매',        value: fNum(Math.round(t.purchases||0)),          icon:'bi-bag-check' },
-        { label:'구매당 비용', value: t.cpa ? fCur(t.cpa) : '–',                  icon:'bi-cash' },
-        { label:'노출수',      value: fNum(t.impressions||0),                    icon:'bi-eye' },
-        { label:'클릭수',      value: fNum(t.clicks||0),                         icon:'bi-hand-index-thumb' },
-        { label:'CTR',         value: t.ctr ? Number(t.ctr).toFixed(2)+'%' : '–', icon:'bi-cursor' },
-        { label:'CPC',         value: t.cpc ? fCur(t.cpc) : '–',                  icon:'bi-coin' },
-        { label:'CVR',         value: t.cvr ? Number(t.cvr).toFixed(2)+'%' : '–', icon:'bi-percent' },
+        { label:'총 지출',           value: fCur(t.spend||0),                           icon:'bi-cash-coin' },
+        { label:'ROAS',              value: t.roas ? (t.roas*100).toFixed(1)+'%' : '–',  icon:'bi-bullseye' },
+        { label:'CPA (구매당 비용)', value: t.cpa ? fCur(t.cpa) : '–',                   icon:'bi-cash' },
+        { label:'CTR',               value: t.ctr ? Number(t.ctr).toFixed(2)+'%' : '–',  icon:'bi-graph-up-arrow' },
+        { label:'CPC',               value: t.cpc ? fCur(t.cpc) : '–',                   icon:'bi-cursor-fill' },
+        { label:'CPM',               value: t.cpm ? fCur(t.cpm) : '–',                   icon:'bi-bar-chart-fill' },
+        { label:'CVR',               value: t.cvr ? Number(t.cvr).toFixed(2)+'%' : '–',  icon:'bi-percent' },
     ];
     return cards.map(k => `
         <div class="col-xl-2 col-lg-3 col-md-4 col-6">

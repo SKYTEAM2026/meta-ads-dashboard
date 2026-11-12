@@ -3822,25 +3822,27 @@ function renderGoogleDetailKpis(rows, kpiRowId, type) {
     const cpr     = tConv>0 ? fCur(tCost/tConv) : '–';
     const roas    = tCost>0&&tCVal>0 ? (tCVal/tCost*100).toFixed(1)+'%' : '–';
     const ctr     = tImpr>0 ? (tClk/tImpr*100).toFixed(2)+'%' : '–';
+    const cpc     = tClk>0 ? fCur(tCost/tClk) : '–';
+    const cpm     = tImpr>0 ? fCur(tCost/tImpr*1000) : '–';
     let kpis;
     if (type === 'creative') {
         const uniqueAds = new Set(rows.map(r=>r.adName).filter(Boolean)).size;
         kpis = [
-            { label:'광고 수',    value:uniqueAds+'개',         icon:'bi-images',        bg:'#e8f0fe', color:'#4285F4' },
-            { label:'총 비용',    value:fCur(tCost),            icon:'bi-cash-coin',     bg:'#f0fdf4', color:'#34A853' },
-            { label:'전환 가치',  value:tCVal?fCur(tCVal):'–', icon:'bi-bag-check',     bg:'#fefce8', color:'#FBBC04' },
-            { label:'전환수',     value:tConv?fNum(tConv):'–', icon:'bi-check-circle',  bg:'#fdf4ff', color:'#9333ea' },
-            { label:'전환당 비용',value:cpr,                    icon:'bi-cursor-fill',   bg:'#fff7ed', color:'#ea580c' },
-            { label:'ROAS',       value:roas,                   icon:'bi-graph-up-arrow',bg:'#fef2f2', color:'#EA4335' },
+            { label:'광고 수',            value:uniqueAds+'개', icon:'bi-images',          bg:'#e8f0fe', color:'#4285F4' },
+            { label:'총 지출',            value:fCur(tCost),    icon:'bi-cash-coin',       bg:'#e8f4fd', color:'#1877F2' },
+            { label:'ROAS',               value:roas,           icon:'bi-bullseye',        bg:'#eff6ff', color:'#2563eb' },
+            { label:'CPA (결과당 비용)',  value:cpr,            icon:'bi-cash',            bg:'#f0fdf4', color:'#16a34a' },
+            { label:'CTR',                value:ctr,            icon:'bi-graph-up-arrow',  bg:'#fdf4ff', color:'#9333ea' },
+            { label:'CPC',                value:cpc,            icon:'bi-cursor-fill',     bg:'#fff7ed', color:'#ea580c' },
         ];
     } else {
         kpis = [
-            { label:'총 비용',    value:fCur(tCost),            icon:'bi-cash-coin',     bg:'#e8f0fe', color:'#4285F4' },
-            { label:'전환 가치',  value:tCVal?fCur(tCVal):'–', icon:'bi-bag-check',     bg:'#f0fdf4', color:'#34A853' },
-            { label:'전환수',     value:tConv?fNum(tConv):'–', icon:'bi-check-circle',  bg:'#fefce8', color:'#FBBC04' },
-            { label:'전환당 비용',value:cpr,                    icon:'bi-cursor-fill',   bg:'#fdf4ff', color:'#9333ea' },
-            { label:'ROAS',       value:roas,                   icon:'bi-graph-up-arrow',bg:'#fff7ed', color:'#ea580c' },
-            { label:'CTR',        value:ctr,                    icon:'bi-bar-chart-fill',bg:'#fef2f2', color:'#EA4335' },
+            { label:'총 지출',            value:fCur(tCost),    icon:'bi-cash-coin',       bg:'#e8f4fd', color:'#1877F2' },
+            { label:'ROAS',               value:roas,           icon:'bi-bullseye',        bg:'#eff6ff', color:'#2563eb' },
+            { label:'CPA (결과당 비용)',  value:cpr,            icon:'bi-cash',            bg:'#f0fdf4', color:'#16a34a' },
+            { label:'CTR',                value:ctr,            icon:'bi-graph-up-arrow',  bg:'#fdf4ff', color:'#9333ea' },
+            { label:'CPC',                value:cpc,            icon:'bi-cursor-fill',     bg:'#fff7ed', color:'#ea580c' },
+            { label:'CPM',                value:cpm,            icon:'bi-bar-chart-fill',  bg:'#fef2f2', color:'#dc2626' },
         ];
     }
     document.getElementById(kpiRowId).innerHTML = kpis.map(k=>`

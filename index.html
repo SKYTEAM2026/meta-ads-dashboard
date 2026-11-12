@@ -4621,6 +4621,25 @@ let googleActiveAccount = '아치핀';
 let googleStore = { '아치핀': null, '써마드': null, '포디온': null };
 let googleCreativeStatusFilter = '';
 let googleOpenCampaign = null;
+let tiktokCreativeStatusFilter = '';
+let tiktokOpenCampaign = null;
+
+// 소재 상태 셀렉터 옵션을 데이터에 맞춰 채움 (실제 상태 있으면 활성/일시중지, 없으면 집행중/미집행)
+function _fillCreativeStatusOptions(selectEl, rows) {
+    if (!selectEl) return;
+    const real = [...new Set(rows.map(r => r.adStatus).filter(Boolean))];
+    const opts = real.length ? real : ['집행중', '미집행'];
+    const cur = selectEl.value;
+    selectEl.innerHTML = '<option value="">전체</option>' + opts.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+    selectEl.value = [...selectEl.options].some(o => o.value === cur) ? cur : '';
+}
+// 소재 rows를 상태필터로 거름 (실제 상태 있으면 그걸로, 없으면 집행중/미집행 폴백)
+function _filterCreativeByStatus(rows, sf) {
+    if (!sf) return rows;
+    if (rows.some(r => r.adStatus)) return rows.filter(r => (r.adStatus || r.status || '') === sf);
+    const on = _creativeDeliverySet(rows);
+    return rows.filter(r => { const k = (r.adName || '(미분류)') + '||' + (r.adGroup || ''); return sf === '집행중' ? on.has(k) : !on.has(k); });
+}
 
 // ═══════════════════════════════════════
 //  실시간 요약 (dusk-team-keys 프록시)

@@ -3771,10 +3771,8 @@ function toggleGoogleCampaignRow(row) {
                 <span><i class="bi bi-images"></i> 소재별 성과</span>
                 <span style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;">
                     <span class="filter-label" style="font-size:11px;">상태</span>
-                    <select class="form-select form-select-sm" style="width:auto;font-size:12px;padding:2px 24px 2px 8px;" onchange="onGoogleCreativeStatusFilter(this.value)">
+                    <select id="ggCreativeStatusSel" class="form-select form-select-sm" style="width:auto;font-size:12px;padding:2px 24px 2px 8px;" onchange="onGoogleCreativeStatusFilter(this.value)">
                         <option value="">전체</option>
-                        <option value="활성">활성</option>
-                        <option value="일시중지">일시중지</option>
                     </select>
                 </span>
             </div>

@@ -4535,7 +4535,7 @@ function renderTiktokDashboard(data) {
         return `
         <tr ${canDrill ? `style="cursor:pointer;" data-campaign="${esc(c.name)}" onclick="toggleTiktokCampaignRow(this)"` : ''}>
             <td>
-                <div class="campaign-name">${esc(c.name)}</div>
+                <div class="campaign-name">${esc(c.name)} ${_statusBadge(c.status === '집행중')}</div>
                 ${canDrill ? '<div class="campaign-meta" style="color:var(--tiktok-pink)"><i class="bi bi-chevron-down tt-chevron" style="font-size:10px;"></i> 클릭하여 상세보기</div>' : ''}
             </td>
             <td class="text-end">${c.budget?fCur(c.budget):'–'}</td>

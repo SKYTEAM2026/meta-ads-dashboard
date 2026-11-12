@@ -1573,6 +1573,7 @@ async function fetchCampaignInsights() {
 //  RENDER KPI
 // ═══════════════════════════════════════
 function renderKPI(ins) {
+    const PTYPES = ['omni_purchase', 'offsite_conversion.fb_pixel_purchase'];
     const spend = parseFloat(ins.spend || 0);
     const impressions = parseInt(ins.impressions || 0);
     const clicks = parseInt(ins.clicks || 0);
@@ -1581,14 +1582,22 @@ function renderKPI(ins) {
     const cpm = parseFloat(ins.cpm || 0);
     const reach = parseInt(ins.reach || 0);
     const freq = parseFloat(ins.frequency || 0);
+    // 구매(전환)·전환값 → ROAS·CPA·CVR 계산 (계정 레벨)
+    const purchases = findAction(ins.actions, PTYPES);
+    const convVal   = findAction(ins.action_values, PTYPES);
+    const roasItem  = (ins.purchase_roas || []).find(a => PTYPES.includes(a.action_type));
+    const roasPct   = roasItem ? parseFloat(roasItem.value) * 100 : (spend > 0 && convVal > 0 ? convVal / spend * 100 : 0);
+    const cpa       = purchases > 0 ? spend / purchases : 0;
+    const cvr       = clicks > 0 ? purchases / clicks * 100 : 0;
 
     const kpis = [
-        { label: '총 지출', value: fCur(spend), sub: reach ? `도달: ${fNum(reach)}명` : '', icon: 'bi-cash-coin', bg: '#e8f4fd', color: '#1877F2' },
-        { label: '노출수', value: fNum(impressions), sub: freq ? `빈도: ${freq.toFixed(2)}` : '', icon: 'bi-eye', bg: '#f0fdf4', color: '#16a34a' },
-        { label: '클릭수', value: fNum(clicks), sub: `CTR: ${ctr.toFixed(2)}%`, icon: 'bi-hand-index-thumb', bg: '#fefce8', color: '#ca8a04' },
-        { label: 'CTR', value: ctr.toFixed(2) + '%', sub: '클릭률', icon: 'bi-graph-up-arrow', bg: '#fdf4ff', color: '#9333ea' },
-        { label: 'CPC', value: fCur(cpc), sub: '클릭당 비용', icon: 'bi-cursor-fill', bg: '#fff7ed', color: '#ea580c' },
-        { label: 'CPM', value: fCur(cpm), sub: '1천회 노출당 비용', icon: 'bi-bar-chart-fill', bg: '#fef2f2', color: '#dc2626' },
+        { label: '총 지출',           value: fCur(spend),                       sub: reach ? `도달: ${fNum(reach)}명` : '', icon: 'bi-cash-coin',       bg: '#e8f4fd', color: '#1877F2' },
+        { label: 'ROAS',              value: roasPct ? roasPct.toFixed(1) + '%' : '–', sub: convVal ? `전환값: ${fCur(convVal)}` : '', icon: 'bi-bullseye', bg: '#eff6ff', color: '#2563eb' },
+        { label: 'CPA (구매당 비용)', value: cpa ? fCur(cpa) : '–',             sub: purchases ? `구매 ${fNum(Math.round(purchases))}건` : '', icon: 'bi-cash', bg: '#f0fdf4', color: '#16a34a' },
+        { label: 'CTR',               value: ctr.toFixed(2) + '%',              sub: '클릭률',           icon: 'bi-graph-up-arrow',  bg: '#fdf4ff', color: '#9333ea' },
+        { label: 'CPC',               value: fCur(cpc),                         sub: '클릭당 비용',      icon: 'bi-cursor-fill',     bg: '#fff7ed', color: '#ea580c' },
+        { label: 'CPM',               value: fCur(cpm),                         sub: '1천회 노출당 비용', icon: 'bi-bar-chart-fill',  bg: '#fef2f2', color: '#dc2626' },
+        { label: 'CVR',               value: cvr ? cvr.toFixed(2) + '%' : '–',  sub: '클릭→구매 전환율', icon: 'bi-percent',         bg: '#fefce8', color: '#ca8a04' },
     ];
 
     document.getElementById('kpiRow').innerHTML = kpis.map(k => `

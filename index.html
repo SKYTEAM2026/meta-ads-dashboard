@@ -4227,19 +4227,21 @@ function _tiktokRowsFromDay(data, day) {
     const out = [];
     for (const c of (data.campaigns || [])) {
         const cn = c.name;
+        const cSt = _normStatus(c.operation_status ?? c.status ?? c.secondary_status ?? '');   // 프록시가 상태 주면 진짜 토글
         const crs = c.creatives || [];
         if (crs.length) {
             for (const cr of crs) {
+                const aSt = _normStatus(cr.operation_status ?? cr.status ?? cr.secondary_status ?? '') || cSt;
                 out.push({ date:day, campaign:cn, adGroup:'', adName:cr.name || '(소재)',
                     cost:cr.spend||0, impr:cr.impressions||0, clicks:cr.clicks||0,
                     purch:cr.purchases||0, purchVal:(cr.revenueExact!=null?cr.revenueExact:cr.revenue)||0,
-                    cprDirect:0, roasDirect:0, ctr:0, cpc:0, cpm:0, status:'', budget:0 });
+                    cprDirect:0, roasDirect:0, ctr:0, cpc:0, cpm:0, status:cSt, adStatus:aSt, budget:0 });
             }
         } else {
             out.push({ date:day, campaign:cn, adGroup:'', adName:'',
                 cost:c.spend||0, impr:c.impressions||0, clicks:c.clicks||0,
                 purch:c.purchases||0, purchVal:(c.revenueExact!=null?c.revenueExact:c.revenue)||0,
-                cprDirect:0, roasDirect:0, ctr:0, cpc:0, cpm:0, status:'', budget:0 });
+                cprDirect:0, roasDirect:0, ctr:0, cpc:0, cpm:0, status:cSt, adStatus:cSt, budget:0 });
         }
     }
     return out;

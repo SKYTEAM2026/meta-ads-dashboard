@@ -4816,7 +4816,7 @@ function loadGoogleData(result) {
     if (statuses.length) {
         sel.innerHTML = '<option value="">전체</option>' + statuses.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
     } else {
-        sel.innerHTML = '<option value="">전체</option><option value="활성">활성</option><option value="일시중지">일시중지</option>';
+        sel.innerHTML = '<option value="">전체</option><option value="집행중">집행중</option><option value="미집행">미집행</option>';
     }
     sel.value = '';
     applyGoogleFilters();

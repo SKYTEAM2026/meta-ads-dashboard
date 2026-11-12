@@ -3711,6 +3711,7 @@ function onTiktokCreativeStatusFilter(val) {
 }
 
 function closeTiktokDetail() {
+    tiktokOpenCampaign = null;
     document.querySelectorAll('.tt-campaign-expanded').forEach(el => el.remove());
     document.querySelectorAll('#tiktokTbody tr').forEach(tr => tr.classList.remove('row-selected'));
     document.querySelectorAll('#tiktokTbody .tt-chevron').forEach(ic => { ic.className = 'bi bi-chevron-down tt-chevron'; });

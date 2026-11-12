@@ -3272,7 +3272,8 @@ function renderCsvCreativeTable(rows, tbodyId, tfootId, noDataId, barColor, cafe
     const convValKey = usePurch ? 'purchVal' : 'convVal';
     rows.forEach(r => {
         const key = (r.adName || '(미분류)') + '||' + (r.adGroup || '');
-        if (!map[key]) map[key] = { adName:r.adName||'(미분류)', adGroup:r.adGroup||'', cost:0, impr:0, clicks:0, conv:0, convVal:0, ctrW:0, cpcW:0, cpmW:0 };
+        if (!map[key]) map[key] = { adName:r.adName||'(미분류)', adGroup:r.adGroup||'', status:'', cost:0, impr:0, clicks:0, conv:0, convVal:0, ctrW:0, cpcW:0, cpmW:0 };
+        if (r.adStatus && !map[key].status) map[key].status = r.adStatus;
         map[key].cost += r.cost; map[key].impr += r.impr; map[key].clicks += r.clicks;
         map[key].conv += r[convKey]||0; map[key].convVal += r[convValKey]||0;
         map[key].ctrW += (r.ctr||0) * r.cost;

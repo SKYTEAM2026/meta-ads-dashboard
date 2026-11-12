@@ -4716,7 +4716,13 @@ async function loadLiveSummary(platform, brand, range, kpiRowId, metaId, prodId,
         const data = await res.json();
         const raw = data.totals || (data.rows && data.rows[0]);
         if (!raw) { clear(); if (metaEl) metaEl.textContent = '데이터 없음'; return; }
-        kpiEl.innerHTML = liveKpiCards(normLiveMetrics(raw), accent);
+        const m = normLiveMetrics(raw);
+        // 실제 ROAS = 카페24 실매출(해당 프리셋 기간합) ÷ 지출
+        const byDate = platform === 'tiktok' ? cafe24TiktokByDate : platform === 'google' ? cafe24GoogleByDate : {};
+        const rd = _rangeToDates(range);
+        const realRev = sumTermRevenue(byDate, rd.since, rd.until);
+        const realRoasPct = m.spend > 0 && realRev > 0 ? realRev / m.spend * 100 : 0;
+        kpiEl.innerHTML = liveKpiCards(m, accent, realRoasPct);
         if (prodEl) prodEl.innerHTML = liveProductTable(data.campaigns, accent);
         if (metaEl) metaEl.textContent = `${brand} · ${LIVE_RANGE_LABEL[range] || range} · ${new Date().toLocaleTimeString('ko-KR')} 조회`;
     } catch (e) {

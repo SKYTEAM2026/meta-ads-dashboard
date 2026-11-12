@@ -4372,12 +4372,11 @@ function applyTiktokFilters() {
         });
     }
 
-    const hasCsvStatus = tiktokRawRows.some(r => r.status);
+    // 집행중/미집행 판정 (프록시엔 ON/OFF 없음 → 최근 집행일 지출 기준). 상태필터 전 전체기간으로 계산
+    const _deliv = _deliveryStatus(rows, 'cost');
+    tiktokDelivery = _deliv;
     if (statusVal) {
-        rows = rows.filter(r => {
-            const eff = r.status || tiktokManualStatus[r.campaign] || '';
-            return eff === statusVal;
-        });
+        rows = rows.filter(r => statusVal === '집행중' ? _deliv.camp.has(r.campaign) : !_deliv.camp.has(r.campaign));
     }
 
     const searchVal = (document.getElementById('ttCampaignSearch').value || '').trim().toLowerCase();

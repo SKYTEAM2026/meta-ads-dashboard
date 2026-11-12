@@ -4395,8 +4395,8 @@ function applyTiktokFilters() {
         c.cprW  += (r.cprDirect||0) * r.cost;
         c.roasW += (r.roasDirect||0) * r.cost;
     }
-    // CSV에 상태 없으면 manual status로 보완
-    Object.values(campaignMap).forEach(c => { if (!c.status) c.status = tiktokManualStatus[c.name] || ''; });
+    // 캠페인 상태 = 집행중/미집행 (최근 집행일 지출 기준)
+    Object.values(campaignMap).forEach(c => { c.status = _deliv.camp.has(c.name) ? '집행중' : '미집행'; });
 
     const filteredData = Object.values(campaignMap).map(c => ({
         ...c,

@@ -3683,6 +3683,19 @@ function toggleTiktokCampaignRow(row) {
         document.getElementById('ttDailyNoData').style.display = '';
     }
 
+    tiktokOpenCampaign = campaignName;
+    tiktokCreativeStatusFilter = '';
+    _fillCreativeStatusOptions(document.getElementById('ttCreativeStatusSel'), rows);
+    renderTiktokCreative(campaignName);
+}
+
+// ── TikTok 소재별 성과 렌더 (상태 필터 적용) ──
+function renderTiktokCreative(campaignName) {
+    const all = tiktokFilteredRawRows.filter(r => r.campaign === campaignName);
+    const rows = _filterCreativeByStatus(all, tiktokCreativeStatusFilter);
+    const ttCafe24 = { lookup: ttTermData, campaignName,
+        since: document.getElementById('ttDateFrom').value || '0000-01-01',
+        until: document.getElementById('ttDateTo').value || '9999-12-31' };
     renderTiktokDetailKpis(rows, 'ttCreativeKpiRow', 'creative');
     if (tiktokHasAdName) {
         renderCsvCreativeTable(rows, 'ttCreativeTbody', 'ttCreativeTfoot', 'ttCreativeNoData', '#FE2C55', ttCafe24);
@@ -3691,6 +3704,10 @@ function toggleTiktokCampaignRow(row) {
         document.getElementById('ttCreativeTfoot').innerHTML = '';
         document.getElementById('ttCreativeNoData').style.display = '';
     }
+}
+function onTiktokCreativeStatusFilter(val) {
+    tiktokCreativeStatusFilter = val;
+    if (tiktokOpenCampaign) renderTiktokCreative(tiktokOpenCampaign);
 }
 
 function closeTiktokDetail() {

@@ -4261,7 +4261,8 @@ function _tiktokResultFromRows(rawRows) {
         cpr:  c.purch>0 ? c.cost/c.purch : 0,
         roas: c.cost>0&&c.purchVal>0 ? c.purchVal/c.cost*100 : 0,
     }));
-    return { campaigns, rawRows, hasDate:true, hasAdName:rawRows.some(r=>r.adName), hasStatus:false, statuses:[] };
+    const _sts = [...new Set(rawRows.map(r=>r.status).filter(Boolean))];
+    return { campaigns, rawRows, hasDate:true, hasAdName:rawRows.some(r=>r.adName), hasStatus:_sts.length>0, statuses:_sts };
 }
 
 async function loadTiktokTables(range, force) {

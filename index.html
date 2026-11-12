@@ -4581,7 +4581,8 @@ function normLiveMetrics(o) {
     const cpc = o.cpc != null ? o.cpc : (clicks > 0 ? spend / clicks : 0);
     const ctr = o.ctr != null ? o.ctr : (impressions > 0 ? clicks / impressions * 100 : 0);
     const cvr = o.cvr != null ? o.cvr : (clicks > 0 ? purchases / clicks * 100 : 0);
-    return { spend, revenue, purchases, impressions, clicks, roas, cpa, cpc, ctr, cvr };
+    const cpm = o.cpm != null ? o.cpm : (impressions > 0 ? spend / impressions * 1000 : 0);
+    return { spend, revenue, purchases, impressions, clicks, roas, cpa, cpc, ctr, cvr, cpm };
 }
 
 function liveKpiCards(t, accent) {

@@ -3273,6 +3273,7 @@ function renderCsvCreativeTable(rows, tbodyId, tfootId, noDataId, barColor, cafe
     });
     const sorted = Object.values(map).sort((a,b) => b.cost - a.cost);
     const maxCost = Math.max(...sorted.map(c=>c.cost),1);
+    const _creOn = _creativeDeliverySet(rows);   // 소재별 집행중 판정(최근 집행일 지출)
     // 실제 ROAS: 행별=광고명 term, 기간=활성 날짜 범위
     const cSince = cafe24 ? cafe24.since : '0000-01-01';
     const cUntil = cafe24 ? cafe24.until : '9999-12-31';

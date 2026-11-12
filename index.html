@@ -4808,7 +4808,8 @@ function _googleResultFromRows(rawRows) {
         cpr:  c.conv>0 ? c.cost/c.conv : 0,
         roas: c.cost>0&&c.convVal>0 ? c.convVal/c.cost*100 : 0,
     }));
-    return { campaigns, rawRows, hasDate:true, hasAdName:rawRows.some(r=>r.adName), hasStatus:false, statuses:[] };
+    const _sts = [...new Set(rawRows.map(r=>r.status).filter(Boolean))];
+    return { campaigns, rawRows, hasDate:true, hasAdName:rawRows.some(r=>r.adName), hasStatus:_sts.length>0, statuses:_sts };
 }
 
 async function loadGoogleTables(range, force) {

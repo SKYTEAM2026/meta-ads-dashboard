@@ -1590,10 +1590,15 @@ function renderKPI(ins) {
     const roasPct   = roasItem ? parseFloat(roasItem.value) * 100 : (spend > 0 && convVal > 0 ? convVal / spend * 100 : 0);
     const cpa       = purchases > 0 ? spend / purchases : 0;
     const cvr       = clicks > 0 ? purchases / clicks * 100 : 0;
+    // 실제 ROAS = 카페24 실매출(기간합) ÷ 지출
+    const _dr = getActiveDateRange();
+    const realRev = sumTermRevenue(cafe24MetaByDate, _dr.since, _dr.until);
+    const realRoasPct = spend > 0 && realRev > 0 ? realRev / spend * 100 : 0;
 
     const kpis = [
         { label: '총 지출',           value: fCur(spend),                       sub: reach ? `도달: ${fNum(reach)}명` : '', icon: 'bi-cash-coin',       bg: '#e8f4fd', color: '#1877F2' },
         { label: 'ROAS',              value: roasPct ? roasPct.toFixed(1) + '%' : '–', sub: convVal ? `전환값: ${fCur(convVal)}` : '', icon: 'bi-bullseye', bg: '#eff6ff', color: '#2563eb' },
+        { label: '실제 ROAS',         value: realRoasPct ? realRoasPct.toFixed(1) + '%' : '–', sub: realRev ? `실매출: ${fCur(realRev)}` : '카페24 실매출', icon: 'bi-graph-up', bg: '#dcfce7', color: '#16a34a' },
         { label: 'CPA (구매당 비용)', value: cpa ? fCur(cpa) : '–',             sub: purchases ? `구매 ${fNum(Math.round(purchases))}건` : '', icon: 'bi-cash', bg: '#f0fdf4', color: '#16a34a' },
         { label: 'CTR',               value: ctr.toFixed(2) + '%',              sub: '클릭률',           icon: 'bi-graph-up-arrow',  bg: '#fdf4ff', color: '#9333ea' },
         { label: 'CPC',               value: fCur(cpc),                         sub: '클릭당 비용',      icon: 'bi-cursor-fill',     bg: '#fff7ed', color: '#ea580c' },
@@ -1602,7 +1607,7 @@ function renderKPI(ins) {
     ];
 
     document.getElementById('kpiRow').innerHTML = kpis.map(k => `
-        <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
+        <div class="col-xl-3 col-lg-3 col-md-4 col-6">
             <div class="kpi-card">
                 <div class="d-flex justify-content-between align-items-start">
                     <div style="min-width:0;">

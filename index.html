@@ -1534,7 +1534,7 @@ async function fetchCampaigns() {
 async function fetchAccountInsights() {
     try {
         const data = await api(`/${state.accountId}/insights`, {
-            fields: 'impressions,clicks,spend,ctr,cpc,cpm,reach,frequency',
+            fields: 'impressions,clicks,spend,ctr,cpc,cpm,reach,frequency,actions,action_values,purchase_roas',
             ...getDateParams(),
             level: 'account',
         });

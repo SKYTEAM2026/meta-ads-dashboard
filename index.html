@@ -3290,7 +3290,7 @@ function renderCsvCreativeTable(rows, tbodyId, tfootId, noDataId, barColor, cafe
             : '';
         return `<tr ${clickAttr}>
             <td>
-                <div class="campaign-name" style="font-size:13px;">${esc(c.adName)}</div>
+                <div class="campaign-name" style="font-size:13px;">${esc(c.adName)} ${_statusBadge(_creOn.has((c.adName||'(미분류)') + '||' + (c.adGroup||'')))}</div>
                 ${c.adGroup ? `<div class="campaign-meta">${esc(c.adGroup)}</div>` : ''}
                 ${hasDate ? `<div class="campaign-meta" style="color:${barColor}"><i class="bi bi-chevron-down" style="font-size:10px;"></i> 클릭하여 일별 성과 보기</div>` : ''}
             </td>

@@ -4843,19 +4843,23 @@ function applyGoogleFilters() {
             return true;
         });
     }
-    if (statusVal && googleRawRows.some(r => r.status)) {
-        rows = rows.filter(r => r.status === statusVal);
+    // 집행중/미집행 판정 (프록시엔 ON/OFF 없음 → 최근 집행일 지출 기준)
+    const _deliv = _deliveryStatus(rows, 'cost');
+    googleDelivery = _deliv;
+    if (statusVal) {
+        rows = rows.filter(r => statusVal === '집행중' ? _deliv.camp.has(r.campaign) : !_deliv.camp.has(r.campaign));
     }
     const searchVal = (document.getElementById('ggCampaignSearch').value || '').trim().toLowerCase();
     if (searchVal) rows = rows.filter(r => (r.campaign || '').toLowerCase().includes(searchVal));
     googleFilteredRawRows = rows;
     const campaignMap = {};
     for (const r of rows) {
-        if (!campaignMap[r.campaign]) campaignMap[r.campaign] = { name:r.campaign, cost:0, impr:0, clicks:0, conv:0, convVal:0, status:r.status||'', budget:r.budget||0 };
+        if (!campaignMap[r.campaign]) campaignMap[r.campaign] = { name:r.campaign, cost:0, impr:0, clicks:0, conv:0, convVal:0, status:'', budget:r.budget||0 };
         const c = campaignMap[r.campaign];
         c.cost += r.cost; c.impr += r.impr; c.clicks += r.clicks;
         c.conv += r.conv; c.convVal += r.convVal;
     }
+    Object.values(campaignMap).forEach(c => { c.status = _deliv.camp.has(c.name) ? '집행중' : '미집행'; });
     const filtered = Object.values(campaignMap).map(c => ({
         ...c,
         ctr:  c.impr>0 ? c.clicks/c.impr*100 : 0,

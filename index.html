@@ -5163,6 +5163,22 @@ async function decryptPayload(p, password) {
     return new TextDecoder().decode(pt);
 }
 
+// 공유 메타 토큰: 비번 성공 시 data/meta_token.enc 를 복호화해 ACCESS_TOKEN 세팅
+// → 팀원/모바일 어디서든 비번만 넣으면 자동 로드(토큰은 시스템유저=만료 없음)
+async function loadSharedMetaToken() {
+    const pw = DATA_PW || sessionStorage.getItem('rr_pw');
+    if (!pw) return;
+    try {
+        const r = await fetch('./data/meta_token.enc?cb=' + Date.now());
+        if (!r.ok) return;
+        const tok = await decryptPayload(await r.json(), pw);
+        if (tok && tok.length > 20) {
+            ACCESS_TOKEN = tok;
+            try { localStorage.setItem(TOKEN_KEY, tok); } catch (_) {}
+        }
+    } catch (_) {}
+}
+
 async function checkPassword() {
     const input = document.getElementById('pwInput').value;
     const fail = () => { document.getElementById('pwError').style.display = 'block'; document.getElementById('pwInput').value = ''; document.getElementById('pwInput').focus(); };

@@ -2425,6 +2425,7 @@ function renderAdsetCreatives(adsetId) {
                 <td class="text-end">${ctr}</td>
                 <td class="text-end">${cpc}</td>
                 <td class="text-end">${cpm}</td>
+                <td class="text-end">${ins.frequency ? parseFloat(ins.frequency).toFixed(2) : '–'}</td>
             </tr>`;
         }).join('');
 

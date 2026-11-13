@@ -1920,6 +1920,7 @@ function renderCampaignTable(campaigns, insightsMap) {
                 <td class="text-end">${ins.ctr ? parseFloat(ins.ctr).toFixed(2) + '%' : '–'}</td>
                 <td class="text-end">${ins.cpc ? fCur(parseFloat(ins.cpc)) : '–'}</td>
                 <td class="text-end">${ins.cpm ? fCur(parseFloat(ins.cpm)) : '–'}</td>
+                <td class="text-end">${ins.frequency ? parseFloat(ins.frequency).toFixed(2) : '–'}</td>
             </tr>
         `;
     }).join('');

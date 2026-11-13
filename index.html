@@ -5192,6 +5192,7 @@ async function checkPassword() {
     }
     sessionStorage.setItem('pw_ok', '1');
     try { sessionStorage.setItem('rr_pw', input); } catch (_) {}
+    await loadSharedMetaToken();   // 공유 메타 토큰 자동 로드(팀원/모바일)
     applyCrawlRevenue();   // 실제 ROAS 열 데이터(소재/캠페인별 매출) 즉시 연동 — 스냅샷(폴백)
     document.getElementById('passwordScreen').style.display = 'none';
     init();

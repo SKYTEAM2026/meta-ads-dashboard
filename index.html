@@ -5233,6 +5233,7 @@ async function checkPassword() {
                 showLoading(false); document.getElementById('pwInput').focus(); return;
             }
         }
+        await loadSharedMetaToken();   // 공유 메타 토큰 자동 로드(세션 복구 시에도)
         document.getElementById('passwordScreen').style.display = 'none';
         init();
         startLiveRevenue();    // 재방문(세션 유지) 시에도 실시간 매출 연동

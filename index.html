@@ -1559,7 +1559,7 @@ async function fetchDailyInsights() {
 async function fetchCampaignInsights() {
     try {
         const data = await api(`/${state.accountId}/insights`, {
-            fields: 'campaign_id,campaign_name,impressions,clicks,spend,ctr,cpc,cpm,actions,action_values,purchase_roas',
+            fields: 'campaign_id,campaign_name,impressions,clicks,spend,ctr,cpc,cpm,reach,frequency,actions,action_values,purchase_roas',
             ...getDateParams(),
             level: 'campaign',
             limit: 200,

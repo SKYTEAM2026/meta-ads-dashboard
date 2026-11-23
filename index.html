@@ -911,6 +911,73 @@
         <!-- Google 캠페인 상세(일별+소재별 성과)는 캠페인 목록 행 클릭 시 인라인으로 펼쳐짐 (toggleGoogleCampaignRow) -->
     </div>
 
+    <!-- ── GFA(네이버) DASHBOARD — 서버가 ccfm API로 만든 data/gfa.enc(비번 암호화) ── -->
+    <div id="gfaDashboard" style="display:none;">
+        <div class="filter-bar mb-4">
+            <span class="filter-label">기간</span>
+            <input type="date" id="gfaFrom" class="form-control form-control-sm" style="width:auto;" onchange="renderGfa()">
+            <span style="color:var(--text-secondary);font-size:14px;padding:0 2px;">~</span>
+            <input type="date" id="gfaTo" class="form-control form-control-sm" style="width:auto;" onchange="renderGfa()">
+            <span class="filter-divider">|</span>
+            <span class="filter-label">제품</span>
+            <select id="gfaProd" class="form-select form-select-sm" style="width:auto;" onchange="renderGfa()"></select>
+            <span class="filter-divider">|</span>
+            <input type="search" id="gfaSearch" class="form-control form-control-sm" style="width:200px;" placeholder="캠페인·소재명 검색" oninput="renderGfa()">
+            <button class="btn-outline-meta btn-sm" style="border-color:#03c75a;color:#03a84c;padding:4px 10px;" onclick="loadGfa(true)"><i class="bi bi-arrow-repeat"></i> 새로고침</button>
+            <span id="gfaMeta" class="ms-auto" style="font-size:11px;color:var(--text-secondary);"></span>
+        </div>
+        <div id="gfaLoading" class="text-center py-5">
+            <div class="panel-spinner mx-auto mb-2"></div>
+            <div style="font-size:13px;color:var(--text-secondary);">GFA 데이터 불러오는 중…</div>
+        </div>
+        <div id="gfaNoData" class="no-data" style="display:none;">
+            <i class="bi bi-inbox"></i>GFA 데이터를 불러올 수 없습니다<br>
+            <span style="font-size:12px;">비밀번호 입력 후 다시 시도하거나, 서버에서 <code>update_real_roas.py</code> 실행 → <code>data/gfa.enc</code> 생성 필요</span>
+        </div>
+        <div id="gfaContent" style="display:none;">
+            <div class="row g-3 mb-4" id="gfaKpiRow"></div>
+
+            <div class="card mb-4"><div class="card-body p-4">
+                <h6 class="section-title mb-3"><i class="bi bi-box-seam me-1" style="color:#03c75a;"></i>제품별 성과
+                    <span style="font-size:11px;font-weight:400;color:var(--text-secondary);margin-left:6px;">진짜 ROAS = cafe24 GFA 유입 실매출 ÷ GFA 실광고비 · 매체 ROAS = 네이버 보고 매출 ÷ 광고비</span></h6>
+                <div class="table-responsive"><table class="table table-hover mb-0">
+                    <thead><tr>
+                        <th>제품</th><th class="text-end">광고비</th><th class="text-end">노출</th><th class="text-end">클릭</th>
+                        <th class="text-end">CTR</th><th class="text-end">CPC</th><th class="text-end">매체 구매</th>
+                        <th class="text-end">매체 ROAS</th><th class="text-end">실매출(cafe24)</th><th class="text-end">진짜 ROAS</th>
+                    </tr></thead>
+                    <tbody id="gfaProdBody"></tbody>
+                    <tfoot id="gfaProdFoot"></tfoot>
+                </table></div>
+            </div></div>
+
+            <div class="card mb-4"><div class="card-body p-4">
+                <h6 class="section-title mb-3"><i class="bi bi-megaphone me-1" style="color:#03c75a;"></i>캠페인별 성과
+                    <span style="font-size:11px;font-weight:400;color:var(--text-secondary);margin-left:6px;">행 클릭 시 소재 펼침 · 광고비 순</span></h6>
+                <div class="table-responsive"><table class="table table-hover mb-0">
+                    <thead><tr>
+                        <th>캠페인</th><th class="text-end">소재 수</th><th class="text-end">광고비</th><th class="text-end">노출</th>
+                        <th class="text-end">클릭</th><th class="text-end">CTR</th><th class="text-end">CPC</th>
+                        <th class="text-end">매체 구매</th><th class="text-end">CPA</th><th class="text-end">매체 ROAS</th>
+                    </tr></thead>
+                    <tbody id="gfaCampBody"></tbody>
+                </table></div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:8px;"><i class="bi bi-info-circle me-1"></i>GFA 소재명엔 utm_term이 없어 소재·캠페인 단위 실매출(진짜 ROAS)은 매칭할 수 없습니다 — 진짜 ROAS는 제품 단위로만 봅니다.</div>
+            </div></div>
+
+            <div class="card mb-4"><div class="card-body p-4">
+                <h6 class="section-title mb-3"><i class="bi bi-calendar3 me-1" style="color:#03c75a;"></i>일별 추이</h6>
+                <div class="table-responsive" style="max-height:420px;overflow:auto;"><table class="table table-sm table-hover mb-0">
+                    <thead style="position:sticky;top:0;background:#fff;"><tr>
+                        <th>날짜</th><th class="text-end">광고비</th><th class="text-end">클릭</th><th class="text-end">CTR</th>
+                        <th class="text-end">매체 구매</th><th class="text-end">매체 ROAS</th><th class="text-end">실매출(cafe24)</th><th class="text-end">진짜 ROAS</th>
+                    </tr></thead>
+                    <tbody id="gfaDailyBody"></tbody>
+                </table></div>
+            </div></div>
+        </div>
+    </div>
+
     <!-- ── 진짜 ROAS DASHBOARD (cafe24 애널리틱스 실매출 ÷ 4채널 실광고비) ── -->
     <div id="realDashboard" style="display:none;">
         <div class="filter-bar mb-4">

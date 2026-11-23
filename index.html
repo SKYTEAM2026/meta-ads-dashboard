@@ -4072,6 +4072,8 @@ function switchPlatform(platform) {
     if (platform !== 'google') closeGoogleDetail();
     document.getElementById('tiktokDashboard').style.display = platform === 'tiktok' ? '' : 'none';
     document.getElementById('googleDashboard').style.display = platform === 'google' ? '' : 'none';
+    document.getElementById('gfaDashboard').style.display    = platform === 'gfa' ? '' : 'none';
+    if (platform === 'gfa') loadGfa();
     if (platform === 'tiktok') {
         loadTiktokCafe24FromStorage();   // 크롤 매출(실제 ROAS 열) 연동
         loadTiktokManualStatus();

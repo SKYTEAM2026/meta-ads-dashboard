@@ -4086,6 +4086,165 @@ function switchPlatform(platform) {
 }
 
 // ═══════════════════════════════════════
+//  GFA(네이버) — data/gfa.enc (공헌이익/gfa_bundle.py가 생성, 비번 암호화)
+//  rows: {d,p,c,sp,im,cl,pu,rv} / creatives[c]: {name,type,status,camp,ag,thumb,brand} / cafe24: {p:{ymd:매출}}
+// ═══════════════════════════════════════
+let GFA = null;
+const gfaOpen = new Set();
+
+async function loadGfa(force) {
+    const L = document.getElementById('gfaLoading'), C = document.getElementById('gfaContent'), N = document.getElementById('gfaNoData');
+    if (GFA && !force) { L.style.display = 'none'; N.style.display = 'none'; C.style.display = ''; renderGfa(); return; }
+    L.style.display = ''; C.style.display = 'none'; N.style.display = 'none';
+    try {
+        const pw = DATA_PW || sessionStorage.getItem('rr_pw');
+        if (!pw) throw new Error('no pw');
+        const e = await fetch('./data/gfa.enc?cb=' + Date.now());
+        if (!e.ok) throw new Error('no enc');
+        GFA = JSON.parse(await decryptPayload(await e.json(), pw));
+        const pr = GFA.period || {};
+        const f = document.getElementById('gfaFrom'), t = document.getElementById('gfaTo');
+        f.min = t.min = pr.since || ''; f.max = t.max = pr.until || '';
+        if (!f.value || force) f.value = pr.since || '';
+        if (!t.value || force) t.value = pr.until || '';
+        const sel = document.getElementById('gfaProd');
+        sel.innerHTML = '<option value="">전체 제품</option>' +
+            Object.entries(GFA.products || {}).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
+        L.style.display = 'none'; C.style.display = '';
+        renderGfa();
+    } catch (err) {
+        L.style.display = 'none'; N.style.display = '';
+        document.getElementById('gfaMeta').textContent = '';
+    }
+}
+
+function gfaNew() { return { sp: 0, im: 0, cl: 0, pu: 0, rv: 0 }; }
+function gfaAdd(a, r) { a.sp += r.sp; a.im += r.im; a.cl += r.cl; a.pu += r.pu; a.rv += r.rv; }
+const gfaN = v => v ? Number(v).toLocaleString('ko-KR') : '–';
+const gfaCtr = a => a.im > 0 ? (a.cl / a.im * 100).toFixed(2) + '%' : '–';
+const gfaCpc = a => a.cl > 0 ? fCur(Math.round(a.sp / a.cl)) : '–';
+const gfaCpa = a => a.pu > 0 ? fCur(Math.round(a.sp / a.pu)) : '–';
+
+function gfaFiltered() {
+    const from = document.getElementById('gfaFrom').value || GFA.period.since;
+    const to   = document.getElementById('gfaTo').value   || GFA.period.until;
+    const prod = document.getElementById('gfaProd').value;
+    const q = (document.getElementById('gfaSearch').value || '').trim().toLowerCase();
+    const cr = GFA.creatives;
+    const rows = GFA.rows.filter(r => r.d >= from && r.d <= to && (!prod || r.p === prod) &&
+        (!q || (cr[r.c].name + ' ' + cr[r.c].camp).toLowerCase().includes(q)));
+    return { from, to, prod, q, rows };
+}
+
+function gfaCafe24(prod, from, to) {
+    let s = 0; const byDay = {};
+    for (const [p, dm] of Object.entries(GFA.cafe24 || {})) {
+        if (prod && p !== prod) continue;
+        for (const [d, v] of Object.entries(dm)) if (d >= from && d <= to) { s += v; byDay[d] = (byDay[d] || 0) + v; }
+    }
+    return { total: s, byDay };
+}
+
+function renderGfa() {
+    if (!GFA) return;
+    const { from, to, prod, q, rows } = gfaFiltered();
+    const cr = GFA.creatives;
+
+    // 제품별
+    const byP = {};
+    rows.forEach(r => { (byP[r.p] = byP[r.p] || gfaNew()); gfaAdd(byP[r.p], r); });
+    const tot = gfaNew(); let tC24 = 0;
+    const prodRows = Object.entries(GFA.products).filter(([k]) => !prod || k === prod).map(([k, name]) => {
+        const a = byP[k] || gfaNew(); gfaAdd(tot, a);
+        const c24 = q ? 0 : gfaCafe24(k, from, to).total; tC24 += c24;
+        if (!a.sp && !c24) return '';
+        return `<tr><td><span class="campaign-name">${esc(name)}</span></td>
+            <td class="text-end">${fCur(a.sp)}</td><td class="text-end">${gfaN(a.im)}</td><td class="text-end">${gfaN(a.cl)}</td>
+            <td class="text-end">${gfaCtr(a)}</td><td class="text-end">${gfaCpc(a)}</td><td class="text-end">${gfaN(a.pu)}</td>
+            <td class="text-end">${roasCell(a.rv, a.sp)}</td><td class="text-end">${c24 ? fCur(c24) : '–'}</td>
+            <td class="text-end">${q ? '<span style="color:var(--text-secondary);">검색 중 –</span>' : roasCell(c24, a.sp)}</td></tr>`;
+    }).join('');
+    document.getElementById('gfaProdBody').innerHTML = prodRows || '<tr><td colspan="10" class="text-center text-secondary py-4">데이터 없음</td></tr>';
+    document.getElementById('gfaProdFoot').innerHTML = `<tr class="total-row"><td>합계</td>
+        <td class="text-end">${fCur(tot.sp)}</td><td class="text-end">${gfaN(tot.im)}</td><td class="text-end">${gfaN(tot.cl)}</td>
+        <td class="text-end">${gfaCtr(tot)}</td><td class="text-end">${gfaCpc(tot)}</td><td class="text-end">${gfaN(tot.pu)}</td>
+        <td class="text-end">${roasCell(tot.rv, tot.sp)}</td><td class="text-end">${tC24 ? fCur(tC24) : '–'}</td>
+        <td class="text-end">${q ? '–' : roasCell(tC24, tot.sp)}</td></tr>`;
+
+    // KPI
+    const kpis = [
+        { label: 'GFA 광고비', value: fCur(tot.sp), icon: 'bi-cash-coin', color: '#03c75a' },
+        { label: '진짜 ROAS (cafe24)', value: !q && tot.sp > 0 && tC24 > 0 ? (tC24 / tot.sp * 100).toFixed(1) + '%' : '–', icon: 'bi-gem', color: '#16a34a' },
+        { label: '매체 ROAS (네이버 보고)', value: tot.sp > 0 && tot.rv > 0 ? (tot.rv / tot.sp * 100).toFixed(1) + '%' : '–', icon: 'bi-bullseye', color: '#64748b' },
+        { label: '실매출 (cafe24)', value: !q && tC24 ? fCur(tC24) : '–', icon: 'bi-graph-up-arrow', color: '#16a34a' },
+        { label: 'CTR', value: gfaCtr(tot), icon: 'bi-graph-up', color: '#03c75a' },
+        { label: 'CPC', value: gfaCpc(tot), icon: 'bi-cursor-fill', color: '#03c75a' },
+        { label: '매체 구매', value: gfaN(tot.pu), icon: 'bi-bag-check', color: '#03c75a' },
+        { label: 'CPA (매체)', value: gfaCpa(tot), icon: 'bi-cash', color: '#03c75a' },
+    ];
+    document.getElementById('gfaKpiRow').innerHTML = kpis.map(k => `
+        <div class="col-xl-3 col-lg-3 col-md-4 col-6"><div class="daily-kpi-item">
+            <div class="daily-kpi-icon" style="background:${k.color}1a;color:${k.color};"><i class="bi ${k.icon}"></i></div>
+            <div><div class="daily-kpi-label">${k.label}</div><div class="daily-kpi-value">${k.value}</div></div>
+        </div></div>`).join('');
+
+    // 캠페인별 (+소재)
+    const camps = {};
+    rows.forEach(r => {
+        const name = cr[r.c].camp;
+        const c = camps[name] = camps[name] || { a: gfaNew(), cre: {} };
+        gfaAdd(c.a, r);
+        gfaAdd(c.cre[r.c] = c.cre[r.c] || gfaNew(), r);
+    });
+    const list = Object.entries(camps).sort((x, y) => y[1].a.sp - x[1].a.sp);
+    document.getElementById('gfaCampBody').innerHTML = list.map(([name, c]) => {
+        const open = gfaOpen.has(name);
+        const nCre = Object.keys(c.cre).length;
+        let html = `<tr style="cursor:pointer;" data-camp="${esc(name)}" onclick="toggleGfaCamp(this.dataset.camp)">
+            <td><span class="campaign-name">${esc(name)} <i class="bi bi-chevron-${open ? 'up' : 'down'}" style="font-size:10px;color:var(--text-secondary);"></i></span></td>
+            <td class="text-end">${nCre}</td><td class="text-end">${fCur(c.a.sp)}</td><td class="text-end">${gfaN(c.a.im)}</td>
+            <td class="text-end">${gfaN(c.a.cl)}</td><td class="text-end">${gfaCtr(c.a)}</td><td class="text-end">${gfaCpc(c.a)}</td>
+            <td class="text-end">${gfaN(c.a.pu)}</td><td class="text-end">${gfaCpa(c.a)}</td><td class="text-end">${roasCell(c.a.rv, c.a.sp)}</td></tr>`;
+        if (open) {
+            html += Object.entries(c.cre).sort((x, y) => y[1].sp - x[1].sp).map(([ci, a]) => {
+                const m = cr[ci];
+                const st = m.status === 'ACTIVE' ? '<span style="color:#16a34a;">●</span>' : '<span style="color:#94a3b8;">●</span>';
+                const th = m.thumb ? `<img class="gfa-thumb" loading="lazy" src="${esc(m.thumb)}" onerror="this.style.visibility='hidden'">` : '<div class="gfa-thumb"></div>';
+                return `<tr class="gfa-sub"><td><div class="d-flex align-items-center gap-2" style="padding-left:14px;">${th}
+                    <div style="min-width:0;"><div style="word-break:break-all;">${st} ${esc(m.name)}</div>
+                    <div style="font-size:10px;color:var(--text-secondary);word-break:break-all;">${esc(m.ag || '')} · ${esc(m.type || '')}</div></div></div></td>
+                    <td></td><td class="text-end">${fCur(a.sp)}</td><td class="text-end">${gfaN(a.im)}</td><td class="text-end">${gfaN(a.cl)}</td>
+                    <td class="text-end">${gfaCtr(a)}</td><td class="text-end">${gfaCpc(a)}</td><td class="text-end">${gfaN(a.pu)}</td>
+                    <td class="text-end">${gfaCpa(a)}</td><td class="text-end">${roasCell(a.rv, a.sp)}</td></tr>`;
+            }).join('');
+        }
+        return html;
+    }).join('') || '<tr><td colspan="10" class="text-center text-secondary py-4">데이터 없음</td></tr>';
+
+    // 일별
+    const byD = {};
+    rows.forEach(r => gfaAdd(byD[r.d] = byD[r.d] || gfaNew(), r));
+    const c24d = q ? {} : gfaCafe24(prod, from, to).byDay;
+    const days = [...new Set([...Object.keys(byD), ...Object.keys(c24d)])].sort().reverse();
+    document.getElementById('gfaDailyBody').innerHTML = days.map(d => {
+        const a = byD[d] || gfaNew(), c = c24d[d] || 0;
+        return `<tr><td>${d}</td><td class="text-end">${fCur(a.sp)}</td><td class="text-end">${gfaN(a.cl)}</td>
+            <td class="text-end">${gfaCtr(a)}</td><td class="text-end">${gfaN(a.pu)}</td><td class="text-end">${roasCell(a.rv, a.sp)}</td>
+            <td class="text-end">${c ? fCur(c) : '–'}</td><td class="text-end">${q ? '–' : roasCell(c, a.sp)}</td></tr>`;
+    }).join('');
+
+    const g = (GFA.generated || '').replace('T', ' ').slice(0, 16);
+    const errs = Object.keys(GFA.errors || {});
+    document.getElementById('gfaMeta').innerHTML = `${from}~${to} · 생성 ${g} · 매일 09:00 갱신` +
+        (errs.length ? ` · <span style="color:#dc2626;">⚠ ${esc(errs.join(','))} 조회 실패</span>` : '');
+}
+
+function toggleGfaCamp(name) {
+    if (gfaOpen.has(name)) gfaOpen.delete(name); else gfaOpen.add(name);
+    renderGfa();
+}
+
+// ═══════════════════════════════════════
 //  진짜 ROAS (data/real_roas.json)
 // ═══════════════════════════════════════
 let REAL_ROAS = null;

@@ -2,3 +2,5 @@
 # 공개 배포는 암호화본(data/real_roas.enc 등)만. (Phase 4)
 data/real_roas.json
 data/real_roas_*.json
+# GFA 탭 평문(광고비·매출). 공개 배포는 data/gfa.enc만.
+data/gfa.json

@@ -4097,11 +4097,17 @@ async function loadGfa(force) {
     if (GFA && !force) { L.style.display = 'none'; N.style.display = 'none'; C.style.display = ''; renderGfa(); return; }
     L.style.display = ''; C.style.display = 'none'; N.style.display = 'none';
     try {
-        const pw = DATA_PW || sessionStorage.getItem('rr_pw');
-        if (!pw) throw new Error('no pw');
-        const e = await fetch('./data/gfa.enc?cb=' + Date.now());
-        if (!e.ok) throw new Error('no enc');
-        GFA = JSON.parse(await decryptPayload(await e.json(), pw));
+        let got = null;
+        // 1) 로컬 평문(개발용, gitignore) → 2) 암호화본 + 비번(공개 배포)
+        try { const r = await fetch('./data/gfa.json?cb=' + Date.now()); if (r.ok) got = await r.json(); } catch (_) {}
+        if (!got) {
+            const pw = DATA_PW || sessionStorage.getItem('rr_pw');
+            if (!pw) throw new Error('no pw');
+            const e = await fetch('./data/gfa.enc?cb=' + Date.now());
+            if (!e.ok) throw new Error('no enc');
+            got = JSON.parse(await decryptPayload(await e.json(), pw));
+        }
+        GFA = got;
         const pr = GFA.period || {};
         const f = document.getElementById('gfaFrom'), t = document.getElementById('gfaTo');
         f.min = t.min = pr.since || ''; f.max = t.max = pr.until || '';
